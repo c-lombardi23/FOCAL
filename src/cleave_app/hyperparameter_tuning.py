@@ -1,7 +1,7 @@
 #import libraries
 import tensorflow as tf
 from tensorflow.keras.models import  Model, Sequential
-from tensorflow.keras.layers import Dense, Concatenate, GlobalAveragePooling2D, Dropout, Input, RandomFlip, RandomRotation, RandomBrightness, RandomZoom, RandomContrast, GaussianNoise
+from tensorflow.keras.layers import Dense, Concatenate, GlobalAveragePooling2D, Dropout, Input, RandomFlip, RandomRotation, RandomBrightness, RandomZoom, RandomContrast, GaussianNoise, BatchNormalization
 from keras_tuner import HyperModel, Hyperband
 from keras.applications import MobileNetV2
 
@@ -46,7 +46,7 @@ class BuildHyperModel(HyperModel):
             RandomRotation(factor=(0.2)),
             RandomBrightness(factor=(0.2)),
             RandomZoom(height_factor=0.1, width_factor=0.1),
-            GaussianNoise(stddev=0.01),
+            #GaussianNoise(stddev=0.01),
             RandomContrast(0.2)
         ])
 
@@ -55,30 +55,34 @@ class BuildHyperModel(HyperModel):
       x = data_augmentation(image_input)
       x = pre_trained_model(x, training=False)
       x = GlobalAveragePooling2D()(x)
-      x = Dropout(hp.Float('dropout', 0.2, 0.5, step=0.1))(x)
+      x = Dropout(hp.Float('dropout', 0.1, 0.3, step=0.1))(x)
 
         # Param input and processing
       param_input = Input(shape=self.param_shape)
       y = Dense(
-            hp.Int('dense_param1', min_value=16, max_value=128, step=16),
+            hp.Int('dense_param1', min_value=32, max_value=64, step=16),
             activation='relu')(param_input)
       y = Dense(
-            hp.Int('dense_param2', min_value=8, max_value=64, step=8),
+            hp.Int('dense_param2', min_value=8, max_value=32, step=8),
             activation='relu')(y)
+      y = BatchNormalization()(y)
 
         # Combine image and parameter features
       combined = Concatenate()([x, y])
 
       z = Dense(
-            hp.Int('dense_combined', min_value=16, max_value=128, step=16),
+            hp.Int('dense_combined', min_value=32, max_value=64, step=16),
             activation='relu')(combined)
-      z = Dense(4, activation='softmax')(z)
+      z = BatchNormalization()(z)
+      z = Dense(3, activation='softmax')(z)
+      z = Dropout(hp.Float('dropout_combined', 0.1, 0.3, step=0.1))(z)
+      z = Dense(3, activation='softmax')(z)
 
       model = Model(inputs=[image_input, param_input], outputs=z)
 
       model.compile(
             optimizer=tf.keras.optimizers.Adam(
-                learning_rate=hp.Choice('learning_rate', values=[0.0005, 0.001, 0.01, 0.015])
+                learning_rate=hp.Choice('learning_rate', values=[1e-4, 3e-4, 5e-4, 1e-3])
             ),
             loss='categorical_crossentropy',
             metrics=['accuracy']

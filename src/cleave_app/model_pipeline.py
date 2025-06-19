@@ -60,7 +60,7 @@ class CustomModel:
 
       combined = Concatenate()([x, y])
       z = Dense(64, name="third_dense_layer", activation='relu')(combined)
-      z = Dense(4, name="output_layer", activation='softmax')(z)
+      z = Dense(3, name="output_layer", activation='softmax')(z)
 
       model = Model(inputs=[image_input, params_input], outputs=z)
       model.summary()
@@ -128,6 +128,38 @@ class CustomModel:
       )
       return model_checkpoint_callback
     
+    def reduce_on_plateau(self, patience=3, mode='auto', factor=2.0, monitor='val_accuracy'):
+      '''
+      Create reduced learning rate callback if monitored value stops improving
+
+      Parameters:
+      ------------------------------------------
+
+      patience: int
+        - number of epochs before reducing learning rate
+        - default: 3
+      mode: str
+        - min, max, auto, method to monitor
+        - default: auto
+      factor: float
+        - factor by which to reduce learning rate
+        - default: 2.0
+      monitor: str
+        - value to monitor before reducing learning rate
+        - default: val_accuracy
+      
+      Returns: tf.keras.callbacks.ReduceLROnPlateau
+        - Reduce Learning rate callback
+      '''
+      reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
+        monitor=monitor,
+        patience=patience,
+        mode=mode,
+        factor=factor,
+        min_lr=0.0
+      )
+      return reduce_lr
+    
     def create_early_stopping(self, patience=3, mode='max', monitor="val_accuracy"):
       '''
       Create early stopping callback to monitor training success and prevent overfitting.
@@ -160,7 +192,7 @@ class CustomModel:
     def create_tensorboard_callback(self, log_dir, histogram_freq=1):
       return tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=histogram_freq)
     
-    def train_model(self, model, checkpoints=None, epochs=5, initial_epoch=0, early_stopping=None, tensorboard=None, history_file=None, model_file=None):
+    def train_model(self, model, checkpoints=None, epochs=5, initial_epoch=0, early_stopping=None, reduce_lr=None, tensorboard=None, history_file=None, model_file=None):
       '''
       Train model with possible callbacks to prevent overfitting
 
@@ -177,7 +209,10 @@ class CustomModel:
         - default: 5
       early_stopping: tf.keras.callback.EarlyStopping
         - early stopping callback to prevent overfitting
-        - defatult: None
+        - default: None
+      reduce_lr: tf.keras.callbacks.ReduceLROnPlateau
+        - reduce learning rate callback
+        - default: None
       tensorboard: tf.keras.callbacks.TensorBoard
         - creates access to tensorboard option in google colab
       history_file: str
@@ -194,7 +229,9 @@ class CustomModel:
       if checkpoints:
         callbacks.append(checkpoints)
       if tensorboard:
-        callbacks.append(tensorboard)  
+        callbacks.append(tensorboard)
+      if reduce_lr:
+        callbacks.append(reduce_lr) 
 
       if callbacks:
         history = model.fit(self.train_ds, epochs=epochs, initial_epoch=initial_epoch,

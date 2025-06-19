@@ -7,7 +7,7 @@ import joblib
 import os
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
 
 
@@ -32,27 +32,61 @@ class TestPredictions:
     self.img_folder = img_folder
     self.model = tf.keras.models.load_model(model_path)
     self.csv_path = csv_path
+    self.df = self.clean_data()
+
+  def set_label(self):
+    try:
+        df = pd.read_csv(self.csv_path)
+    except FileNotFoundError:
+        print("CSV file not found!")
+        return None
+
+    def label(row):
+      good_angle = row['CleaveAngle'] <= 0.45
+      no_defects = not row['Hackle'] and not row['Misting']
+      good_diameter = row['ScribeDiameter'] < 17
+      
+      
+      if good_angle and no_defects and good_diameter:
+         return "Good"
+      elif (good_angle and not no_defects and good_diameter) or (good_angle and no_defects and not good_diameter) or (not good_angle and no_defects and good_diameter):
+        return "Single_Error"
+      else:
+         return "Multiple Errors"
+
+
+    df["CleaveCategory"] = df.apply(label, axis=1)
+
+    return df
 
   def clean_data(self):
     '''
     Read csv file into dataframe and add column for cleave quality.
 
     Returns: pandas.DataFrame
-      - dataframe with cleave quality column
+      - dataframe with cleave quality column and one-hot encoded labels
     '''
     try:
-      df = pd.read_csv(self.csv_path)
+        df = self.set_label()
     except FileNotFoundError:
-      print("File not found")
-      return None
-    df['CleaveQuality'] = ((df['CleaveAngle'] <= 0.45) & (df['Misting'] == 0) & (df['Hackle'] == 0)).astype(int)
-    # Clean image path to read from google drive
-    df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "")
-    print(df)    
-    pred_image_paths = df['ImagePath'].values
-    pred_features = df[['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values.astype(np.float32)
-    self.true_labels = list(df['CleaveQuality'])
-    return pred_image_paths, pred_features
+        print("CSV file not found!")
+        return None
+
+    # Clean image path
+    df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
+
+    # One-hot encode CleaveCategory
+    ohe = OneHotEncoder()
+    onehot_labels = ohe.fit_transform(df[['CleaveCategory']]).toarray()
+    class_names = ohe.categories_[0]
+
+    for idx, class_name in enumerate(class_names):
+        df[f"Label_{class_name}"] = onehot_labels[:, idx]
+
+    self.encoder = ohe
+    self.class_names = class_names
+
+    return df
 
   def load_process_images(self, filename):
     '''
@@ -104,10 +138,9 @@ class TestPredictions:
     image = self.load_process_images(image_path)
     image = np.expand_dims(image, axis=0)
 
-    scalar = joblib.load(self.scalar_path)
-    scaled_features = scalar.transform([feature_vector]) 
+    feature_vector = np.expand_dims(feature_vector, axis=0) 
 
-    prediction = self.model.predict([image, scaled_features])
+    prediction = self.model.predict([image, feature_vector])
     return prediction
 
   def gather_predictions(self):
@@ -118,17 +151,26 @@ class TestPredictions:
       - list of predictions
     '''
 
-    pred_image_paths, pred_features = self.clean_data()
+    if self.df is None:
+        return None, None, None
+
+    pred_image_paths = self.df["ImagePath"].values
+    pred_features = self.df[['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values
+
+    scalar = joblib.load(self.scalar_path)
+    pred_features = scalar.transform(pred_features)
+
     predictions = []
     for img_path, feature_vector in zip(pred_image_paths, pred_features):
       prediction = self.test_prediction(img_path, feature_vector)
       predictions.append(prediction)
 
     # Set prediction labels to 0 or 1 based on probability
-    pred_labels = [1 if pred[0][0] > 0.5 else 0 for pred in predictions]
-    return pred_labels, predictions
+    pred_labels = [np.argmax(pred[0]) for pred in predictions]
+    true_labels = self.df["CleaveCategory"].map({label: idx for idx, label in enumerate(self.class_names)}).values
+    return true_labels, pred_labels, predictions
 
-  def display_confusion_matrix(self, pred_labels):
+  def display_confusion_matrix(self, true_labels, pred_labels):
     '''
     Displays confusion matrix metric comparing true labels to predicted labels.
 
@@ -138,9 +180,10 @@ class TestPredictions:
     pred_labels: list
       - list of predicted labels
     '''
-    cm = confusion_matrix(self.true_labels, pred_labels, labels=[0, 1])
+    labels = list(range(len(self.class_names)))
+    cm = confusion_matrix(true_labels, pred_labels, labels=labels)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
-                              display_labels=['Bad Cleave', 'Good Cleave'])
+                              display_labels=self.class_names)
     disp.plot()
     plt.show()
 
@@ -156,7 +199,7 @@ class TestPredictions:
     pred_labels: list
       - list of predicted labels
     '''
-    print(classification_report(true_labels, pred_labels))
+    print(classification_report(true_labels, pred_labels, target_names=self.class_names))
 
   def plot_roc(self, title, true_labels, pred_probabilites):
     pred_probabilites = np.array(pred_probabilites).flatten()
@@ -230,7 +273,7 @@ class TensionPredictor:
         features = np.array(features).reshape(1, -1)
         features = tf.convert_to_tensor(features, dtype=tf.float32)
         # Predict tension
-        features = self.feature_scaler.fit_transform(features)
+        features = self.feature_scaler.transform(features)
         predicted_tension = self.model.predict([image, features])
         # Scale tension back to normal units
         predicted_tension = self.tension_scaler.inverse_transform(predicted_tension)
