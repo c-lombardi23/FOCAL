@@ -76,7 +76,7 @@ class BuildHyperModel(HyperModel):
       z = BatchNormalization()(z)
       z = Dense(3, activation='softmax')(z)
       z = Dropout(hp.Float('dropout_combined', 0.1, 0.3, step=0.1))(z)
-      z = Dense(3, activation='softmax')(z)
+      z = Dense(5, activation='softmax')(z)
 
       model = Model(inputs=[image_input, param_input], outputs=z)
 

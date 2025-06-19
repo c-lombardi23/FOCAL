@@ -19,7 +19,7 @@ class CustomModel:
       self.train_ds = train_ds
       self.test_ds = test_ds
 
-    def build_pretrained_model(self, image_shape, param_shape):
+    def build_pretrained_model(self, image_shape, param_shape, unfreeze_from =None):
       '''
       Utilize pretrained CNN to supplement small dataset
 
@@ -35,7 +35,10 @@ class CustomModel:
         - returns model to train
       '''
       pre_trained_model = MobileNetV2(input_shape=image_shape, include_top=False, weights="imagenet")
-      pre_trained_model.trainable =False
+      pre_trained_model.trainable =  unfreeze_from is not None
+      if unfreeze_from is not None:
+        for layer in pre_trained_model.layers[:unfreeze_from]:
+            layer.trainable = False
 
       # Data augmentation pipeline
       data_augmentation = Sequential([
@@ -60,13 +63,13 @@ class CustomModel:
 
       combined = Concatenate()([x, y])
       z = Dense(64, name="third_dense_layer", activation='relu')(combined)
-      z = Dense(3, name="output_layer", activation='softmax')(z)
+      z = Dense(5, name="output_layer", activation='softmax')(z)
 
       model = Model(inputs=[image_input, params_input], outputs=z)
       model.summary()
       return model
 
-    def compile_model(self, image_shape, param_shape, learning_rate=0.001, metrics=['accuracy']):
+    def compile_model(self, image_shape, param_shape, unfreeze_from=None, learning_rate=0.001, metrics=['accuracy']):
       '''
       Compile model after calling build_model function
 
@@ -90,7 +93,7 @@ class CustomModel:
       # Set learning rate and then compile model
       # Loss functions is categorical_crossentropy for multi-class classification
       #model = build_model((image_shape), (param_shape))
-      model = self.build_pretrained_model(image_shape, param_shape)
+      model = self.build_pretrained_model(image_shape, param_shape, unfreeze_from)
       optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
       model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=metrics)
       return model

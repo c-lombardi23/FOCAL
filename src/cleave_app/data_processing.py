@@ -37,14 +37,21 @@ class DataCollector:
         return None
 
     def label(row):
-      if (row['CleaveAngle'] <= 0.45 and not row['Misting'] and not row['Hackle'] and row['ScribeDiameter'] >= 17):
-          return "BadDiameter"
-      elif (row['CleaveAngle'] <= 0.45 and not row['Misting'] and not row['Hackle']):
-          return "Good"
-      elif (row['CleaveAngle'] <= 0.45) and (row['Misting'] or row['Hackle']):
-          return "Bad_Misting_Hackle"
+      good_angle = row['CleaveAngle'] <= 0.45
+      no_defects = not row['Hackle'] and not row['Misting']
+      good_diameter = row['ScribeDiameter'] < 17
+      
+      
+      if good_angle and no_defects and good_diameter:
+         return "Good"
+      elif (good_angle and not no_defects and good_diameter) : 
+        return "Misting_Hackle"
+      elif (good_angle and no_defects and not good_diameter):
+         return "Bad_Scribe_Mark"
+      elif (not good_angle and no_defects and good_diameter):
+         return "Bad_Angle"
       else:
-          return "BadAngle"
+         return "Multiple_Errors"
 
 
     df["CleaveCategory"] = df.apply(label, axis=1)
@@ -112,7 +119,7 @@ class DataCollector:
     img.set_shape([224, 224, 3])
     return img
 
-  def extract_data(self, feature_scaler_path=None):
+  def extract_data(self):
     '''
     Extract data from dataframe into separate lists for creating datasets.
 
@@ -126,15 +133,9 @@ class DataCollector:
       - lists of images, features, and labels
     '''
     images = self.df['ImagePath'].values
-    #features = self.df[['CleaveAngle', 'CleaveTension']].values
     features = self.df[['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values.astype(np.float32)
     label_cols = [col for col in self.df.columns if col.startswith('Label_')]
     labels = self.df[label_cols].values.astype(np.float32)
-    self.feature_scaler = MinMaxScaler()
-    features = self.feature_scaler.fit_transform(features)
-    #joblib.dump(self.scaler, f'./{scaler_filename}.pkl')
-    if feature_scaler_path:
-      joblib.dump(self.feature_scaler, f'{feature_scaler_path}.pkl')
     return images, features, labels
 
   def process_images_features(self, inputs, label):
@@ -189,7 +190,7 @@ class DataCollector:
 
     return datasets
   
-  def create_datasets(self, images, features, labels, test_size, buffer_size, batch_size):
+  def create_datasets(self, images, features, labels, test_size, buffer_size, batch_size, feature_scaler_path=None):
     '''
     Creates test and train datasets and splits into different batches after shuffling.
 
@@ -212,8 +213,16 @@ class DataCollector:
     Returns: tf.tensor
       - train and test datasets
     '''
+
+    stratify_labels = labels.argmax(axis=1)
     train_imgs, test_imgs, train_features, test_features, train_labels, test_labels = train_test_split(
-        images, features, labels, stratify=labels, test_size=test_size)
+        images, features, labels, stratify=stratify_labels, test_size=test_size)
+    
+    scaler = MinMaxScaler()
+    train_features = scaler.fit_transform(train_features)
+    if feature_scaler_path:
+      joblib.dump(self.feature_scaler, f'{feature_scaler_path}.pkl')
+    test_features = scaler.transform(test_features)
     train_ds = tf.data.Dataset.from_tensor_slices(((train_imgs, train_features), train_labels))
     test_ds = tf.data.Dataset.from_tensor_slices(((test_imgs, test_features), test_labels))
 
