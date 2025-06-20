@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.layers import RandomFlip, RandomRotation, RandomBrightness, RandomZoom, GaussianNoise, RandomContrast
 from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Dense, Concatenate, Input, Dropout
+from tensorflow.keras.layers import Dense, Concatenate, Input, Dropout, BatchNormalization
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import GlobalAveragePooling2D
 
@@ -42,34 +42,38 @@ class CustomModel:
 
       # Data augmentation pipeline
       data_augmentation = Sequential([
-            RandomFlip(mode="HORIZONTAL_AND_VERTICAL"),
-            RandomRotation(factor=(0.2)),
-            RandomBrightness(factor=(0.2)),
+            #RandomFlip(mode="HORIZONTAL_AND_VERTICAL"), doesn't represent real-world scenario
+            RandomRotation(factor=(0.1)),
+            RandomBrightness(factor=(0.1)),
             RandomZoom(height_factor=0.1, width_factor=0.1),
             GaussianNoise(stddev=0.01),
-            RandomContrast(0.2)
+            RandomContrast(0.1)
         ])
       # CNN for images
       image_input = Input(shape=image_shape)
-      x = data_augmentation(image_input, training=True)
-      x = pre_trained_model(x, training=False)
+      x = data_augmentation(image_input)
+      x = pre_trained_model(x)
       x = GlobalAveragePooling2D()(x)
-      x = Dropout(0.5, name="dropout")(x)
+      x = Dropout(0.1, name="dropout")(x)
 
       # Numerical featuers section
       params_input = Input(shape=param_shape)
-      y = Dense(32, name="first_dense_layer", activation='relu')(params_input)
-      y = Dense(16, name="second_dense_layer", activation='relu')(y)
+      y = Dense(64, name="dense_param1", activation='relu')(params_input)
+      y = Dense(24, name="dense_param2", activation='relu')(y)
+      y = BatchNormalization()(y)
+      
 
       combined = Concatenate()([x, y])
-      z = Dense(64, name="third_dense_layer", activation='relu')(combined)
+      z = Dense(48, name="dense_combined", activation='relu')(combined)
+      z = BatchNormalization()(z)
+      z = Dropout(0.2, name="dropout_combined")(z)
       z = Dense(5, name="output_layer", activation='softmax')(z)
 
       model = Model(inputs=[image_input, params_input], outputs=z)
       model.summary()
       return model
 
-    def compile_model(self, image_shape, param_shape, unfreeze_from=None, learning_rate=0.001, metrics=['accuracy']):
+    def compile_model(self, image_shape, param_shape, learning_rate=0.001, metrics=['accuracy'], unfreeze_from=None,):
       '''
       Compile model after calling build_model function
 
@@ -159,7 +163,7 @@ class CustomModel:
         patience=patience,
         mode=mode,
         factor=factor,
-        min_lr=0.0
+        min_lr=1e-7
       )
       return reduce_lr
     
@@ -188,7 +192,8 @@ class CustomModel:
         monitor=monitor,
         patience=patience,
         mode = mode,
-        restore_best_weights=True
+        restore_best_weights=True,
+        verbose=1
       )
       return es_callback
 
@@ -245,11 +250,11 @@ class CustomModel:
                     validation_data=(self.test_ds))
       if history_file:
         df = pd.DataFrame(history.history)
-        df.to_csv(f"{history_file}.csv", index=False)
+        df.to_csv(f"{history_file}", index=False)
       else:
         print("History not saved")
       if model_file:
-        model.save(f'{model_file}.keras')
+        model.save(f'{model_file}')
       else:
         print("Model not saved")
       return history

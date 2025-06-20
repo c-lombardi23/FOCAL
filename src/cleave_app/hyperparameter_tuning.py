@@ -38,22 +38,22 @@ class BuildHyperModel(HyperModel):
             include_top=False,
             weights="imagenet"
         )
-      pre_trained_model.trainable = False
+      pre_trained_model.trainable =  False
 
         # Data augmentation pipeline
       data_augmentation = Sequential([
-            RandomFlip(mode="HORIZONTAL_AND_VERTICAL"),
-            RandomRotation(factor=(0.2)),
-            RandomBrightness(factor=(0.2)),
+            #RandomFlip(mode="HORIZONTAL_AND_VERTICAL"),
+            RandomRotation(factor=(0.1)),
+            RandomBrightness(factor=(0.3)),
             RandomZoom(height_factor=0.1, width_factor=0.1),
             #GaussianNoise(stddev=0.01),
-            RandomContrast(0.2)
+            RandomContrast(0.1)
         ])
 
         # Image input and processing
       image_input = Input(shape=self.image_shape)
       x = data_augmentation(image_input)
-      x = pre_trained_model(x, training=False)
+      x = pre_trained_model(x)
       x = GlobalAveragePooling2D()(x)
       x = Dropout(hp.Float('dropout', 0.1, 0.3, step=0.1))(x)
 
@@ -74,7 +74,6 @@ class BuildHyperModel(HyperModel):
             hp.Int('dense_combined', min_value=32, max_value=64, step=16),
             activation='relu')(combined)
       z = BatchNormalization()(z)
-      z = Dense(3, activation='softmax')(z)
       z = Dropout(hp.Float('dropout_combined', 0.1, 0.3, step=0.1))(z)
       z = Dense(5, activation='softmax')(z)
 
@@ -82,7 +81,7 @@ class BuildHyperModel(HyperModel):
 
       model.compile(
             optimizer=tf.keras.optimizers.Adam(
-                learning_rate=hp.Choice('learning_rate', values=[1e-4, 3e-4, 5e-4, 1e-3])
+                learning_rate=hp.Choice('learning_rate', values=[5e-4, 1e-3, 5e-3, 1e-2, 5e-2])
             ),
             loss='categorical_crossentropy',
             metrics=['accuracy']
@@ -115,7 +114,7 @@ class HyperParameterTuning:
       - deafult: /content/drive/MyDrive/Thorlabs
     project_name: str
       - name of project
-      - deafult: Cleave_Tuner3
+      - default: Cleave_Tuner3
 
     '''
     self.image_shape = image_shape

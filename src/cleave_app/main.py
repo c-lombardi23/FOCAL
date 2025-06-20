@@ -22,10 +22,13 @@ def load_file(filepath):
 
 def train_cnn(config):
     data = DataCollector(config.csv_path, config.img_folder)
-    images, features, labels = data.extract_data(config.feature_scaler_path)
+    images, features, labels = data.extract_data()
     train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size)
     trainable_model = CustomModel(train_ds, test_ds)
-    compiled_model = trainable_model.compile_model(config.image_shape, config.feature_shape, config.learning_rate)
+    if config.continue_train == "y":
+        compiled_model = tf.keras.models.load_model(config.model_path)
+    else:
+        compiled_model = trainable_model.compile_model(config.image_shape, config.feature_shape, config.learning_rate, unfreeze_from=config.unfreeze_from)
     if config.checkpoints == "y":
         checkpoint = trainable_model.create_checkpoints(config.checkpoint_filepath, config.monitor, config.method)
     else:
@@ -34,9 +37,17 @@ def train_cnn(config):
         es = trainable_model.create_early_stopping(config.patience, config.method, config.monitor)
     else:
         es = None
+    if config.reduce_lr != None:
+        if config.reduce_lr_patience != None:
+            reduce_lr = trainable_model.reduce_on_plateau(patience=config.reduce_lr_patience, factor=config.reduce_lr)
+        else:
+            reduce_lr = trainable_model.reduce_on_plateau(factor=config.reduce_lr)
+    else:
+        reduce_lr = None
     if config.max_epochs == None:
         config.max_epochs = 20
-    history = trainable_model.train_model(compiled_model, epochs=config.max_epochs, early_stopping=es, checkpoints=checkpoint, history_file=config.save_history_file, model_file=config.save_model_file)
+    
+    history = trainable_model.train_model(compiled_model, epochs=config.max_epochs, early_stopping=es, reduce_lr=reduce_lr, checkpoints=checkpoint, history_file=config.save_history_file, model_file=config.save_model_file)
     trainable_model.plot_metric("Loss vs. Val Loss", history.history['loss'], history.history['val_loss'], 'loss', 'val_loss', 'epochs', 'loss')
     trainable_model.plot_metric("Accuracy vs. Val Accuracy", history.history['accuracy'], history.history['val_accuracy'], 'accuracy', 'val_accuracy', 'epochs', 'accuracy')
 
@@ -56,8 +67,8 @@ def train_mlp(config):
     else:
         es = None
     if config.max_epochs == None:
-        config.max_epoch = 20
-    history = trainable_model.train_model(compiled_model, epochs=config.max_epochs, early_stopping=es, checkpoints=checkpoint, history_file=config.save_history_file, model_file=config.save_model_file)
+        config.max_epochs = 20
+    history = trainable_model.train_model(compiled_model, epochs=config.max_epochs, early_stopping=es, reduce_lr=config.reduce_lr, checkpoints=checkpoint, history_file=config.save_history_file, model_file=config.save_model_file)
     trainable_model.plot_metric("Loss vs. Val Loss", history.history['loss'], history.history['val_loss'], 'loss', 'val_loss', 'epochs', 'loss')
     trainable_model.plot_metric("Accuracy vs. Val Accuracy", history.history['accuracy'], history.history['val_accuracy'], 'accuracy', 'val_accuracy', 'epochs', 'accuracy')
 
@@ -92,21 +103,28 @@ def run_search_helper(config, tuner, train_ds, test_ds):
 
 def cnn_hyperparameter(config):
     data = DataCollector(config.csv_path, config.img_folder)
-    images, features, labels = data.extract_data(config.feature_scaler_path)
+    images, features, labels = data.extract_data()
     train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size)
-    if config.max_epoch == None:
-        max_epoch = 20
-    tuner = HyperParameterTuning(config.image_shape, config.feature_shape, max_epochs=max_epoch, project_name=config.project_name, directory=config.tuner_directory)
+    if config.max_epochs == None:
+        config.max_epochs = 20
+    if config.unfreeze_from != None:
+        tuner = HyperParameterTuning(config.image_shape, config.feature_shape, max_epochs=config.max_epochs, project_name=config.project_name, directory=config.tuner_directory, unfreeze_from=config.unfreeze_from)
+    else:
+        tuner = HyperParameterTuning(config.image_shape, config.feature_shape, max_epochs=config.max_epochs, project_name=config.project_name, directory=config.tuner_directory)
     run_search_helper(config, tuner, train_ds, test_ds)
+    if config.tuner_path != None:
+        tuner.save_best_model(config.tuner_path)
   
 def mlp_hyperparameter(config):
     data = MLPDataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data(config.feature_scaler_path)
     train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size)
     if config.max_epoch == None:
-        max_epoch = 20
-    tuner = MLPHyperparameterTuning(config.image_shape, config.feature_shape, max_epochs=max_epoch, project_name=config.project_name, directory=config.tuner_directory)
+        config.max_epochs = 20
+    tuner = MLPHyperparameterTuning(config.image_shape, config.feature_shape, max_epochs=config.max_epochs, project_name=config.project_name, directory=config.tuner_directory)
     run_search_helper(config, tuner, train_ds, test_ds)
+    if config.tuner_path != None:
+        tuner.save_best_model(config.tuner_path)
 
 def test_cnn(config):
     tester = TestPredictions(config.model_path, config.csv_path, config.feature_scaler_path, config.img_folder)

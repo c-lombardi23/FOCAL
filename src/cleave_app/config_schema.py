@@ -33,6 +33,12 @@ class Config(BaseModel):
     save_model_file: Optional[str] = None
     save_history_file: Optional[str] = None
     best_model_path: Optional[str] = None
+    unfreeze_from: Optional[int] = None
+    reduce_lr: Optional[float] = None
+    reduce_lr_patience: Optional[int] = None
+    initial_epochs: Optional[int] = None
+    continue_train: Optional[str] = None
+    tuner_path: Optional[str] = None
 
     @field_validator("csv_path", "img_folder", mode="before")
     @classmethod
@@ -46,7 +52,7 @@ class Config(BaseModel):
     def valid_modes(cls, value):
         valid_modes = [
             'train_cnn', 'train_mlp',
-            'cnn_hyperparamter', 'mlp_hyperparameter',
+            'cnn_hyperparameter', 'mlp_hyperparameter',
             'test_cnn', 'test_mlp', 'train_kfold_cnn', 'train_kfold_mlp'
         ]
         if value not in valid_modes:
@@ -86,6 +92,11 @@ class Config(BaseModel):
                     raise ValueError("Missing parameters for testing")
         if self.mode == "test_mlp" and self.img_path == None or self.label_scaler_path == None:
             raise ValueError("Missing parameters for testing mlp. Require imgPath, label_scaler_path, feature_scaler_path, and mode_path.")
+        continue_train_reqs = [self.initial_epochs, self.model_path] 
+        if self.continue_train == "y": 
+            for req in continue_train_reqs:
+                if req == None:      
+                    raise ValueError("Missing parameters for retraining. Require intial epochs and model path")
         
 
     
