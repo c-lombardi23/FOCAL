@@ -53,9 +53,9 @@ def train_cnn(config):
 
 
 def train_mlp(config):
-    data = DataCollector(config.csv_path, config.img_folder)
-    images, features, labels = data.extract_data(config.feature_scaler_path)
-    train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size)
+    data = MLPDataCollector(config.csv_path, config.img_folder)
+    images, features, labels = data.extract_data()
+    train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size, feature_scaler_path=config.feature_scaler_path, tension_scaler_path=config.label_scaler_path)
     trainable_model = BuildMLPModel(config.model_path, train_ds, test_ds)
     compiled_model = trainable_model.compile_model(config.feature_shape)
     if config.checkpoints == "y":
@@ -70,7 +70,7 @@ def train_mlp(config):
         config.max_epochs = 20
     history = trainable_model.train_model(compiled_model, epochs=config.max_epochs, early_stopping=es, reduce_lr=config.reduce_lr, checkpoints=checkpoint, history_file=config.save_history_file, model_file=config.save_model_file)
     trainable_model.plot_metric("Loss vs. Val Loss", history.history['loss'], history.history['val_loss'], 'loss', 'val_loss', 'epochs', 'loss')
-    trainable_model.plot_metric("Accuracy vs. Val Accuracy", history.history['accuracy'], history.history['val_accuracy'], 'accuracy', 'val_accuracy', 'epochs', 'accuracy')
+    trainable_model.plot_metric("MAE vs. Val MAE", history.history['mae'], history.history['val_mae'], 'mae', 'val_mae', 'epochs', 'mae')
 
 def train_kfold_cnn(config):
     data = DataCollector(config.csv_path, config.img_folder)

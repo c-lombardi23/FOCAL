@@ -255,20 +255,11 @@ class MLPDataCollector(DataCollector):
         - lists of images, features, and labels
         '''
         images = self.df['ImagePath'].values
-        #features = self.df[['CleaveAngle', 'CleaveTension']].values
         features = self.df[['CleaveAngle', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values.astype(np.float32)
         labels = self.df['CleaveTension'].values.astype(np.float32)
-        self.label_scaler = MinMaxScaler()
-        labels = self.label_scaler.fit_transform(labels.reshape(-1, 1))
-        self.feature_scaler = MinMaxScaler()
-        features = self.feature_scaler.fit_transform(features)
-        if feature_scaler_path:
-            joblib.dump(self.feature_scaler, f'{feature_scaler_path}.pkl')
-        if tension_scaler_path:
-            joblib.dump(self.label_scaler, f'{tension_scaler_path}.pkl')
         return images, features, labels
     
-    def create_datasets(self, images, features, labels, test_size, buffer_size, batch_size):
+    def create_datasets(self, images, features, labels, test_size, buffer_size, batch_size, feature_scaler_path =None, tension_scaler_path=None):
         '''
         Creates test and train datasets and splits into different batches after shuffling.
 
@@ -293,6 +284,18 @@ class MLPDataCollector(DataCollector):
         '''
         train_imgs, test_imgs, train_features, test_features, train_labels, test_labels = train_test_split(
             images, features, labels, test_size=test_size)
+        
+        scaler = MinMaxScaler()
+        train_features = scaler.fit_transform(train_features)
+        test_features = scaler.fit_transform(test_features)
+        train_labels = scaler.fit_transform(train_labels.reshape(-1,1))
+        test_labels = scaler.fit_transform(test_labels.reshape(-1,1))
+
+        if feature_scaler_path:
+            joblib.dump(self.feature_scaler, f'{feature_scaler_path}.pkl')
+        if tension_scaler_path:
+            joblib.dump(self.label_scaler, f'{tension_scaler_path}.pkl')
+
         train_ds = tf.data.Dataset.from_tensor_slices(((train_imgs, train_features), train_labels))
         test_ds = tf.data.Dataset.from_tensor_slices(((test_imgs, test_features), test_labels))
 
