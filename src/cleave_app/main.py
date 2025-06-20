@@ -119,7 +119,7 @@ def mlp_hyperparameter(config):
     data = MLPDataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data(config.feature_scaler_path)
     train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size)
-    if config.max_epoch == None:
+    if config.max_epochs == None:
         config.max_epochs = 20
     tuner = MLPHyperparameterTuning(config.image_shape, config.feature_shape, max_epochs=config.max_epochs, project_name=config.project_name, directory=config.tuner_directory)
     run_search_helper(config, tuner, train_ds, test_ds)
@@ -128,9 +128,9 @@ def mlp_hyperparameter(config):
 
 def test_cnn(config):
     tester = TestPredictions(config.model_path, config.csv_path, config.feature_scaler_path, config.img_folder)
-    pred_labels, predictions = tester.gather_predictions()
-    tester.display_confusion_matrix(pred_labels)
-    tester.display_classification_report(tester.true_labels, pred_labels)
+    true_labels, pred_labels, predictions = tester.gather_predictions()
+    tester.display_confusion_matrix(true_labels, pred_labels)
+    tester.display_classification_report(true_labels, pred_labels, config.classification_path)
 
 def test_mlp(config):
     test_model = tf.keras.models.load_model(config.model_path)
@@ -158,7 +158,6 @@ def choices(mode, config):
         train_kfold_mlp(config)
 
 def main(args=None):
-    import argparse
     parser = argparse.ArgumentParser(description="Train Model from command line")
     parser.add_argument("--file_path", required=True)
     parsed_args = parser.parse_args(args)
@@ -171,17 +170,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()  
-
-'''def main(args):
-    filepath = args.file_path
-    config = load_file(filepath)
-    mode = config.mode
-    choices(mode, config)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train Model from command line")
-    parser.add_argument("--file_path", required=True)
-    args = parser.parse_args()
-    main(args)
-    '''

@@ -49,10 +49,14 @@ class TestPredictions:
       
       if good_angle and no_defects and good_diameter:
          return "Good"
-      elif (good_angle and not no_defects and good_diameter) or (good_angle and no_defects and not good_diameter) or (not good_angle and no_defects and good_diameter):
-        return "Single_Error"
+      elif (good_angle and not no_defects and good_diameter) : 
+        return "Misting_Hackle"
+      elif (good_angle and no_defects and not good_diameter):
+         return "Bad_Scribe_Mark"
+      elif (not good_angle and no_defects and good_diameter):
+         return "Bad_Angle"
       else:
-         return "Multiple Errors"
+         return "Multiple_Errors"
 
 
     df["CleaveCategory"] = df.apply(label, axis=1)
@@ -129,8 +133,8 @@ class TestPredictions:
       - path to image to predict
     tension: int
       - tension value in grams
-    cleave_angle: float
-      - angle that was achieved from cleave
+    feature_vector: list
+      - numerical features to go along with image
 
     Return: tf.keras.Model
       - predicition from new image of good or bad cleave
@@ -158,6 +162,8 @@ class TestPredictions:
     pred_features = self.df[['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values
 
     scalar = joblib.load(self.scalar_path)
+    if(scalar is None):
+       print("none")
     pred_features = scalar.transform(pred_features)
 
     predictions = []
@@ -165,7 +171,7 @@ class TestPredictions:
       prediction = self.test_prediction(img_path, feature_vector)
       predictions.append(prediction)
 
-    # Set prediction labels to 0 or 1 based on probability
+    # Set prediction labels based on max of ohe
     pred_labels = [np.argmax(pred[0]) for pred in predictions]
     true_labels = self.df["CleaveCategory"].map({label: idx for idx, label in enumerate(self.class_names)}).values
     return true_labels, pred_labels, predictions
@@ -187,7 +193,7 @@ class TestPredictions:
     disp.plot()
     plt.show()
 
-  def display_classification_report(self, true_labels, pred_labels):
+  def display_classification_report(self, true_labels, pred_labels, classification_path=None):
     '''
     Diplays classification report comparing true labels to predicted labels.
 
@@ -198,7 +204,12 @@ class TestPredictions:
       - list of true labels
     pred_labels: list
       - list of predicted labels
+    classification_path: str
+      - optional path to save classifcation report
     '''
+    if classification_path:
+      df = pd.DataFrame(classification_report(true_labels, pred_labels, target_names=self.class_names, output_dict=True)).transpose()
+      df.to_csv(classification_path, index=True)
     print(classification_report(true_labels, pred_labels, target_names=self.class_names))
 
   def plot_roc(self, title, true_labels, pred_probabilites):
@@ -267,7 +278,6 @@ class TensionPredictor:
         float
             - Predicted tension
         '''
-        # Process image and convert angle and image to tensor with dimension for single batch
         image = self.load_and_preprocess_image(self.image_path, self.image_folder)
         image = tf.expand_dims(image, axis=0)
         features = np.array(features).reshape(1, -1)

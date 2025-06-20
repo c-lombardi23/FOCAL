@@ -75,6 +75,12 @@ Below is a detailed explanation of each key in the JSON configuration file used 
 | `patience` | Number of epochs to wait before early stopping is triggered. |
 | `img_path` | Path to a single image to run a prediction on (used for inference mode). |
 | `test_features` | List of numerical features to use for a single prediction (e.g., `[angle, scribe_diam, misting, hackle, tearing]`). |
+| `tuner_path` | Path to save the best model from running Keras Tuner. |
+| `unfreeze_from` | Layers to unfreeze from MobileNetV2. |
+| `initial_epochs` | Start epoch to continue from if continue_train is `y`. |
+| `reduce_lr` | Rate to reduce learning rate. |
+| `continue_train` | Yes or No to continue training previous model from checkpoint. |
+| `classification_path` | Optional path to save classification report. |
 
 
 To Install: <br>

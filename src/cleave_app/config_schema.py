@@ -39,6 +39,7 @@ class Config(BaseModel):
     initial_epochs: Optional[int] = None
     continue_train: Optional[str] = None
     tuner_path: Optional[str] = None
+    classification_path: Optional[str] = None
 
     @field_validator("csv_path", "img_folder", mode="before")
     @classmethod
@@ -90,7 +91,7 @@ class Config(BaseModel):
             for req in testing_reqs:
                 if req == None:
                     raise ValueError("Missing parameters for testing")
-        if self.mode == "test_mlp" and self.img_path == None or self.label_scaler_path == None:
+        if self.mode == "test_mlp" and (self.img_path == None or self.label_scaler_path == None):
             raise ValueError("Missing parameters for testing mlp. Require imgPath, label_scaler_path, feature_scaler_path, and mode_path.")
         continue_train_reqs = [self.initial_epochs, self.model_path] 
         if self.continue_train == "y": 
