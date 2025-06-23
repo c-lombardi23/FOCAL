@@ -9,6 +9,10 @@ __version__ = "0.1.0"
 __author__ = "Chris Lombardi"
 __email__ = "clombardi23245@gmail.com"
 
+import os
+import warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+warnings.filterwarnings('ignore')
 from .config_schema import Config
 from .data_processing import DataCollector, MLPDataCollector
 from .model_pipeline import CustomModel, BuildMLPModel
