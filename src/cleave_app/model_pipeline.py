@@ -1,409 +1,565 @@
+"""
+Model pipeline module for the Fiber Cleave Processing application.
+
+This module provides classes for building, training, and managing CNN and MLP models
+for fiber cleave quality classification and tension prediction.
+"""
+
+import os
+import warnings
+from typing import Optional, Tuple, List, Any, Union
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import tensorflow as tf
-from tensorflow.keras.layers import RandomFlip, RandomRotation, RandomBrightness, RandomZoom, GaussianNoise, RandomContrast
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Dense, Concatenate, Input, Dropout, BatchNormalization
-from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.layers import GlobalAveragePooling2D
+
+# Suppress TensorFlow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+warnings.filterwarnings('ignore')
+
+try:
+    import tensorflow as tf
+    from tensorflow.keras.layers import (
+        RandomFlip, RandomRotation, RandomBrightness, RandomZoom, 
+        GaussianNoise, RandomContrast, Dense, Concatenate, Input, 
+        Dropout, BatchNormalization, GlobalAveragePooling2D
+    )
+    from tensorflow.keras.models import Sequential, Model
+    from tensorflow.keras.applications import MobileNetV2
+    from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, TensorBoard
+except ImportError as e:
+    print(f"Warning: TensorFlow not found: {e}")
+    print("Please install tensorflow>=2.19.0")
+    tf = None
+
 import joblib
 
 
 class CustomModel:
-    '''
-    Class is used to define custom model using pre-trained MobileNetV2 model.
-    '''
+    """
+    Class for defining custom models using pre-trained MobileNetV2.
+    
+    This class provides functionality for building, compiling, and training
+    CNN models for fiber cleave classification.
+    """
+    
     def __init__(self, train_ds, test_ds):
-      self.train_ds = train_ds
-      self.test_ds = test_ds
+        """
+        Initialize the custom model.
+        
+        Args:
+            train_ds: Training dataset
+            test_ds: Test dataset
+        """
+        if tf is None:
+            raise ImportError("TensorFlow is required for CustomModel")
+            
+        self.train_ds = train_ds
+        self.test_ds = test_ds
 
-    def build_pretrained_model(self, image_shape, param_shape, unfreeze_from =None):
-      '''
-      Utilize pretrained CNN to supplement small dataset
+    def build_pretrained_model(self, 
+                              image_shape: Tuple[int, int, int], 
+                              param_shape: Tuple[int, ...], 
+                              unfreeze_from: Optional[int] = None) -> tf.keras.Model:
+        """
+        Build a model using pre-trained MobileNetV2 to supplement small dataset.
 
-      Parameters:
-      ------------------------------------------------
+        Args:
+            image_shape: Dimensions of input images (height, width, channels)
+            param_shape: Dimensions of numerical parameters
+            unfreeze_from: Layer index from which to unfreeze weights (None = all frozen)
 
-      image_shape: tuple
-        - dimensions of image
-      param_shape: tuple
-        - dimension of features
+        Returns:
+            tf.keras.Model: Compiled model ready for training
+        """
+        pre_trained_model = MobileNetV2(
+            input_shape=image_shape, 
+            include_top=False, 
+            weights="imagenet", 
+            name="mobilenet"
+        )
+        pre_trained_model.trainable = unfreeze_from is not None
+        
+        if unfreeze_from is not None:
+            for layer in pre_trained_model.layers[:unfreeze_from]:
+                layer.trainable = False
 
-      Returns: tf.keras.Model
-        - returns model to train
-      '''
-      pre_trained_model = MobileNetV2(input_shape=image_shape, include_top=False, weights="imagenet", name="mobilenet")
-      pre_trained_model.trainable =  unfreeze_from is not None
-      if unfreeze_from is not None:
-        for layer in pre_trained_model.layers[:unfreeze_from]:
-            layer.trainable = False
-
-      # Data augmentation pipeline
-      data_augmentation = Sequential([
-            #RandomFlip(mode="HORIZONTAL_AND_VERTICAL"), doesn't represent real-world scenario
-            RandomRotation(factor=(0.1)),
-            RandomBrightness(factor=(0.1)),
+        # Data augmentation pipeline
+        data_augmentation = Sequential([
+            RandomRotation(factor=0.1),
+            RandomBrightness(factor=0.1),
             RandomZoom(height_factor=0.1, width_factor=0.1),
             GaussianNoise(stddev=0.01),
             RandomContrast(0.1)
         ])
-      # CNN for images
-      image_input = Input(shape=image_shape)
-      x = data_augmentation(image_input)
-      x = pre_trained_model(x)
-      x = GlobalAveragePooling2D(name="global_avg")(x)
-      x = Dropout(0.1, name="dropout")(x)
+        
+        # CNN for images
+        image_input = Input(shape=image_shape)
+        x = data_augmentation(image_input)
+        x = pre_trained_model(x)
+        x = GlobalAveragePooling2D(name="global_avg")(x)
+        x = Dropout(0.1, name="dropout")(x)
 
-      # Numerical featuers section
-      params_input = Input(shape=param_shape)
-      y = Dense(24, name="dense_param1", activation='relu')(params_input)
-      y = Dense(16, name="dense_param2", activation='relu')(y)
-      y = Dropout(0.6, name="dropout_2")(y) # added to remove reliance on features
-      y = BatchNormalization()(y)
-      
+        # Numerical features section
+        params_input = Input(shape=param_shape)
+        y = Dense(24, name="dense_param1", activation='relu')(params_input)
+        y = Dense(16, name="dense_param2", activation='relu')(y)
+        y = Dropout(0.6, name="dropout_2")(y)  # Added to remove reliance on features
+        y = BatchNormalization()(y)
 
-      combined = Concatenate()([x, y])
-      z = Dense(48, name="dense_combined", activation='relu')(combined)
-      z = BatchNormalization(name="batch_norm")(z)
-      z = Dropout(0.2, name="dropout_combined")(z)
-      z = Dense(5, name="output_layer", activation='softmax')(z)
+        combined = Concatenate()([x, y])
+        z = Dense(48, name="dense_combined", activation='relu')(combined)
+        z = BatchNormalization(name="batch_norm")(z)
+        z = Dropout(0.2, name="dropout_combined")(z)
+        z = Dense(5, name="output_layer", activation='softmax')(z)
 
-      model = Model(inputs=[image_input, params_input], outputs=z)
-      model.summary()
-      return model
+        model = Model(inputs=[image_input, params_input], outputs=z)
+        model.summary()
+        return model
     
-    def build_image_only_model(self, image_shape):
-      '''
-      Build a model that uses only the image input (no param vector).
-      '''
-      pre_trained_model = MobileNetV2(input_shape=image_shape, include_top=False, weights="imagenet", name="mobilenet")
-      pre_trained_model.trainable = False
+    def build_image_only_model(self, image_shape: Tuple[int, int, int]) -> tf.keras.Model:
+        """
+        Build a model that uses only the image input (no parameter features).
 
-      data_augmentation = Sequential([
-          RandomRotation(factor=(0.1)),
-          RandomBrightness(factor=(0.1)),
-          RandomZoom(height_factor=0.1, width_factor=0.1),
-          GaussianNoise(stddev=0.01),
-          RandomContrast(0.1)
-      ])
+        Args:
+            image_shape: Dimensions of input images
 
-      image_input = Input(shape=image_shape)
-      x = data_augmentation(image_input)
-      x = pre_trained_model(x)
-      x = GlobalAveragePooling2D(name="global_avg")(x)
-      x = Dropout(0.1, name="dropout")(x)
-      z = Dense(48, name="dense_combined", activation='relu')(x)
-      z = BatchNormalization(name="batch_norm")(z)
-      z = Dropout(0.2, name="dropout_combined")(z)
-      z = Dense(5, name="output_layer", activation='softmax')(z)
+        Returns:
+            tf.keras.Model: Image-only classification model
+        """
+        pre_trained_model = MobileNetV2(
+            input_shape=image_shape, 
+            include_top=False, 
+            weights="imagenet", 
+            name="mobilenet"
+        )
+        pre_trained_model.trainable = False
 
-      model = Model(inputs=image_input, outputs=z)
-      model.summary()
-      return model
+        data_augmentation = Sequential([
+            RandomRotation(factor=0.1),
+            RandomBrightness(factor=0.1),
+            RandomZoom(height_factor=0.1, width_factor=0.1),
+            GaussianNoise(stddev=0.01),
+            RandomContrast(0.1)
+        ])
+
+        image_input = Input(shape=image_shape)
+        x = data_augmentation(image_input)
+        x = pre_trained_model(x)
+        x = GlobalAveragePooling2D(name="global_avg")(x)
+        x = Dropout(0.1, name="dropout")(x)
+        z = Dense(48, name="dense_combined", activation='relu')(x)
+        z = BatchNormalization(name="batch_norm")(z)
+        z = Dropout(0.2, name="dropout_combined")(z)
+        z = Dense(5, name="output_layer", activation='softmax')(z)
+
+        model = Model(inputs=image_input, outputs=z)
+        model.summary()
+        return model
     
-    def compile_image_only_model(self, image_shape, learning_rate=0.001, metrics=['accuracy']):
-      model = self.build_image_only_model(image_shape)
-      optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-      model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=metrics)
-      return model
+    def compile_image_only_model(self, 
+                                image_shape: Tuple[int, int, int], 
+                                learning_rate: float = 0.001, 
+                                metrics: List[str] = None) -> tf.keras.Model:
+        """
+        Compile an image-only model.
 
-    def compile_model(self, image_shape, param_shape, learning_rate=0.001, metrics=['accuracy'], unfreeze_from=None,):
-      '''
-      Compile model after calling build_model function
+        Args:
+            image_shape: Dimensions of input images
+            learning_rate: Learning rate for optimization
+            metrics: List of metrics to monitor
 
-      Parameters:
-      -------------------------------------
-      image_shape: tuple
-          - dimensions of images
-      param_shape: tuple
-          - dimensions of parameters
-      learning_rate: float
-          - learning rate for training model
-        metrics: list
-          - metrics to monitor during training
-          - default: accuracy
+        Returns:
+            tf.keras.Model: Compiled image-only model
+        """
+        if metrics is None:
+            metrics = ['accuracy']
+            
+        model = self.build_image_only_model(image_shape)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=metrics)
+        return model
 
-      Returns:
-      tf.keras.Model
-          - Mode to be trained
-      '''
-      # Adaptive Moment Estimation optimizer
-      # Set learning rate and then compile model
-      # Loss functions is categorical_crossentropy for multi-class classification
-      #model = build_model((image_shape), (param_shape))
-      model = self.build_pretrained_model(image_shape, param_shape, unfreeze_from)
-      optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-      model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=metrics)
-      return model
+    def compile_model(self, 
+                     image_shape: Tuple[int, int, int], 
+                     param_shape: Tuple[int, ...], 
+                     learning_rate: float = 0.001, 
+                     metrics: List[str] = None, 
+                     unfreeze_from: Optional[int] = None) -> tf.keras.Model:
+        """
+        Compile model after calling build_model function.
+
+        Args:
+            image_shape: Dimensions of input images
+            param_shape: Dimensions of numerical parameters
+            learning_rate: Learning rate for optimization
+            metrics: List of metrics to monitor
+            unfreeze_from: Layer index from which to unfreeze weights
+
+        Returns:
+            tf.keras.Model: Compiled model ready for training
+        """
+        if metrics is None:
+            metrics = ['accuracy']
+            
+        model = self.build_pretrained_model(image_shape, param_shape, unfreeze_from)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=metrics)
+        return model
     
-    def create_checkpoints(self, checkpoint_filepath="/content/drive/MyDrive/checkpoints.keras", monitor="val_accuracy", mode="max", save_best_only=True):
-      '''
-      Create model checkpoints to avoid losing data while training
+    def create_checkpoints(self, 
+                          checkpoint_filepath: str = "./checkpoints/model.keras", 
+                          monitor: str = "val_accuracy", 
+                          mode: str = "max", 
+                          save_best_only: bool = True) -> ModelCheckpoint:
+        """
+        Create model checkpoints to avoid losing data while training.
 
-      Parameters:
-      --------------------------------------
+        Args:
+            checkpoint_filepath: Path to save model checkpoints
+            monitor: Metric to monitor during training
+            mode: Method to determine stopping point of metric (max, min, auto)
+            save_best_only: Whether to save only the best model
 
-      checkpoint_filepath: str
-        - path to save model checkpoints
-        - default: /content/drive/MyDrive/checkpoints.keras
-      monitor: str
-        - metric to monitor during training
-        - deafault: val_accuracy
-      mode: str
-        - max, min, avg
-        - method to determine stoppping point of metric
-        - default: max
-      save_best_only: boolean
-        - to determine if only best model shold be saved
-        - deafault: True
-
-      Returns: tf.callback.ModelCheckpoint
-        - checkpoint to use during training
-      '''
-      model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath = checkpoint_filepath,
-        monitor=monitor,
-        mode=mode,
-        save_best_only=save_best_only,
-        verbose=1
-      )
-      return model_checkpoint_callback
+        Returns:
+            tf.keras.callbacks.ModelCheckpoint: Checkpoint callback
+        """
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(checkpoint_filepath), exist_ok=True)
+        
+        model_checkpoint_callback = ModelCheckpoint(
+            filepath=checkpoint_filepath,
+            monitor=monitor,
+            mode=mode,
+            save_best_only=save_best_only,
+            verbose=1
+        )
+        return model_checkpoint_callback
     
-    def reduce_on_plateau(self, patience=3, mode='auto', factor=2.0, monitor='val_accuracy'):
-      '''
-      Create reduced learning rate callback if monitored value stops improving
+    def reduce_on_plateau(self, 
+                         patience: int = 3, 
+                         mode: str = 'auto', 
+                         factor: float = 2.0, 
+                         monitor: str = 'val_accuracy') -> ReduceLROnPlateau:
+        """
+        Create reduced learning rate callback if monitored value stops improving.
 
-      Parameters:
-      ------------------------------------------
+        Args:
+            patience: Number of epochs before reducing learning rate
+            mode: Method to monitor (min, max, auto)
+            factor: Factor by which to reduce learning rate
+            monitor: Value to monitor before reducing learning rate
 
-      patience: int
-        - number of epochs before reducing learning rate
-        - default: 3
-      mode: str
-        - min, max, auto, method to monitor
-        - default: auto
-      factor: float
-        - factor by which to reduce learning rate
-        - default: 2.0
-      monitor: str
-        - value to monitor before reducing learning rate
-        - default: val_accuracy
-      
-      Returns: tf.keras.callbacks.ReduceLROnPlateau
-        - Reduce Learning rate callback
-      '''
-      reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
-        monitor=monitor,
-        patience=patience,
-        mode=mode,
-        factor=factor,
-        min_lr=1e-7
-      )
-      return reduce_lr
+        Returns:
+            tf.keras.callbacks.ReduceLROnPlateau: Reduce learning rate callback
+        """
+        reduce_lr = ReduceLROnPlateau(
+            monitor=monitor,
+            patience=patience,
+            mode=mode,
+            factor=factor,
+            min_lr=1e-7
+        )
+        return reduce_lr
     
-    def create_early_stopping(self, patience=3, mode='max', monitor="val_accuracy"):
-      '''
-      Create early stopping callback to monitor training success and prevent overfitting.
+    def create_early_stopping(self, 
+                            patience: int = 3, 
+                            mode: str = 'max', 
+                            monitor: str = "val_accuracy") -> EarlyStopping:
+        """
+        Create early stopping callback to monitor training success and prevent overfitting.
 
-      Parameters:
-      ----------------------------------------
+        Args:
+            patience: Number of epochs to wait before stopping when monitor plateaus
+            mode: Method to track monitor (max, min, auto)
+            monitor: Metric to monitor during training
 
-      patience: int
-        - number of epochs to stop when monitor plateus
-        - default: 3
-      mode: str
-        - max, min, avg
-        - method to track monitor
-        - default: max
-      monitor: str
-        - metric to monitor during training
-        - default: val_accuracy
-      
-      Returns: tf.callbacks.EarlyStopping
-        - early stopping callback
-      '''
-      es_callback = tf.keras.callbacks.EarlyStopping(
-        monitor=monitor,
-        patience=patience,
-        mode = mode,
-        restore_best_weights=True,
-        verbose=1
-      )
-      return es_callback
+        Returns:
+            tf.keras.callbacks.EarlyStopping: Early stopping callback
+        """
+        es_callback = EarlyStopping(
+            monitor=monitor,
+            patience=patience,
+            mode=mode,
+            restore_best_weights=True,
+            verbose=1
+        )
+        return es_callback
 
-    def create_tensorboard_callback(self, log_dir, histogram_freq=1):
-      return tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=histogram_freq)
+    def create_tensorboard_callback(self, 
+                                  log_dir: str = "./logs", 
+                                  histogram_freq: int = 1) -> TensorBoard:
+        """
+        Create TensorBoard callback for monitoring training.
+
+        Args:
+            log_dir: Directory for TensorBoard logs
+            histogram_freq: Frequency for computing weight histograms
+
+        Returns:
+            tf.keras.callbacks.TensorBoard: TensorBoard callback
+        """
+        return TensorBoard(log_dir=log_dir, histogram_freq=histogram_freq)
     
-    def train_model(self, model, checkpoints=None, epochs=5, initial_epoch=0, early_stopping=None, reduce_lr=None, tensorboard=None, history_file=None, model_file=None):
-      '''
-      Train model with possible callbacks to prevent overfitting
+    def train_model(self, 
+                   model: tf.keras.Model, 
+                   checkpoints: Optional[ModelCheckpoint] = None, 
+                   epochs: int = 5, 
+                   initial_epoch: int = 0, 
+                   early_stopping: Optional[EarlyStopping] = None, 
+                   reduce_lr: Optional[ReduceLROnPlateau] = None, 
+                   tensorboard: Optional[TensorBoard] = None, 
+                   history_file: Optional[str] = None, 
+                   model_file: Optional[str] = None) -> tf.keras.callbacks.History:
+        """
+        Train model with possible callbacks to prevent overfitting.
 
-      Parameters:
-      -----------------------------------------
+        Args:
+            model: Model to be trained
+            checkpoints: Checkpoints to save model
+            epochs: Number of training epochs
+            initial_epoch: Starting epoch number
+            early_stopping: Early stopping callback
+            reduce_lr: Reduce learning rate callback
+            tensorboard: TensorBoard callback
+            history_file: File to save training history
+            model_file: File to save trained model
 
-      model: tf.keras.Model
-        - model to be trained
-      checkpoints: tf.keras.callback.Checkpoints
-        - checkpoints to save model
-        - default: None
-      epochs: int
-        - number of training epochs to pass though
-        - default: 5
-      early_stopping: tf.keras.callback.EarlyStopping
-        - early stopping callback to prevent overfitting
-        - default: None
-      reduce_lr: tf.keras.callbacks.ReduceLROnPlateau
-        - reduce learning rate callback
-        - default: None
-      tensorboard: tf.keras.callbacks.TensorBoard
-        - creates access to tensorboard option in google colab
-      history_file: str
-        - file to save history to
-      model_file: str
-        - file to save model to
-
-      Returns: tf.keras.Model
-        - trained model
-      '''
-      callbacks = []
-      if early_stopping:
-        callbacks.append(early_stopping)
-      if checkpoints:
-        callbacks.append(checkpoints)
-      if tensorboard:
-        callbacks.append(tensorboard)
-      if reduce_lr:
-        callbacks.append(reduce_lr) 
-
-      if callbacks:
-        history = model.fit(self.train_ds, epochs=epochs, initial_epoch=initial_epoch,
-                    validation_data=(self.test_ds), callbacks=callbacks)
-      else:
-        print("Training without callbacks")
-        history = model.fit(self.train_ds, epochs=epochs, initial_epoch=initial_epoch,
-                    validation_data=(self.test_ds))
-      if history_file:
-        df = pd.DataFrame(history.history)
-        df.to_csv(f"{history_file}", index=False)
-      else:
-        print("History not saved")
-      if model_file:
-        model.save(f'{model_file}')
-      else:
-        print("Model not saved")
-      return history
-    
-    @staticmethod
-    def train_kfold(datasets, image_shape, param_shape, learning_rate, metrics = ['accuracy', 'precision', 'recall'], checkpoints=None, epochs=5, initial_epoch=0, early_stopping=None, history_file=None, model_file=None):
-      kfold_histories = []
-      k_models = []
-      train_datasets = [i[0] for i in datasets]
-      test_datasets = [i[1] for i in datasets]
-
-      callbacks=[]
-
-      if early_stopping:
-        callbacks.append(early_stopping)
-      if checkpoints:
-        callbacks.append(checkpoints)
-
-      for fold, (train_ds, test_ds) in enumerate(zip(train_datasets, test_datasets)):
-        print(f"\n=== Training fold {fold + 1} ===")
-
-        custom_model = CustomModel(train_ds, test_ds)
-        model = custom_model.compile_model(image_shape=image_shape, param_shape=param_shape, learning_rate=learning_rate, metrics=metrics)
+        Returns:
+            tf.keras.callbacks.History: Training history
+        """
+        callbacks = []
+        
+        if early_stopping:
+            callbacks.append(early_stopping)
+        if checkpoints:
+            callbacks.append(checkpoints)
+        if tensorboard:
+            callbacks.append(tensorboard)
+        if reduce_lr:
+            callbacks.append(reduce_lr) 
 
         if callbacks:
-          history = model.fit(train_ds, epochs=epochs, initial_epoch=initial_epoch,
-                    validation_data=(test_ds), callbacks=callbacks)
+            history = model.fit(
+                self.train_ds, 
+                epochs=epochs, 
+                initial_epoch=initial_epoch,
+                validation_data=self.test_ds, 
+                callbacks=callbacks
+            )
         else:
-          print("Training without callbacks")
-          history = model.fit(train_ds, epochs=epochs, initial_epoch=initial_epoch,
-                    validation_data=(test_ds))
-          
-        kfold_histories.append(history)
-        k_models.append(model)
-          
+            print("Training without callbacks")
+            history = model.fit(
+                self.train_ds, 
+                epochs=epochs, 
+                initial_epoch=initial_epoch,
+                validation_data=self.test_ds
+            )
+            
+        # Save training history
         if history_file:
-          df = pd.DataFrame(history.history)
-          df.to_csv(f"{history_file}_fold{fold+1}.csv", index=False)
+            os.makedirs(os.path.dirname(history_file), exist_ok=True)
+            df = pd.DataFrame(history.history)
+            df.to_csv(history_file, index=False)
+            print(f"Training history saved to: {history_file}")
         else:
-          print("History not saved")
+            print("Training history not saved")
+            
+        # Save trained model
         if model_file:
-          model.save(f'{model_file}_fold{fold+1}.keras')
+            os.makedirs(os.path.dirname(model_file), exist_ok=True)
+            model.save(model_file)
+            print(f"Model saved to: {model_file}")
         else:
-         print("Model not saved")
-
-      return k_models, kfold_histories
+            print("Model not saved")
+            
+        return history
     
     @staticmethod
-    def get_averages_from_kfold(kfold_histories):
-      accuracy = []
-      precision = []
-      recall = []
+    def train_kfold(datasets: List[Tuple], 
+                   image_shape: Tuple[int, int, int], 
+                   param_shape: Tuple[int, ...], 
+                   learning_rate: float, 
+                   metrics: List[str] = None, 
+                   checkpoints: Optional[ModelCheckpoint] = None, 
+                   epochs: int = 5, 
+                   initial_epoch: int = 0, 
+                   early_stopping: Optional[EarlyStopping] = None, 
+                   history_file: Optional[str] = None, 
+                   model_file: Optional[str] = None) -> Tuple[List[tf.keras.Model], List[tf.keras.callbacks.History]]:
+        """
+        Train model using k-fold cross validation.
 
-      for history in kfold_histories:
-        accuracy.append(max(history.history['accuracy']))
-        precision.append(max(history.history['precision']))
-        recall.append(max(history.history['recall']))
+        Args:
+            datasets: List of (train_ds, test_ds) tuples for each fold
+            image_shape: Dimensions of input images
+            param_shape: Dimensions of numerical parameters
+            learning_rate: Learning rate for optimization
+            metrics: List of metrics to monitor
+            checkpoints: Checkpoint callback
+            epochs: Number of training epochs
+            initial_epoch: Starting epoch number
+            early_stopping: Early stopping callback
+            history_file: Base filename for saving training history
+            model_file: Base filename for saving models
 
-      avg_accuracy = np.mean(accuracy)
-      avg_precision = np.mean(precision)
-      avg_recall = np.mean(recall)
+        Returns:
+            Tuple of (list of trained models, list of training histories)
+        """
+        if metrics is None:
+            metrics = ['accuracy', 'precision', 'recall']
+            
+        kfold_histories = []
+        k_models = []
+        train_datasets = [i[0] for i in datasets]
+        test_datasets = [i[1] for i in datasets]
 
-      print(f"Average Accuracy: {avg_accuracy:.2f}")
-      print(f"Average Precision: {avg_precision:.2f}")
-      print(f"Average Recall: {avg_recall:.2f}")
+        callbacks = []
+        if early_stopping:
+            callbacks.append(early_stopping)
+        if checkpoints:
+            callbacks.append(checkpoints)
 
+        for fold, (train_ds, test_ds) in enumerate(zip(train_datasets, test_datasets)):
+            print(f"\n=== Training fold {fold + 1} ===")
 
-    def plot_metric(self, title, metric_1, metric_2, metric_1_label, metric_2_label, x_label, y_label):
-      '''
-      Plotting function for one metric
+            custom_model = CustomModel(train_ds, test_ds)
+            model = custom_model.compile_model(
+                image_shape=image_shape, 
+                param_shape=param_shape, 
+                learning_rate=learning_rate, 
+                metrics=metrics
+            )
 
-      Parameters:
-      ----------------------------------------------
+            if callbacks:
+                history = model.fit(
+                    train_ds, 
+                    epochs=epochs, 
+                    initial_epoch=initial_epoch,
+                    validation_data=test_ds, 
+                    callbacks=callbacks
+                )
+            else:
+                print("Training without callbacks")
+                history = model.fit(
+                    train_ds, 
+                    epochs=epochs, 
+                    initial_epoch=initial_epoch,
+                    validation_data=test_ds
+                )
+                
+            kfold_histories.append(history)
+            k_models.append(model)
+                
+            # Save fold-specific history and model
+            if history_file:
+                os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                df = pd.DataFrame(history.history)
+                df.to_csv(f"{history_file}_fold{fold+1}.csv", index=False)
+                print(f"Fold {fold+1} history saved")
+            else:
+                print("History not saved")
+                
+            if model_file:
+                os.makedirs(os.path.dirname(model_file), exist_ok=True)
+                model.save(f'{model_file}_fold{fold+1}.keras')
+                print(f"Fold {fold+1} model saved")
+            else:
+                print("Model not saved")
 
-      title: str
-        - title for plot
-      metric_1, metric_2: strs
-        - metrics to be plotted vs. each other
-      metric_1_label, metric_2_label: strs
-        - labels for each metric to plot
-      x_label, y_label: strs
-        - labels for graph axes
-      '''
+        return k_models, kfold_histories
+    
+    @staticmethod
+    def get_averages_from_kfold(kfold_histories: List[tf.keras.callbacks.History]) -> None:
+        """
+        Calculate and display average metrics from k-fold cross validation.
 
-      plt.title(title)
-      plt.plot(metric_1, label=metric_1_label)
-      plt.plot(metric_2, label=metric_2_label)
-      plt.xlabel(x_label)
-      plt.ylabel(y_label)
-      plt.legend(loc="lower right")
-      plt.show()
+        Args:
+            kfold_histories: List of training histories from k-fold training
+        """
+        accuracy = []
+        precision = []
+        recall = []
+
+        for history in kfold_histories:
+            accuracy.append(max(history.history['accuracy']))
+            precision.append(max(history.history['precision']))
+            recall.append(max(history.history['recall']))
+
+        avg_accuracy = np.mean(accuracy)
+        avg_precision = np.mean(precision)
+        avg_recall = np.mean(recall)
+
+        print(f"Average Accuracy: {avg_accuracy:.4f}")
+        print(f"Average Precision: {avg_precision:.4f}")
+        print(f"Average Recall: {avg_recall:.4f}")
+
+    def plot_metric(self, 
+                   title: str, 
+                   metric_1: List[float], 
+                   metric_2: List[float], 
+                   metric_1_label: str, 
+                   metric_2_label: str, 
+                   x_label: str, 
+                   y_label: str) -> None:
+        """
+        Plot training metrics for visualization.
+
+        Args:
+            title: Title for the plot
+            metric_1: First metric values to plot
+            metric_2: Second metric values to plot
+            metric_1_label: Label for first metric
+            metric_2_label: Label for second metric
+            x_label: Label for x-axis
+            y_label: Label for y-axis
+        """
+        plt.figure(figsize=(10, 6))
+        plt.title(title)
+        plt.plot(metric_1, label=metric_1_label)
+        plt.plot(metric_2, label=metric_2_label)
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.legend(loc="lower right")
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.show()
+
 
 class BuildMLPModel(CustomModel):
+    """
+    MLP model for tension prediction using features from pre-trained CNN.
+    
+    This class builds regression models that use features extracted from a CNN
+    to predict optimal tension values for fiber cleaving.
+    """
 
-    def __init__(self, cnn_model_path, train_ds, test_ds):
+    def __init__(self, cnn_model_path: str, train_ds, test_ds):
+        """
+        Initialize the MLP model.
+
+        Args:
+            cnn_model_path: Path to the pre-trained CNN model
+            train_ds: Training dataset
+            test_ds: Test dataset
+        """
         super().__init__(train_ds, test_ds)
         self.cnn_model = tf.keras.models.load_model(cnn_model_path)
         self.image_input = self.cnn_model.input[0]
         self.feature_output = self.cnn_model.get_layer('dropout').output
-       
 
-    def build_pretrained_model(self, param_shape):
-        '''
-        Build model
+    def build_pretrained_model(self, param_shape: Tuple[int, ...]) -> tf.keras.Model:
+        """
+        Build MLP model for tension prediction.
+
+        Args:
+            param_shape: Dimensions of numerical parameters
 
         Returns:
-        tf.keras.Model
-            - Model to be trained
-            
-        '''
-        # Pre-trained base model
+            tf.keras.Model: Regression model for tension prediction
+        """
         x = Dense(64, name="first_dense_layer", activation='relu')(self.feature_output)
         x = Dense(32, name="second_dense_layer", activation='relu')(x)
-        feature_input = Input(shape=param_shape, name='feature_input')  # Features
+        feature_input = Input(shape=param_shape, name='feature_input')
         y = Dense(16, name="third_dense_layer", activation='relu')(feature_input)
 
         combined = Concatenate()([x, y])
@@ -413,155 +569,198 @@ class BuildMLPModel(CustomModel):
         regression_model.summary()
         return regression_model
     
-    def compile_model(self, param_shape, learning_rate=0.001, metrics=['mae']):
-      '''
-      Compile model after calling build_model function
+    def compile_model(self, 
+                     param_shape: Tuple[int, ...], 
+                     learning_rate: float = 0.001, 
+                     metrics: List[str] = None) -> tf.keras.Model:
+        """
+        Compile MLP model for regression.
 
-      Parameters:
-      -------------------------------------
-      image_shape: tuple
-          - dimensions of images
-      param_shape: tuple
-          - dimensions of parameters
-      learning_rate: float
-          - learning rate for training model
+        Args:
+            param_shape: Dimensions of numerical parameters
+            learning_rate: Learning rate for optimization
+            metrics: List of metrics to monitor
 
-      Returns:
-      tf.keras.Model
-          - Mode to be trained
-      '''
-      # Adaptive Moment Estimation optimizer
-      # Set learning rate and then compile model
-      # Loss functions is mean squared error for regression
-      model = self.build_pretrained_model(param_shape)
-      optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-      model.compile(optimizer=optimizer, loss='mse', metrics=metrics)
-      return model
+        Returns:
+            tf.keras.Model: Compiled regression model
+        """
+        if metrics is None:
+            metrics = ['mae']
+            
+        model = self.build_pretrained_model(param_shape)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+        model.compile(optimizer=optimizer, loss='mse', metrics=metrics)
+        return model
     
-    def create_early_stopping(self, patience=3, mode='min', monitor="val_mae"):
-      '''
-      Create early stopping callback to monitor training success and prevent overfitting.
+    def create_early_stopping(self, 
+                            patience: int = 3, 
+                            mode: str = 'min', 
+                            monitor: str = "val_mae") -> EarlyStopping:
+        """
+        Create early stopping callback for regression model.
 
-      Parameters:
-      ----------------------------------------
+        Args:
+            patience: Number of epochs to wait before stopping
+            mode: Method to track monitor (min for regression)
+            monitor: Metric to monitor during training
 
-      patience: int
-        - number of epochs to stop when monitor plateus
-        - default: 3
-      mode: str
-        - max, min, avg
-        - method to track monitor
-        - default: max
-      monitor: str
-        - metric to monitor during training
-        - default: val_accuracy
-      
-      Returns: tf.callbacks.EarlyStopping
-        - early stopping callback
-      '''
-      es_callback = tf.keras.callbacks.EarlyStopping(
-        monitor=monitor,
-        patience=patience,
-        mode = mode,
-        restore_best_weights=True
-      )
-      return es_callback
+        Returns:
+            tf.keras.callbacks.EarlyStopping: Early stopping callback
+        """
+        es_callback = EarlyStopping(
+            monitor=monitor,
+            patience=patience,
+            mode=mode,
+            restore_best_weights=True,
+            verbose=1
+        )
+        return es_callback
     
-    def create_checkpoints(self, checkpoint_filepath="/content/drive/MyDrive/mlp_checkpoints.keras", monitor="val_mae", mode="min", save_best_only=True):
-      '''
-      Create model checkpoints to avoid losing data while training
+    def create_checkpoints(self, 
+                          checkpoint_filepath: str = "./checkpoints/mlp_model.keras", 
+                          monitor: str = "val_mae", 
+                          mode: str = "min", 
+                          save_best_only: bool = True) -> ModelCheckpoint:
+        """
+        Create model checkpoints for MLP model.
 
-      Parameters:
-      --------------------------------------
+        Args:
+            checkpoint_filepath: Path to save model checkpoints
+            monitor: Metric to monitor during training
+            mode: Method to determine stopping point (min for regression)
+            save_best_only: Whether to save only the best model
 
-      checkpoint_filepath: str
-        - path to save model checkpoints
-        - default: /content/drive/MyDrive/checkpoints.keras
-      monitor: str
-        - metric to monitor during training
-        - deafault: val_accuracy
-      mode: str
-        - max, min, avg
-        - method to determine stoppping point of metric
-        - default: max
-      save_best_only: boolean
-        - to determine if only best model shold be saved
-        - deafault: True
-
-      Returns: tf.callback.ModelCheckpoint
-        - checkpoint to use during training
-      '''
-      model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath = checkpoint_filepath,
-        monitor=monitor,
-        mode=mode,
-        save_best_only=save_best_only,
-        verbose=1
-      )
-      return model_checkpoint_callback
-    
-    @staticmethod
-    def train_kfold_mlp(datasets, cnn_model_path, param_shape, learning_rate, checkpoints=None, epochs=5, initial_epoch=0, early_stopping=None, history_file=None, model_file=None):
-      kfold_histories = []
-      k_models = []
-      train_datasets = [i[0] for i in datasets]
-      test_datasets = [i[1] for i in datasets]
-
-      callbacks=[]
-
-      if early_stopping:
-        callbacks.append(early_stopping)
-      if checkpoints:
-        callbacks.append(checkpoints)
-
-      for fold, (train_ds, test_ds) in enumerate(zip(train_datasets, test_datasets)):
-        print(f"\n=== Training fold {fold + 1} ===")
-
-        custom_model = BuildMLPModel(cnn_model_path, train_ds, test_ds)
-        model = custom_model.compile_model(param_shape=param_shape, learning_rate=learning_rate, metrics=['mae', 'mse'])
-
-        if callbacks:
-          history = model.fit(train_ds, epochs=epochs, initial_epoch=initial_epoch,
-                    validation_data=(test_ds), callbacks=callbacks)
-        else:
-          print("Training without callbacks")
-          history = model.fit(train_ds, epochs=epochs, initial_epoch=initial_epoch,
-                    validation_data=(test_ds))
-          
-        kfold_histories.append(history)
-        k_models.append(model)
-          
-        if history_file:
-          df = pd.DataFrame(history.history)
-          df.to_csv(f"{history_file}_fold{fold+1}.csv", index=False)
-        else:
-          print("History not saved")
-        if model_file:
-          model.save(f'{model_file}_fold{fold+1}.keras')
-        else:
-         print("Model not saved")
-
-      return k_models, kfold_histories
-    
-    @staticmethod
-    def get_averages_from_kfold(kfold_histories, scaler):
-      mae = []
-      mse = []
-
-      max_tension = scaler.data_max_[0]
-      min_tension = scaler.data_min_[0]
-
-      for history in kfold_histories:
-        mae.append(max(history.history['mae']))
-        mse.append(max(history.history['mse']))
+        Returns:
+            tf.keras.callbacks.ModelCheckpoint: Checkpoint callback
+        """
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(checkpoint_filepath), exist_ok=True)
         
-      avg_mae= np.mean(mae)
-      avg_mse = np.mean(mse)
+        model_checkpoint_callback = ModelCheckpoint(
+            filepath=checkpoint_filepath,
+            monitor=monitor,
+            mode=mode,
+            save_best_only=save_best_only,
+            verbose=1
+        )
+        return model_checkpoint_callback
+    
+    @staticmethod
+    def train_kfold_mlp(datasets: List[Tuple], 
+                       cnn_model_path: str, 
+                       param_shape: Tuple[int, ...], 
+                       learning_rate: float, 
+                       checkpoints: Optional[ModelCheckpoint] = None, 
+                       epochs: int = 5, 
+                       initial_epoch: int = 0, 
+                       early_stopping: Optional[EarlyStopping] = None, 
+                       history_file: Optional[str] = None, 
+                       model_file: Optional[str] = None) -> Tuple[List[tf.keras.Model], List[tf.keras.callbacks.History]]:
+        """
+        Train MLP model using k-fold cross validation.
 
-      mae_val = avg_mae * (max_tension - min_tension)
-      mse_val = avg_mse * (max_tension - min_tension) ** 2
-      mse_val = np.sqrt(mse_val)
+        Args:
+            datasets: List of (train_ds, test_ds) tuples for each fold
+            cnn_model_path: Path to the pre-trained CNN model
+            param_shape: Dimensions of numerical parameters
+            learning_rate: Learning rate for optimization
+            checkpoints: Checkpoint callback
+            epochs: Number of training epochs
+            initial_epoch: Starting epoch number
+            early_stopping: Early stopping callback
+            history_file: Base filename for saving training history
+            model_file: Base filename for saving models
 
-      print(f"Average MAE: {mae_val:.2f}")
-      print(f"Average MSE: {mse_val:.2f}")
-     
+        Returns:
+            Tuple of (list of trained models, list of training histories)
+        """
+        kfold_histories = []
+        k_models = []
+        train_datasets = [i[0] for i in datasets]
+        test_datasets = [i[1] for i in datasets]
+
+        callbacks = []
+        if early_stopping:
+            callbacks.append(early_stopping)
+        if checkpoints:
+            callbacks.append(checkpoints)
+
+        for fold, (train_ds, test_ds) in enumerate(zip(train_datasets, test_datasets)):
+            print(f"\n=== Training MLP fold {fold + 1} ===")
+
+            custom_model = BuildMLPModel(cnn_model_path, train_ds, test_ds)
+            model = custom_model.compile_model(
+                param_shape=param_shape, 
+                learning_rate=learning_rate, 
+                metrics=['mae', 'mse']
+            )
+
+            if callbacks:
+                history = model.fit(
+                    train_ds, 
+                    epochs=epochs, 
+                    initial_epoch=initial_epoch,
+                    validation_data=test_ds, 
+                    callbacks=callbacks
+                )
+            else:
+                print("Training without callbacks")
+                history = model.fit(
+                    train_ds, 
+                    epochs=epochs, 
+                    initial_epoch=initial_epoch,
+                    validation_data=test_ds
+                )
+                
+            kfold_histories.append(history)
+            k_models.append(model)
+                
+            # Save fold-specific history and model
+            if history_file:
+                os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                df = pd.DataFrame(history.history)
+                df.to_csv(f"{history_file}_fold{fold+1}.csv", index=False)
+                print(f"Fold {fold+1} history saved")
+            else:
+                print("History not saved")
+                
+            if model_file:
+                os.makedirs(os.path.dirname(model_file), exist_ok=True)
+                model.save(f'{model_file}_fold{fold+1}.keras')
+                print(f"Fold {fold+1} model saved")
+            else:
+                print("Model not saved")
+
+        return k_models, kfold_histories
+    
+    @staticmethod
+    def get_averages_from_kfold(kfold_histories: List[tf.keras.callbacks.History], 
+                               scaler: Any) -> None:
+        """
+        Calculate and display average metrics from k-fold cross validation for MLP.
+
+        Args:
+            kfold_histories: List of training histories from k-fold training
+            scaler: Scaler used for tension values (for denormalization)
+        """
+        mae = []
+        mse = []
+
+        max_tension = scaler.data_max_[0]
+        min_tension = scaler.data_min_[0]
+
+        for history in kfold_histories:
+            mae.append(min(history.history['mae']))  
+            mse.append(min(history.history['mse'])) 
+            
+        avg_mae = np.mean(mae)
+        avg_mse = np.mean(mse)
+
+        # Denormalize metrics
+        mae_val = avg_mae * (max_tension - min_tension)
+        mse_val = avg_mse * (max_tension - min_tension) ** 2
+        rmse_val = np.sqrt(mse_val)
+
+        print(f"Average MAE: {mae_val:.2f}")
+        print(f"Average RMSE: {rmse_val:.2f}")
+       

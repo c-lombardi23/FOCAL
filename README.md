@@ -1,97 +1,252 @@
-<h1 align="center">LDC Classifier and Tension Predictor</h1>
-<p align="center"><a href="#project-description">Project Description</a> - <a href="#key-features">Key Features</a> - <a href="#technology-stack">Tech Stack</a>
-- <a href="#getting-started">Getting Started</a> - <a href="#configuration-file-field-descriptions">Configuration File Field Descriptions</a></p>
+# Fiber Cleave Processing
 
-## Project Description
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![TensorFlow 2.19+](https://img.shields.io/badge/tensorflow-2.19+-orange.svg)](https://tensorflow.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This project involves implementing a CNN model to first classify good and bad cleave images uploaded from the user. The images are produced by THORLABS Fiber Cleave Analyzer (FCA) with cleaves produced by the LDC400. If a bad cleave image is obtained, a second, regression-based model is implemented to predict the optimal parameters for producing a good cleave. As of now the model is only capable or predicting tension. A command line interface is provided for training and testing either the CNN model or the regression model. To install, please clone the repository and install the dependencies using the requirements.txt file
+A machine learning package for fiber cleave quality classification and tension prediction using CNN and MLP models.
 
-## Key Features
+## 📋 Table of Contents
 
-This project used a transfer learning model using MobileNetV2 as the base input for the CNN model. After freezing the top layers, I implemented two fully connected layers with parameters determined using Keras Tuner. This was for the image branch of the model. A second branch uses numerical features as input, which is then concatenated with the image branch to produce the full model. For the regression model, I used the dropout layer of the CNN model and then implemented more specific logic to predict the optimal tension.
+- [Project Description](#project-description)
+- [Key Features](#key-features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Usage Examples](#usage-examples)
+- [Tech Stack](#tech-stack)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Getting Started 
+## 🎯 Project Description
 
-A CLI lets the user train and test the model using different option implemented in a JSON file which is then passed in the CLI through the --file_path option. An example structure of the JSON config file is as follows:
+This project implements a comprehensive machine learning pipeline for analyzing fiber cleave quality using images from the THORLABS Fiber Cleave Analyzer (FCA). The system consists of two main components:
 
+1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features
+2. **MLP Regression Model**: Predicts optimal tension parameters for producing good cleaves
+
+The models use transfer learning with MobileNetV2 as the backbone and are optimized using Keras Tuner for hyperparameter optimization.
+
+## ✨ Key Features
+
+- **Transfer Learning**: Uses pre-trained MobileNetV2 for robust feature extraction
+- **Multi-Modal Input**: Combines image features with numerical parameters
+- **Hyperparameter Optimization**: Automated tuning using Keras Tuner
+- **Flexible Architecture**: Supports both classification and regression tasks
+- **K-Fold Cross Validation**: Robust model evaluation
+- **GradCAM Visualization**: Model interpretability through attention maps
+- **Command Line Interface**: Easy-to-use CLI for training and inference
+- **Comprehensive Logging**: Training history and model checkpoints
+
+## 🚀 Installation
+
+### Prerequisites
+
+- Python 3.8 or higher
+- TensorFlow 2.19 or higher
+- CUDA-compatible GPU (recommended for training)
+
+### Install from PyPI
+
+```bash
+pip install FiberCleaveProcessing
+```
+
+### Install from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/c-lombardi23/ImageProcessing.git
+cd ImageProcessing
+
+# Install in development mode
+pip install -e .
+
+# Or install with development dependencies
+pip install -e ".[dev]"
+```
+
+### Verify Installation
+
+```bash
+cleave-app --help
+```
+
+## 🏃‍♂️ Quick Start
+
+1. **Prepare your data**:
+   - Organize cleave images in a folder
+   - Create a CSV file with metadata (tension, angle, etc.)
+
+2. **Create a configuration file** (see [Configuration](#configuration) section)
+
+3. **Train a classification model**:
+   ```bash
+   cleave-app --file_path config.json
+   ```
+
+## ⚙️ Configuration
+
+The application uses a JSON configuration file to specify all parameters. Here's an example:
+
+```json
 {
-  "csv_path": "C:\\Thorlabs\\FCA\\125pm_data.csv", <br>
-  "img_folder": "C:\\Users\\clombardi\\125PM", <br>
-  "feature_scaler_path": "C:\\Users\\clombardi\\mlp_feature_scaler_6_13.pkl",<br>
-  "label_scaler_path": "C:\\Users\\clombardi\\mlp_tension_scaler_6_13.pkl",<br>
-  "image_shape": [224, 224, 3],<br>
-  "feature_shape": [6],<br>
-  "test_size": 0.2,<br>
-  "buffer_size":20,<br>
-  "batch_size": 4,<br>
-  "mode": "train_cnn",<br>
-  "learning_rate": 0.01,<br>
-  "model_path": "C:\\Users\\clombardi\\125pm_best_mlp_model_6_13.keras",<br>
-  "checkpoint_filepath": "",<br>
-  "save_history_file":"",<br>
-  "save_model_file":"",<br>
-  "project_name": "Cleave_Tuner_new1",<br>
-  "tuner_directory": "C:\\Users\\clombardi\\tuner1",<br>
-  "max_epochs": 3,<br>
-  "objective": "val_accuracy",<br>
-  "early_stopping": "y",<br>
-  "checkpoints":"n",<br>
-  "method": "max",<br>
-  "monitor":"val_accuracy",<br>
-  "patience": 3,<br>
-  "img_path": "Fiber-189Plus.png",<br>
-  "test_features":[1.6, 17.65, 1, 0, 1]
+  "csv_path": "data/cleave_metadata.csv",
+  "img_folder": "data/images/",
+  "feature_scaler_path": "models/feature_scaler.pkl",
+  "label_scaler_path": "models/label_scaler.pkl",
+  "image_shape": [224, 224, 3],
+  "feature_shape": [6],
+  "test_size": 0.2,
+  "buffer_size": 32,
+  "batch_size": 8,
+  "mode": "train_cnn",
+  "learning_rate": 0.001,
+  "model_path": "models/cleave_classifier.keras",
+  "max_epochs": 50,
+  "early_stopping": "y",
+  "patience": 5
 }
+```
 
-### Configuration File Field Descriptions
+### Configuration Parameters
 
-Below is a detailed explanation of each key in the JSON configuration file used by the CLI.
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `csv_path` | string | Path to CSV file with cleave metadata | Required |
+| `img_folder` | string | Directory containing cleave images | Required |
+| `feature_scaler_path` | string | Path to feature scaler (optional) | None |
+| `label_scaler_path` | string | Path to label scaler (optional) | None |
+| `image_shape` | list | Input image dimensions `[height, width, channels]` | `[224, 224, 3]` |
+| `feature_shape` | list | Numerical feature dimensions | `[6]` for CNN, `[5]` for MLP |
+| `test_size` | float | Fraction of data for testing | `0.2` |
+| `buffer_size` | int | Buffer size for dataset shuffling | `32` |
+| `batch_size` | int | Training batch size | `8` |
+| `mode` | string | Operation mode (see modes below) | Required |
+| `learning_rate` | float | Learning rate for optimization | `0.001` |
+| `model_path` | string | Path to save/load model | Required |
+| `max_epochs` | int | Maximum training epochs | `20` |
+| `early_stopping` | string | Enable early stopping (`"y"`/`"n"`) | `"n"` |
+| `patience` | int | Early stopping patience | `3` |
 
-| Key | Description |
-|-----|-------------|
-| `csv_path` | Path to the CSV file containing cleave metadata (e.g., tension, angle, misting, etc.). |
-| `img_folder` | Directory containing the cleave images. Filenames must match entries in the CSV. |
-| `feature_scaler_path` | Path to the saved `MinMaxScaler` used to scale input features (for classification or regression). |
-| `label_scaler_path` | Path to the saved `MinMaxScaler` used to scale tension labels (used for regression model only). |
-| `image_shape` | Shape of the input images (e.g., `[224, 224, 3]`). |
-| `feature_shape` | Shape of the numerical input features (e.g., `[6]`). |
-| `test_size` | Fraction of the dataset to use for testing (e.g., `0.2` = 20%). |
-| `buffer_size` | Buffer size used when shuffling the dataset. |
-| `batch_size` | Number of samples per training batch. |
-| `mode` | Mode of operation. Options: `"train_cnn"` for classification or `"train_regression"` for tension prediction. |
-| `learning_rate` | Learning rate for model training. |
-| `model_path` | Path to load/save the trained `.keras` model. |
-| `checkpoint_filepath` | Optional path to save model checkpoints during training. |
-| `save_history_file` | Optional path to save training history as a `.csv` file. |
-| `save_model_file` | Optional path to save the trained model. |
-| `project_name` | Name of the training project (used in Keras Tuner and logging). |
-| `tuner_directory` | Path to save Keras Tuner logs and trial results. |
-| `max_epochs` | Maximum number of training epochs. |
-| `objective` | Metric to optimize with Keras Tuner (e.g., `"val_accuracy"` or `"val_mae"`). |
-| `early_stopping` | Whether to use early stopping (`"y"` or `"n"`). |
-| `checkpoints` | Whether to save model checkpoints (`"y"` or `"n"`). |
-| `method` | Optimization direction for monitored metric: `"max"` or `"min"`. |
-| `monitor` | Metric to monitor during training (e.g., `"val_accuracy"` or `"val_mae"`). |
-| `patience` | Number of epochs to wait before early stopping is triggered. |
-| `img_path` | Path to a single image to run a prediction on (used for inference mode). |
-| `test_features` | List of numerical features to use for a single prediction (e.g., `[angle, scribe_diam, misting, hackle, tearing]`). |
-| `tuner_path` | Path to save the best model from running Keras Tuner. |
-| `unfreeze_from` | Layers to unfreeze from MobileNetV2. |
-| `initial_epochs` | Start epoch to continue from if continue_train is `y`. |
-| `reduce_lr` | Rate to reduce learning rate. |
-| `continue_train` | Yes or No to continue training previous model from checkpoint. |
-| `classification_path` | Optional path to save classification report. |
+### Available Modes
 
+| Mode | Description |
+|------|-------------|
+| `train_cnn` | Train CNN classification model |
+| `train_mlp` | Train MLP regression model |
+| `train_image_only` | Train image-only classification model |
+| `cnn_hyperparameter` | Run hyperparameter search for CNN |
+| `mlp_hyperparameter` | Run hyperparameter search for MLP |
+| `image_hyperparameter` | Run hyperparameter search for image-only model |
+| `test_cnn` | Test CNN model performance |
+| `test_mlp` | Test MLP model performance |
+| `train_kfold_cnn` | Train CNN with k-fold cross validation |
+| `train_kfold_mlp` | Train MLP with k-fold cross validation |
+| `grad_cam` | Generate GradCAM visualizations |
 
-To Install: <br>
-pip install git+https://github.com/c-lombardi23/ImageProcessing.git
+## 📖 Usage Examples
 
-To Run: <br>
-cleave-app --file_path \path\to\config.json
+### Training a Classification Model
 
-## Tech Stack
+```bash
+# Train CNN model
+cleave-app --file_path config_cnn.json
 
-*   TensorFlow
-*   Keras
-*   Keras Tuner
-*   Python
+# Train with hyperparameter optimization
+cleave-app --file_path config_cnn_tuner.json
+```
+
+### Training a Regression Model
+
+```bash
+# Train MLP model for tension prediction
+cleave-app --file_path config_mlp.json
+```
+
+### Testing Models
+
+```bash
+# Test classification model
+cleave-app --file_path config_test_cnn.json
+
+# Test regression model
+cleave-app --file_path config_test_mlp.json
+```
+
+### K-Fold Cross Validation
+
+```bash
+# Train with k-fold cross validation
+cleave-app --file_path config_kfold.json
+```
+
+## 🏗️ Tech Stack
+
+- **Deep Learning**: TensorFlow 2.19+, Keras
+- **Hyperparameter Tuning**: Keras Tuner
+- **Data Processing**: NumPy, Pandas, scikit-learn
+- **Image Processing**: OpenCV, Pillow
+- **Visualization**: Matplotlib
+- **Configuration**: Pydantic
+- **CLI**: Typer, Click
+- **Testing**: pytest
+
+## 📁 Project Structure
+
+```
+ImageProcessingClone/
+├── src/
+│   └── cleave_app/
+│       ├── __init__.py
+│       ├── main.py                 # CLI entry point
+│       ├── config_schema.py        # Configuration validation
+│       ├── data_processing.py      # Data loading and preprocessing
+│       ├── model_pipeline.py       # Model building and training
+│       ├── hyperparameter_tuning.py # Hyperparameter optimization
+│       ├── prediction_testing.py   # Model evaluation
+│       └── grad_cam.py            # Model interpretability
+├── tests/                         # Unit tests
+├── notebooks/                     # Jupyter notebooks
+├── config_files/                  # Example configurations
+├── requirements.txt               # Dependencies
+├── setup.py                      # Package configuration
+└── README.md                     # This file
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+### Development Setup
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Install in development mode: `pip install -e ".[dev]"`
+4. Make your changes and add tests
+5. Run tests: `pytest`
+6. Commit your changes: `git commit -m 'Add amazing feature'`
+7. Push to the branch: `git push origin feature/amazing-feature`
+8. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- THORLABS for the Fiber Cleave Analyzer (FCA)
+- TensorFlow and Keras teams for the excellent deep learning framework
+- The open-source community for various tools and libraries
+
+## 📞 Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Issues](https://github.com/c-lombardi23/ImageProcessing/issues) page
+2. Create a new issue with detailed information
+3. Contact: clombardi23245@gmail.com
+
+---
+
+**Note**: This project is designed for research and development purposes. Please ensure you have proper data handling and validation procedures in place for production use.
