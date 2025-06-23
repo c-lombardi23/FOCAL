@@ -1,86 +1,116 @@
-#import libraries
-import tensorflow as tf
-from tensorflow.keras.models import  Model, Sequential
-from tensorflow.keras.layers import Dense, Concatenate, GlobalAveragePooling2D, Dropout, Input, RandomFlip, RandomRotation, RandomBrightness, RandomZoom, RandomContrast, GaussianNoise, BatchNormalization
-from keras_tuner import HyperModel, Hyperband
-from keras.applications import MobileNetV2
+"""
+Hyperparameter tuning module for the Fiber Cleave Processing application.
+
+This module provides classes for hyperparameter optimization using Keras Tuner
+for both CNN and MLP models.
+"""
+
+import os
+import warnings
+from typing import Optional, Tuple, Any
+
+# Suppress TensorFlow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+warnings.filterwarnings('ignore')
+
+try:
+    import tensorflow as tf
+    from tensorflow.keras.models import Model, Sequential
+    from tensorflow.keras.layers import (
+        Dense, Concatenate, GlobalAveragePooling2D, Dropout, Input,
+        RandomFlip, RandomRotation, RandomBrightness, RandomZoom,
+        RandomContrast, GaussianNoise, BatchNormalization
+    )
+    from keras_tuner import HyperModel, Hyperband
+    from keras.applications import MobileNetV2
+except ImportError as e:
+    print(f"Warning: Required ML libraries not found: {e}")
+    print("Please install tensorflow>=2.19.0 and keras-tuner>=1.4.7")
+    tf = None
+    HyperModel = None
+    Hyperband = None
+
 
 class BuildHyperModel(HyperModel):
-    '''
-    This class build a HyperModel to determine optimal hyperparmeters
-    '''
-    def __init__(self, image_shape, param_shape):
-      '''
-      Parameters:
-      ----------------------------------------------
-
-      image_shape: tuple
-        - dimensions of image
-      param_shape: tuple
-        - dimensions of parameters
-      '''
-      self.image_shape = image_shape
-      self.param_shape = param_shape
+    """
+    HyperModel for determining optimal hyperparameters for the combined CNN+MLP model.
+    
+    This class builds a model architecture that combines image features from MobileNetV2
+    with numerical parameters for fiber cleave classification.
+    """
+    
+    def __init__(self, image_shape: Tuple[int, int, int], param_shape: Tuple[int, ...]):
+        """
+        Initialize the hypermodel builder.
+        
+        Args:
+            image_shape: Dimensions of input images (height, width, channels)
+            param_shape: Dimensions of numerical parameters
+        """
+        if tf is None:
+            raise ImportError("TensorFlow is required for BuildHyperModel")
+            
+        self.image_shape = image_shape
+        self.param_shape = param_shape
 
     def build(self, hp):
-      '''
-      Build hypermodel to perform hyperparameter search.
+        """
+        Build hypermodel to perform hyperparameter search.
 
-      Parameters:
-      -------------------------
-
-      hp: keras_tuner.engine.hyperparameters.HyperParameters
-        - hyperparameters to be tuned
-      '''
+        Args:
+            hp: keras_tuner.engine.hyperparameters.HyperParameters
+                Hyperparameters to be tuned
+                
+        Returns:
+            tf.keras.Model: Compiled model with hyperparameters
+        """
         # Pre-trained base model
-      pre_trained_model = MobileNetV2(
+        pre_trained_model = MobileNetV2(
             input_shape=self.image_shape,
             include_top=False,
             weights="imagenet",
             name="mobilenet"
         )
-      pre_trained_model.trainable =  False
+        pre_trained_model.trainable = False
 
         # Data augmentation pipeline
-      data_augmentation = Sequential([
-            #RandomFlip(mode="HORIZONTAL_AND_VERTICAL"),
-            RandomRotation(factor=(0.1)),
-            RandomBrightness(factor=(0.3)),
+        data_augmentation = Sequential([
+            RandomRotation(factor=0.1),
+            RandomBrightness(factor=0.3),
             RandomZoom(height_factor=0.1, width_factor=0.1),
-            #GaussianNoise(stddev=0.01),
             RandomContrast(0.1)
         ])
 
         # Image input and processing
-      image_input = Input(shape=self.image_shape)
-      x = data_augmentation(image_input)
-      x = pre_trained_model(x)
-      x = GlobalAveragePooling2D()(x)
-      x = Dropout(hp.Float('dropout', 0.1, 0.3, step=0.1))(x)
+        image_input = Input(shape=self.image_shape)
+        x = data_augmentation(image_input)
+        x = pre_trained_model(x)
+        x = GlobalAveragePooling2D()(x)
+        x = Dropout(hp.Float('dropout', 0.1, 0.3, step=0.1))(x)
 
         # Param input and processing
-      param_input = Input(shape=self.param_shape)
-      y = Dense(
+        param_input = Input(shape=self.param_shape)
+        y = Dense(
             hp.Int('dense_param1', min_value=32, max_value=64, step=16),
             activation='relu')(param_input)
-      y = Dense(
+        y = Dense(
             hp.Int('dense_param2', min_value=8, max_value=32, step=8),
             activation='relu')(y)
-      y = BatchNormalization()(y)
+        y = BatchNormalization()(y)
 
         # Combine image and parameter features
-      combined = Concatenate()([x, y])
+        combined = Concatenate()([x, y])
 
-      z = Dense(
+        z = Dense(
             hp.Int('dense_combined', min_value=32, max_value=64, step=16),
             activation='relu')(combined)
-      z = BatchNormalization()(z)
-      z = Dropout(hp.Float('dropout_combined', 0.1, 0.3, step=0.1))(z)
-      z = Dense(5, activation='softmax')(z)
+        z = BatchNormalization()(z)
+        z = Dropout(hp.Float('dropout_combined', 0.1, 0.3, step=0.1))(z)
+        z = Dense(5, activation='softmax')(z)
 
-      model = Model(inputs=[image_input, param_input], outputs=z)
+        model = Model(inputs=[image_input, param_input], outputs=z)
 
-      model.compile(
+        model.compile(
             optimizer=tf.keras.optimizers.Adam(
                 learning_rate=hp.Choice('learning_rate', values=[5e-4, 1e-3, 5e-3, 1e-2, 5e-2])
             ),
@@ -88,136 +118,211 @@ class BuildHyperModel(HyperModel):
             metrics=['accuracy']
         )
 
-      return model
+        return model
 
 
 class HyperParameterTuning:
-  '''
-  This class is used to tune hyperparameters for model
-  '''
-  def __init__(self, image_shape, feature_shape, max_epochs=20, objective='val_accuracy', directory='/content/drive/MyDrive/Thorlabs', project_name='Cleave_Tuner3'):
-    '''
-    Parameters:
-    ----------------------------------------------
+    """
+    Class for tuning hyperparameters for the combined CNN+MLP model.
+    """
+    
+    def __init__(self, 
+                 image_shape: Tuple[int, int, int], 
+                 feature_shape: Tuple[int, ...], 
+                 max_epochs: int = 20, 
+                 objective: str = 'val_accuracy', 
+                 directory: str = './tuner_logs', 
+                 project_name: str = 'Cleave_Tuner'):
+        """
+        Initialize the hyperparameter tuner.
+        
+        Args:
+            image_shape: Dimensions of input images
+            feature_shape: Dimensions of numerical features
+            max_epochs: Maximum number of epochs to train for
+            objective: Metric to monitor during tuning
+            directory: Directory path to store hyperparameters
+            project_name: Name of the tuning project
+        """
+        if tf is None or HyperModel is None or Hyperband is None:
+            raise ImportError("TensorFlow and Keras Tuner are required for hyperparameter tuning")
+            
+        self.image_shape = image_shape
+        self.feature_shape = feature_shape
+        hypermodel = BuildHyperModel(self.image_shape, self.feature_shape)
+        self.tuner = Hyperband(
+            hypermodel,
+            objective=objective,
+            max_epochs=max_epochs,
+            directory=directory,
+            project_name=project_name
+        )
+        
+    def run_search(self, train_ds, test_ds):
+        """
+        Run hyperparameter search.
 
-    image_shape: tuple
-      - dimensions of image
-    feature_shape: tuple
-      - dimensions of parameters
-    max_epochs: int
-      - maximum number of epochs to train for
-      - default: 20
-    objective: str
-      - metric to monitor during tuning
-      - default: val_accuracy
-    directory: str
-      - directory path to store hyperparameters
-      - deafult: /content/drive/MyDrive/Thorlabs
-    project_name: str
-      - name of project
-      - default: Cleave_Tuner3
-
-    '''
-    self.image_shape = image_shape
-    self.feature_shape = feature_shape
-    hypermodel = BuildHyperModel(self.image_shape, self.feature_shape)
-    self.tuner = Hyperband(
-        hypermodel,
-        objective=objective,
-        max_epochs=max_epochs,
-        directory=directory,
-        project_name=project_name
-    )
-  def run_search(self, train_ds, test_ds):
-    '''
-    Run hyperparameter search
-
-    Parameters:
-    ----------------------------------------------
-
-    train_ds: tf.data.Dataset
-      - training dataset
-    test_ds: tf.data.Dataset
-      - testing dataset
-      
-    '''
+        Args:
+            train_ds: tf.data.Dataset - Training dataset
+            test_ds: tf.data.Dataset - Testing dataset
+        """
+        self.tuner.search(train_ds, validation_data=test_ds)
   
-    self.tuner.search(train_ds, validation_data=test_ds)
-  
-  def save_best_model(self, pathname):
-     best_model = self.get_best_model()
-     best_model.save(f"{pathname}.keras")
+    def save_best_model(self, pathname: str):
+        """
+        Save the best model from hyperparameter search.
+        
+        Args:
+            pathname: Path where to save the model
+        """
+        best_model = self.get_best_model()
+        best_model.save(f"{pathname}.keras")
 
-  def get_best_model(self):
-    '''
-    Get best model from hyperparameter search
+    def get_best_model(self):
+        """
+        Get best model from hyperparameter search.
 
-    Returns: tf.keras.Model
-      - best model from hyperparameter search
-    '''
-    return self.tuner.get_best_models(num_models=1)[0]
+        Returns:
+            tf.keras.Model: Best model from hyperparameter search
+        """
+        return self.tuner.get_best_models(num_models=1)[0]
 
-  def get_best_hyperparameters(self):
-    '''
-    Get best hyperparameters from hyperparameter search
+    def get_best_hyperparameters(self):
+        """
+        Get best hyperparameters from hyperparameter search.
 
-    Returns: keras_tuner.engine.hyperparameters.HyperParameters
-      - best hyperparameters from hyperparameter search
-    '''
-    return self.tuner.get_best_hyperparameters(num_trials=1)[0]
+        Returns:
+            keras_tuner.engine.hyperparameters.HyperParameters: 
+                Best hyperparameters from hyperparameter search
+        """
+        return self.tuner.get_best_hyperparameters(num_trials=1)[0]
+
+
+class ImageOnlyHyperModel(HyperModel):
+    """
+    HyperModel for image-only classification (no numerical parameters).
+    """
+    
+    def __init__(self, image_shape: Tuple[int, int, int], num_classes: int = 5):
+        """
+        Initialize the image-only hypermodel.
+        
+        Args:
+            image_shape: Dimensions of input images
+            num_classes: Number of output classes
+        """
+        if tf is None:
+            raise ImportError("TensorFlow is required for ImageOnlyHyperModel")
+            
+        self.image_shape = image_shape
+        self.num_classes = num_classes
+
+    def build(self, hp):
+        """
+        Build the image-only model with hyperparameters.
+        
+        Args:
+            hp: Hyperparameters to tune
+            
+        Returns:
+            tf.keras.Model: Compiled model
+        """
+        pre_trained_model = MobileNetV2(
+            input_shape=self.image_shape,
+            include_top=False,
+            weights="imagenet",
+            name="mobilenet"
+        )
+        pre_trained_model.trainable = False  
+
+        # Data augmentation
+        data_augmentation = Sequential([
+            RandomRotation(factor=0.1),
+            RandomBrightness(factor=0.3),
+            RandomZoom(height_factor=0.1, width_factor=0.1),
+            RandomContrast(0.1),
+        ])
+
+        image_input = Input(shape=self.image_shape)
+        x = data_augmentation(image_input)
+        x = pre_trained_model(x)
+        x = GlobalAveragePooling2D()(x)
+        x = Dropout(hp.Float('dropout', 0.1, 0.3, step=0.1))(x)
+
+        x = Dense(
+            hp.Int('dense1', min_value=32, max_value=128, step=32),
+            activation='relu')(x)
+        x = Dropout(hp.Float('dropout_2', 0.1, 0.4, step=0.1))(x)
+
+        output = Dense(self.num_classes, activation='softmax')(x)
+
+        model = Model(inputs=image_input, outputs=output)
+
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(
+                learning_rate=hp.Choice('learning_rate', [5e-4, 1e-3, 5e-3, 0.01])
+            ),
+            loss='categorical_crossentropy',
+            metrics=['accuracy']
+        )
+
+        return model
+
   
 class BuildMLPHyperModel(HyperModel):
-    '''
-    This class build a HyperModel to determine optimal hyperparmeters
-    '''
-    def __init__(self, model_path):
-        '''
-        Parameters:
-        -------------------------------------
-        model: tf.keras.Model
-            - Model to be used for hyperparameter tuning
-        '''
+    """
+    HyperModel for MLP-based tension prediction.
+    
+    This class builds a model that uses features extracted from a pre-trained CNN
+    to predict optimal tension values.
+    """
+    
+    def __init__(self, model_path: str):
+        """
+        Initialize the MLP hypermodel.
+        
+        Args:
+            model_path: Path to the pre-trained CNN model
+        """
+        if tf is None:
+            raise ImportError("TensorFlow is required for BuildMLPHyperModel")
+            
         self.cnn_model = tf.keras.models.load_model(model_path)
         self.image_input = self.cnn_model.input[0]
         self.feature_output = self.cnn_model.get_layer('dropout').output
 
     def build(self, hp):
-      '''
-      Build model with hyperparameters
+        """
+        Build model with hyperparameters.
 
-      Parameters:
-      -------------------------------------
-      hp: keras_tuner.HyperParameters
-          - Hyperparameters to be used for tuning
-      Returns:
-      tf.keras.Model
-          - Model to be trained
-      '''
-        # Pre-trained base model
-
-      x = Dense(
+        Args:
+            hp: keras_tuner.HyperParameters - Hyperparameters to be used for tuning
+            
+        Returns:
+            tf.keras.Model: Model to be trained
+        """
+        x = Dense(
             hp.Int('dense_param1', min_value=16, max_value=128, step=16),
             activation='relu')(self.feature_output)
-      x = Dense(
+        x = Dense(
             hp.Int('dense_param2', min_value=8, max_value=64, step=8),
             activation='relu')(x)
 
-      feature_input = Input(shape=(5,), name='feature_input')  # Features
-        #angle_input = Input(shape=(1,), name='angle_input')  # New input
-      y = Dense(
+        feature_input = Input(shape=(5,), name='feature_input')
+        y = Dense(
             hp.Int('dense_angle', min_value=16, max_value=128, step=16),
             activation='relu')(feature_input)
 
-      combined = Concatenate()([x, y])
-      z = Dense(
+        combined = Concatenate()([x, y])
+        z = Dense(
             hp.Int('dense_combined', min_value=16, max_value=128, step=16),
             activation='relu')(combined)
-      z = Dense(1)(z)
+        z = Dense(1)(z)
 
-      mlp_hypermodel = Model(inputs=[self.image_input, feature_input], outputs=z)
-      mlp_hypermodel.summary()
+        mlp_hypermodel = Model(inputs=[self.image_input, feature_input], outputs=z)
+        mlp_hypermodel.summary()
 
-      mlp_hypermodel.compile(
+        mlp_hypermodel.compile(
             optimizer=tf.keras.optimizers.Adam(
                 learning_rate=hp.Choice('learning_rate', values=[0.0005, 0.001, 0.01])
             ),
@@ -225,25 +330,70 @@ class BuildMLPHyperModel(HyperModel):
             metrics=['mae']
         )
 
-      return mlp_hypermodel
+        return mlp_hypermodel
+    
+    
+class ImageHyperparameterTuning(HyperParameterTuning):
+    """
+    Hyperparameter tuning specifically for image-only models.
+    """
+
+    def __init__(self, 
+                 image_shape: Tuple[int, int, int], 
+                 max_epochs: int = 20, 
+                 objective: str = 'val_accuracy', 
+                 directory: str = './tuner_logs', 
+                 project_name: str = 'CNN_Image_Only'):
+        """
+        Initialize image-only hyperparameter tuning.
+        
+        Args:
+            image_shape: Dimensions of input images
+            max_epochs: Maximum number of epochs
+            objective: Metric to optimize
+            directory: Directory for tuner logs
+            project_name: Name of the tuning project
+        """
+        self.image_shape = image_shape
+        hypermodel = ImageOnlyHyperModel(self.image_shape, num_classes=5)
+        self.tuner = Hyperband(
+            hypermodel,
+            objective=objective,
+            max_epochs=max_epochs,
+            directory=directory,
+            project_name=project_name
+        )
+    
     
 class MLPHyperparameterTuning(HyperParameterTuning):
+    """
+    Hyperparameter tuning specifically for MLP models.
+    """
 
-    def __init__(self, cnn_path, max_epochs=20, objective='val_mae', directory='/content/drive/MyDrive/Thorlabs', project_name='MLPTuner'):
-      '''
-      Parameters:
-      -------------------------------------
-      model: tf.keras.Model
-          - Model to be used for hyperparameter tuning
-      '''
-      self.cnn_model = tf.keras.models.load_model(cnn_path)
-      self.image_input = self.cnn_model.input[0]
-      self.feature_output = self.cnn_model.get_layer('dropout').output
-      hypermodel = BuildMLPHyperModel(cnn_path)
-      self.tuner = Hyperband(
-        hypermodel,
-        objective=objective,
-        max_epochs=max_epochs,
-        directory=directory,
-        project_name=project_name
-    )
+    def __init__(self, 
+                 cnn_path: str, 
+                 max_epochs: int = 20, 
+                 objective: str = 'val_mae', 
+                 directory: str = './tuner_logs', 
+                 project_name: str = 'MLPTuner'):
+        """
+        Initialize MLP hyperparameter tuning.
+        
+        Args:
+            cnn_path: Path to the pre-trained CNN model
+            max_epochs: Maximum number of epochs
+            objective: Metric to optimize
+            directory: Directory for tuner logs
+            project_name: Name of the tuning project
+        """
+        self.cnn_model = tf.keras.models.load_model(cnn_path)
+        self.image_input = self.cnn_model.input[0]
+        self.feature_output = self.cnn_model.get_layer('dropout').output
+        hypermodel = BuildMLPHyperModel(cnn_path)
+        self.tuner = Hyperband(
+            hypermodel,
+            objective=objective,
+            max_epochs=max_epochs,
+            directory=directory,
+            project_name=project_name
+        )

@@ -10,7 +10,6 @@ from tensorflow.keras.layers import GlobalAveragePooling2D
 import joblib
 
 
-
 class CustomModel:
     '''
     Class is used to define custom model using pre-trained MobileNetV2 model.
@@ -58,9 +57,9 @@ class CustomModel:
 
       # Numerical featuers section
       params_input = Input(shape=param_shape)
-      y = Dense(64, name="dense_param1", activation='relu')(params_input)
-      y = Dense(24, name="dense_param2", activation='relu')(y)
-      y = Dropout(0.5, name="dropout_2")(y) # added to remove reliance on features
+      y = Dense(24, name="dense_param1", activation='relu')(params_input)
+      y = Dense(16, name="dense_param2", activation='relu')(y)
+      y = Dropout(0.6, name="dropout_2")(y) # added to remove reliance on features
       y = BatchNormalization()(y)
       
 
@@ -72,6 +71,41 @@ class CustomModel:
 
       model = Model(inputs=[image_input, params_input], outputs=z)
       model.summary()
+      return model
+    
+    def build_image_only_model(self, image_shape):
+      '''
+      Build a model that uses only the image input (no param vector).
+      '''
+      pre_trained_model = MobileNetV2(input_shape=image_shape, include_top=False, weights="imagenet", name="mobilenet")
+      pre_trained_model.trainable = False
+
+      data_augmentation = Sequential([
+          RandomRotation(factor=(0.1)),
+          RandomBrightness(factor=(0.1)),
+          RandomZoom(height_factor=0.1, width_factor=0.1),
+          GaussianNoise(stddev=0.01),
+          RandomContrast(0.1)
+      ])
+
+      image_input = Input(shape=image_shape)
+      x = data_augmentation(image_input)
+      x = pre_trained_model(x)
+      x = GlobalAveragePooling2D(name="global_avg")(x)
+      x = Dropout(0.1, name="dropout")(x)
+      z = Dense(48, name="dense_combined", activation='relu')(x)
+      z = BatchNormalization(name="batch_norm")(z)
+      z = Dropout(0.2, name="dropout_combined")(z)
+      z = Dense(5, name="output_layer", activation='softmax')(z)
+
+      model = Model(inputs=image_input, outputs=z)
+      model.summary()
+      return model
+    
+    def compile_image_only_model(self, image_shape, learning_rate=0.001, metrics=['accuracy']):
+      model = self.build_image_only_model(image_shape)
+      optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+      model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=metrics)
       return model
 
     def compile_model(self, image_shape, param_shape, learning_rate=0.001, metrics=['accuracy'], unfreeze_from=None,):

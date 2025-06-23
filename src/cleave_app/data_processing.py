@@ -239,6 +239,9 @@ class DataCollector:
 
     return train_ds, test_ds
   
+  def image_only_dataset(self, original_dataset):
+    return original_dataset.map(lambda inputs, label: (inputs[0], label))
+  
 class MLPDataCollector(DataCollector):
 
     def __init__(self, csv_path, img_folder):

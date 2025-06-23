@@ -55,7 +55,7 @@ class Config(BaseModel):
             'train_cnn', 'train_mlp',
             'cnn_hyperparameter', 'mlp_hyperparameter',
             'test_cnn', 'test_mlp', 'train_kfold_cnn', 'train_kfold_mlp',
-            'grad_cam'
+            'grad_cam', 'train_image_only', 'image_hyperparameter'
         ]
         if value not in valid_modes:
             raise ValueError(f"{value} is not a valid mode!")
