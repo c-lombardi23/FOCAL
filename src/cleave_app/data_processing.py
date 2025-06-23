@@ -357,4 +357,4 @@ class MLPDataCollector(DataCollector):
             test_ds = test_ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
             datasets.append((train_ds, test_ds))
-        return datasets
+        return datasets, label_scaler

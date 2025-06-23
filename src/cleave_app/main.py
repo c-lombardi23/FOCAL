@@ -135,10 +135,10 @@ def train_kfold_mlp(config):
     '''
     data = MLPDataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data()
-    datasets = data.create_kfold_datasets(images, features, labels, config.buffer_size, config.batch_size)
+    datasets, scaler = data.create_kfold_datasets(images, features, labels, config.buffer_size, config.batch_size)
     k_models, kfold_histories = BuildMLPModel.train_kfold_mlp(datasets, config.model_path, config.feature_shape, config.learning_rate, history_file = config.save_history_file,
                                             model_file = config.save_model_file)
-    BuildMLPModel.get_averages_from_kfold(kfold_histories)
+    BuildMLPModel.get_averages_from_kfold(kfold_histories, scaler)
 
 def run_search_helper(config, tuner, train_ds, test_ds):
     '''

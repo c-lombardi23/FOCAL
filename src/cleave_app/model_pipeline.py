@@ -7,7 +7,7 @@ from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Concatenate, Input, Dropout, BatchNormalization
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import GlobalAveragePooling2D
-
+import joblib
 
 
 
@@ -509,9 +509,12 @@ class BuildMLPModel(CustomModel):
       return k_models, kfold_histories
     
     @staticmethod
-    def get_averages_from_kfold(kfold_histories):
+    def get_averages_from_kfold(kfold_histories, scaler):
       mae = []
       mse = []
+
+      max_tension = scaler.data_max_[0]
+      min_tension = scaler.data_min_[0]
 
       for history in kfold_histories:
         mae.append(max(history.history['mae']))
@@ -519,7 +522,11 @@ class BuildMLPModel(CustomModel):
         
       avg_mae= np.mean(mae)
       avg_mse = np.mean(mse)
-    
-      print(f"Average MAE: {avg_mae:.2f}")
-      print(f"Average MSE: {avg_mse:.2f}")
+
+      mae_val = avg_mae * (max_tension - min_tension)
+      mse_val = avg_mse * (max_tension - min_tension) ** 2
+      mse_val = np.sqrt(mse_val)
+
+      print(f"Average MAE: {mae_val:.2f}")
+      print(f"Average MSE: {mse_val:.2f}")
      
