@@ -54,7 +54,8 @@ class Config(BaseModel):
         valid_modes = [
             'train_cnn', 'train_mlp',
             'cnn_hyperparameter', 'mlp_hyperparameter',
-            'test_cnn', 'test_mlp', 'train_kfold_cnn', 'train_kfold_mlp'
+            'test_cnn', 'test_mlp', 'train_kfold_cnn', 'train_kfold_mlp',
+            'grad_cam'
         ]
         if value not in valid_modes:
             raise ValueError(f"{value} is not a valid mode!")

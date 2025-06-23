@@ -36,7 +36,8 @@ class BuildHyperModel(HyperModel):
       pre_trained_model = MobileNetV2(
             input_shape=self.image_shape,
             include_top=False,
-            weights="imagenet"
+            weights="imagenet",
+            name="mobilenet"
         )
       pre_trained_model.trainable =  False
 

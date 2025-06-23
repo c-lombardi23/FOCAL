@@ -11,6 +11,7 @@ from .data_processing import *
 from .model_pipeline import *
 from .prediction_testing import *
 from .hyperparameter_tuning import *
+from .grad_cam import gradcam_driver, compute_saliency_map
 
 import argparse
 import json
@@ -178,7 +179,7 @@ def cnn_hyperparameter(config):
     '''
     data = DataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data()
-    train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size)
+    train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size, feature_scaler_path=config.feature_scaler_path)
     if config.max_epochs == None:
         config.max_epochs = 20
     if config.unfreeze_from != None:
@@ -238,8 +239,16 @@ def test_mlp(config):
     tester = TensionPredictor(test_model, config.img_folder, config.img_path, config.label_scaler_path, config.feature_scaler_path)
     predicted_tension = tester.PredictTension(config.test_features)
     print(f"Predicted Tension: {predicted_tension:.0f}g")
- 
+import cv2
 
+def grad_cam(config):
+    #gradcam_driver(config.model_path, config.img_path, config.test_features, backbone_name="mobilenetv2_1.00_224", conv_layer_name="out_relu", heatmap_file="C:\\Users\\clombardi\\heatmap.png")
+    model = tf.keras.models.load_model(config.model_path)
+    saliency = compute_saliency_map(model, config.img_path, config.test_features)
+    cv2.imshow("Saliency Map", saliency)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    
 def choices(mode, config):
     '''
     Call function based on mode input.
@@ -268,6 +277,8 @@ def choices(mode, config):
         train_kfold_cnn(config)
     elif mode == "train_kfold_mlp":
         train_kfold_mlp(config)
+    elif mode == "grad_cam":
+        grad_cam(config)
 
 def main(args=None):
     # parse file_path entry from CLI

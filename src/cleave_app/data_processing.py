@@ -220,9 +220,12 @@ class DataCollector:
         images, features, labels, stratify=stratify_labels, test_size=test_size)
     
     scaler = MinMaxScaler()
+    self.feature_scaler = scaler
     train_features = scaler.fit_transform(train_features)
     if feature_scaler_path:
-      joblib.dump(self.feature_scaler, f'{feature_scaler_path}.pkl')
+      if not feature_scaler_path.endswith(".pkl"):
+         feature_scaler_path = feature_scaler_path + ".pkl"
+      joblib.dump(scaler, f'{feature_scaler_path}')
     test_features = scaler.transform(test_features)
     train_ds = tf.data.Dataset.from_tensor_slices(((train_imgs, train_features), train_labels))
     test_ds = tf.data.Dataset.from_tensor_slices(((test_imgs, test_features), test_labels))
@@ -242,7 +245,7 @@ class MLPDataCollector(DataCollector):
         super().__init__(csv_path, img_folder)
         
 
-    def extract_data(self, feature_scaler_path=None, tension_scaler_path=None):
+    def extract_data(self):
         '''
         Extract data from dataframe into separate lists for creating datasets.
 
@@ -286,16 +289,23 @@ class MLPDataCollector(DataCollector):
         train_imgs, test_imgs, train_features, test_features, train_labels, test_labels = train_test_split(
             images, features, labels, test_size=test_size)
         
-        scaler = MinMaxScaler()
-        train_features = scaler.fit_transform(train_features)
-        test_features = scaler.fit_transform(test_features)
-        train_labels = scaler.fit_transform(train_labels.reshape(-1,1))
-        test_labels = scaler.fit_transform(test_labels.reshape(-1,1))
+        feature_scaler = MinMaxScaler()
+        tension_scaler = MinMaxScaler()
+        self.feature_scaler = feature_scaler
+        self.label_scaler = tension_scaler
+        train_features = feature_scaler.fit_transform(train_features)
+        test_features = feature_scaler.fit_transform(test_features)
+        train_labels = tension_scaler.fit_transform(train_labels.reshape(-1,1))
+        test_labels = tension_scaler.fit_transform(test_labels.reshape(-1,1))
 
         if feature_scaler_path:
-            joblib.dump(self.feature_scaler, f'{feature_scaler_path}.pkl')
+            if not feature_scaler_path.endswith(".pkl"):
+               feature_scaler_path = feature_scaler_path + ".pkl"
+            joblib.dump(feature_scaler, f'{feature_scaler_path}.pkl')
         if tension_scaler_path:
-            joblib.dump(self.label_scaler, f'{tension_scaler_path}.pkl')
+            if not tension_scaler_path.endswith(".pkl"):
+               tension_scaler_path = tension_scaler_path + ".pkl"
+            joblib.dump(tension_scaler, f'{tension_scaler_path}.pkl')
 
         train_ds = tf.data.Dataset.from_tensor_slices(((train_imgs, train_features), train_labels))
         test_ds = tf.data.Dataset.from_tensor_slices(((test_imgs, test_features), test_labels))

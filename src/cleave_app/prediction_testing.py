@@ -161,10 +161,8 @@ class TestPredictions:
     pred_image_paths = self.df["ImagePath"].values
     pred_features = self.df[['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values
 
-    scalar = joblib.load(self.scalar_path)
-    if(scalar is None):
-       print("none")
-    pred_features = scalar.transform(pred_features)
+    scaler = joblib.load(self.scalar_path)
+    pred_features = scaler.transform(pred_features)
 
     predictions = []
     for img_path, feature_vector in zip(pred_image_paths, pred_features):

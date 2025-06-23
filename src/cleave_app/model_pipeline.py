@@ -34,7 +34,7 @@ class CustomModel:
       Returns: tf.keras.Model
         - returns model to train
       '''
-      pre_trained_model = MobileNetV2(input_shape=image_shape, include_top=False, weights="imagenet")
+      pre_trained_model = MobileNetV2(input_shape=image_shape, include_top=False, weights="imagenet", name="mobilenet")
       pre_trained_model.trainable =  unfreeze_from is not None
       if unfreeze_from is not None:
         for layer in pre_trained_model.layers[:unfreeze_from]:
@@ -53,19 +53,20 @@ class CustomModel:
       image_input = Input(shape=image_shape)
       x = data_augmentation(image_input)
       x = pre_trained_model(x)
-      x = GlobalAveragePooling2D()(x)
+      x = GlobalAveragePooling2D(name="global_avg")(x)
       x = Dropout(0.1, name="dropout")(x)
 
       # Numerical featuers section
       params_input = Input(shape=param_shape)
       y = Dense(64, name="dense_param1", activation='relu')(params_input)
       y = Dense(24, name="dense_param2", activation='relu')(y)
+      y = Dropout(0.5, name="dropout_2")(y) # added to remove reliance on features
       y = BatchNormalization()(y)
       
 
       combined = Concatenate()([x, y])
       z = Dense(48, name="dense_combined", activation='relu')(combined)
-      z = BatchNormalization()(z)
+      z = BatchNormalization(name="batch_norm")(z)
       z = Dropout(0.2, name="dropout_combined")(z)
       z = Dense(5, name="output_layer", activation='softmax')(z)
 
