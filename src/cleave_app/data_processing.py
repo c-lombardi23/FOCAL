@@ -171,8 +171,9 @@ class DataCollector:
     kf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=24)
 
     datasets = []
+    single_labels = np.argmax(labels, axis=1)
 
-    for train_index, test_index in kf.split(X=features, y=labels):
+    for train_index, test_index in kf.split(X=features, y=single_labels):
       train_imgs, test_imgs = images[train_index], images[test_index]
       train_features, test_features = features[train_index], features[test_index]
       train_labels, test_labels = labels[train_index], labels[test_index]
@@ -335,11 +336,16 @@ class MLPDataCollector(DataCollector):
         kf = KFold(n_splits=n_splits, shuffle=True, random_state=24)
 
         datasets = []
+        feature_scaler = MinMaxScaler()
+        label_scaler = MinMaxScaler()
+
+        scaled_features = feature_scaler.fit_transform(features)
+        scaled_labels = label_scaler.fit_transform(labels.reshape(-1,1))
 
         for train_index, test_index in kf.split(images):
             train_imgs, test_imgs = images[train_index], images[test_index]
-            train_features, test_features = features[train_index], features[test_index]
-            train_labels, test_labels = labels[train_index], labels[test_index]
+            train_features, test_features = scaled_features[train_index], scaled_features[test_index]
+            train_labels, test_labels = scaled_labels[train_index], scaled_labels[test_index]
 
             train_ds = tf.data.Dataset.from_tensor_slices(((train_imgs, train_features), train_labels))
             test_ds = tf.data.Dataset.from_tensor_slices(((test_imgs, test_features), test_labels))
@@ -351,3 +357,4 @@ class MLPDataCollector(DataCollector):
             test_ds = test_ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
             datasets.append((train_ds, test_ds))
+        return datasets

@@ -260,7 +260,7 @@ class CustomModel:
       return history
     
     @staticmethod
-    def train_kfold( datasets, image_shape, param_shape, learning_rate, metrics = ['accuracy', 'precision', 'recall'], checkpoints=None, epochs=5, initial_epoch=0, early_stopping=None, history_file=None, model_file=None):
+    def train_kfold(datasets, image_shape, param_shape, learning_rate, metrics = ['accuracy', 'precision', 'recall'], checkpoints=None, epochs=5, initial_epoch=0, early_stopping=None, history_file=None, model_file=None):
       kfold_histories = []
       k_models = []
       train_datasets = [i[0] for i in datasets]
@@ -369,19 +369,16 @@ class BuildMLPModel(CustomModel):
         x = Dense(64, name="first_dense_layer", activation='relu')(self.feature_output)
         x = Dense(32, name="second_dense_layer", activation='relu')(x)
         feature_input = Input(shape=param_shape, name='feature_input')  # Features
-        #angle_input = Input(shape=(1,), name='angle_input')  # New input
         y = Dense(16, name="third_dense_layer", activation='relu')(feature_input)
-        #y = Dense(16, activation='relu')(angle_input
 
         combined = Concatenate()([x, y])
         z = Dense(64, activation='relu')(combined)
         output = Dense(1, name='tension_output')(z)
-        # Use angle input for 250LA
         regression_model = Model(inputs=[self.image_input, feature_input], outputs=output)
         regression_model.summary()
         return regression_model
     
-    def compile_model(self, param_shape, learning_rate=0.001):
+    def compile_model(self, param_shape, learning_rate=0.001, metrics=['mae']):
       '''
       Compile model after calling build_model function
 
@@ -403,7 +400,7 @@ class BuildMLPModel(CustomModel):
       # Loss functions is mean squared error for regression
       model = self.build_pretrained_model(param_shape)
       optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-      model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
+      model.compile(optimizer=optimizer, loss='mse', metrics=metrics)
       return model
     
     def create_early_stopping(self, patience=3, mode='min', monitor="val_mae"):
@@ -467,3 +464,62 @@ class BuildMLPModel(CustomModel):
         verbose=1
       )
       return model_checkpoint_callback
+    
+    @staticmethod
+    def train_kfold_mlp(datasets, cnn_model_path, param_shape, learning_rate, checkpoints=None, epochs=5, initial_epoch=0, early_stopping=None, history_file=None, model_file=None):
+      kfold_histories = []
+      k_models = []
+      train_datasets = [i[0] for i in datasets]
+      test_datasets = [i[1] for i in datasets]
+
+      callbacks=[]
+
+      if early_stopping:
+        callbacks.append(early_stopping)
+      if checkpoints:
+        callbacks.append(checkpoints)
+
+      for fold, (train_ds, test_ds) in enumerate(zip(train_datasets, test_datasets)):
+        print(f"\n=== Training fold {fold + 1} ===")
+
+        custom_model = BuildMLPModel(cnn_model_path, train_ds, test_ds)
+        model = custom_model.compile_model(param_shape=param_shape, learning_rate=learning_rate, metrics=['mae', 'mse'])
+
+        if callbacks:
+          history = model.fit(train_ds, epochs=epochs, initial_epoch=initial_epoch,
+                    validation_data=(test_ds), callbacks=callbacks)
+        else:
+          print("Training without callbacks")
+          history = model.fit(train_ds, epochs=epochs, initial_epoch=initial_epoch,
+                    validation_data=(test_ds))
+          
+        kfold_histories.append(history)
+        k_models.append(model)
+          
+        if history_file:
+          df = pd.DataFrame(history.history)
+          df.to_csv(f"{history_file}_fold{fold+1}.csv", index=False)
+        else:
+          print("History not saved")
+        if model_file:
+          model.save(f'{model_file}_fold{fold+1}.keras')
+        else:
+         print("Model not saved")
+
+      return k_models, kfold_histories
+    
+    @staticmethod
+    def get_averages_from_kfold(kfold_histories):
+      mae = []
+      mse = []
+
+      for history in kfold_histories:
+        mae.append(max(history.history['mae']))
+        mse.append(max(history.history['mse']))
+        
+      avg_mae= np.mean(mae)
+      avg_mse = np.mean(mse)
+    
+      print(f"Average MAE: {avg_mae:.2f}")
+      print(f"Average MSE: {avg_mse:.2f}")
+     

@@ -116,7 +116,7 @@ def train_kfold_cnn(config):
         - parsed file contents
     '''
     data = DataCollector(config.csv_path, config.img_folder)
-    images, features, labels = data.extract_data(config.feature_scaler_path)
+    images, features, labels = data.extract_data()
     datasets = data.create_kfold_datasets(images, features, labels, config.buffer_size, config.batch_size)
     k_models, kfold_histories = CustomModel.train_kfold(datasets, config.image_shape, config.feature_shape, config.learning_rate, history_file = config.save_history_file,
                                             model_file = config.save_model_file)
@@ -134,12 +134,11 @@ def train_kfold_mlp(config):
         - parsed file contents
     '''
     data = MLPDataCollector(config.csv_path, config.img_folder)
-    images, features, labels = data.extract_data(config.feature_scaler_path)
+    images, features, labels = data.extract_data()
     datasets = data.create_kfold_datasets(images, features, labels, config.buffer_size, config.batch_size)
-    k_models, kfold_histories = CustomModel.train_kfold(datasets, config.image_shape, config.feature_shape, config.learning_rate, metrics=['mae'], history_file = config.save_history_file,
+    k_models, kfold_histories = BuildMLPModel.train_kfold_mlp(datasets, config.model_path, config.feature_shape, config.learning_rate, history_file = config.save_history_file,
                                             model_file = config.save_model_file)
-    CustomModel.get_averages_from_kfold(kfold_histories)
-
+    BuildMLPModel.get_averages_from_kfold(kfold_histories)
 
 def run_search_helper(config, tuner, train_ds, test_ds):
     '''
