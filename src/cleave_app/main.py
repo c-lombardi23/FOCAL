@@ -2,6 +2,7 @@ from .config_schema import Config
 import warnings
 import os
 
+# ignore warnings from tensorflow
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 warnings.filterwarnings('ignore')
 
@@ -16,11 +17,34 @@ import json
 
 
 def load_file(filepath):
+    '''
+    Load a json file from path and calls Config function
+    to parse data.
+
+    Parameters:
+    ----------------------------------
+
+    filepath: str
+        - path to json file
+    
+    Returns: Config.BaseModel
+        - Parsed file contents
+    '''
     with open(filepath, 'r') as f:
         data = json.load(f)
     return Config(**data)
 
 def train_cnn(config):
+    '''
+    Logic for training CNN model from model_pipeline.
+
+    Parameters:
+    --------------------------------------
+
+    config: Config.BaseModel
+        - parsed file contents
+    
+    '''
     data = DataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data()
     train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size)
@@ -53,6 +77,15 @@ def train_cnn(config):
 
 
 def train_mlp(config):
+    '''
+    Logic for training regression model. 
+
+    Parameters:
+    ----------------------------------
+
+    config: Config.BaseModel
+        - parsed file contents
+    '''
     data = MLPDataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data()
     train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size, feature_scaler_path=config.feature_scaler_path, tension_scaler_path=config.label_scaler_path)
@@ -73,6 +106,15 @@ def train_mlp(config):
     trainable_model.plot_metric("MAE vs. Val MAE", history.history['mae'], history.history['val_mae'], 'mae', 'val_mae', 'epochs', 'mae')
 
 def train_kfold_cnn(config):
+    '''
+    Logic for training CNN model using k-fold cross validation.
+
+    Parameters:
+    -----------------------------
+
+    config: Config.BaseModel
+        - parsed file contents
+    '''
     data = DataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data(config.feature_scaler_path)
     datasets = data.create_kfold_datasets(images, features, labels, config.buffer_size, config.batch_size)
@@ -82,6 +124,15 @@ def train_kfold_cnn(config):
 
 
 def train_kfold_mlp(config):
+    '''
+    Logic for training regression model using k-fold cross validation
+
+    Parameters:
+    --------------------------------------
+
+    config: Config.BaseModel
+        - parsed file contents
+    '''
     data = MLPDataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data(config.feature_scaler_path)
     datasets = data.create_kfold_datasets(images, features, labels, config.buffer_size, config.batch_size)
@@ -91,6 +142,21 @@ def train_kfold_mlp(config):
 
 
 def run_search_helper(config, tuner, train_ds, test_ds):
+    '''
+    Helper function for running search in keras tuner.
+
+    Parameters:
+    ----------------------------------------
+
+    config: Config.BaseModel
+        - parsed file contents
+    tuner: keras_tuner.Tuner
+        - instance of tuner class of Keras models
+    train_ds: tf.data.Dataset
+        - dataset of training elements
+    test_ds: tf.data.Dataset
+        - dataset of testing elements
+    '''
     tuner.run_search(train_ds, test_ds)
     print(tuner.get_best_hyperparameters().values)
     pathname = config.best_model_path
@@ -102,6 +168,15 @@ def run_search_helper(config, tuner, train_ds, test_ds):
         print(f"Model saved to: {pathname}")
 
 def cnn_hyperparameter(config):
+    '''
+    Logic for performing hyperparameter search on CNN model.
+
+    Parameters:
+    -------------------------------------------
+
+    config: Config.BaseModel
+        - parsed file contents
+    '''
     data = DataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data()
     train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size)
@@ -116,6 +191,15 @@ def cnn_hyperparameter(config):
         tuner.save_best_model(config.tuner_path)
   
 def mlp_hyperparameter(config):
+    '''
+    Logic for performing hyperparameter search on regression model.
+
+    Parameters:
+    ------------------------------------------
+
+    config: Config.BaseModel
+        - parsed file contents
+    '''
     data = MLPDataCollector(config.csv_path, config.img_folder)
     images, features, labels = data.extract_data(config.feature_scaler_path)
     train_ds, test_ds = data.create_datasets(images, features, labels, config.test_size, config.buffer_size, config.batch_size)
@@ -127,12 +211,30 @@ def mlp_hyperparameter(config):
         tuner.save_best_model(config.tuner_path)
 
 def test_cnn(config):
+    '''
+    Logic for testing CNN model.
+
+    Parameters:
+    ------------------------------------------
+
+    config: Config.BaseModel
+        - parsed file contents
+    '''
     tester = TestPredictions(config.model_path, config.csv_path, config.feature_scaler_path, config.img_folder)
     true_labels, pred_labels, predictions = tester.gather_predictions()
     tester.display_confusion_matrix(true_labels, pred_labels)
     tester.display_classification_report(true_labels, pred_labels, config.classification_path)
 
 def test_mlp(config):
+    '''
+    Logic for testing regression model.
+
+    Parameters:
+    ------------------------------------------
+
+    config: Config.BaseModel
+        - parsed file contents
+    '''
     test_model = tf.keras.models.load_model(config.model_path)
     tester = TensionPredictor(test_model, config.img_folder, config.img_path, config.label_scaler_path, config.feature_scaler_path)
     predicted_tension = tester.PredictTension(config.test_features)
@@ -140,6 +242,17 @@ def test_mlp(config):
  
 
 def choices(mode, config):
+    '''
+    Call function based on mode input.
+
+    Parameters: 
+    ------------------------------------------------
+
+    mode: str
+        - training or testing mode to call
+    config: Config.BaseModel
+        - parsed file contents 
+    '''
     if mode == "train_cnn":
         train_cnn(config)
     elif mode == "train_mlp":
@@ -158,13 +271,16 @@ def choices(mode, config):
         train_kfold_mlp(config)
 
 def main(args=None):
+    # parse file_path entry from CLI
     parser = argparse.ArgumentParser(description="Train Model from command line")
     parser.add_argument("--file_path", required=True)
     parsed_args = parser.parse_args(args)
 
+    # extract file path
     filepath = parsed_args.file_path
     config = load_file(filepath)
     mode = config.mode
+    # call choices function
     choices(mode, config)
 
 
