@@ -13,7 +13,6 @@ import os
 import warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 warnings.filterwarnings('ignore')
-from .config_schema import Config
 from .data_processing import DataCollector, MLPDataCollector
 from .model_pipeline import CustomModel, BuildMLPModel
 from .hyperparameter_tuning import (

@@ -22,7 +22,9 @@ try:
         RandomContrast, GaussianNoise, BatchNormalization
     )
     from keras_tuner import HyperModel, Hyperband
-    from keras.applications import MobileNetV2
+    from tensorflow.keras.regularizers import l2
+    from keras.applications import MobileNetV2, ResNet50, EfficientNetB0
+    from .data_processing import DataCollector
 except ImportError as e:
     print(f"Warning: Required ML libraries not found: {e}")
     print("Please install tensorflow>=2.19.0 and keras-tuner>=1.4.7")
@@ -39,7 +41,8 @@ class BuildHyperModel(HyperModel):
     with numerical parameters for fiber cleave classification.
     """
     
-    def __init__(self, image_shape: Tuple[int, int, int], param_shape: Tuple[int, ...]):
+    def __init__(self, image_shape: Tuple[int, int, int], param_shape: Tuple[int, ...],
+                 backbone: Optional[str] = "mobilenet"):
         """
         Initialize the hypermodel builder.
         
@@ -52,6 +55,7 @@ class BuildHyperModel(HyperModel):
             
         self.image_shape = image_shape
         self.param_shape = param_shape
+        self.backbone = backbone
 
     def build(self, hp):
         """
@@ -65,12 +69,27 @@ class BuildHyperModel(HyperModel):
             tf.keras.Model: Compiled model with hyperparameters
         """
         # Pre-trained base model
-        pre_trained_model = MobileNetV2(
-            input_shape=self.image_shape,
-            include_top=False,
-            weights="imagenet",
-            name="mobilenet"
-        )
+        if self.backbone == "mobilenet":
+          pre_trained_model = MobileNetV2(
+              input_shape=self.image_shape,
+              include_top=False,
+              weights="imagenet",
+              name="mobilenet"
+          )
+        elif self.backbone == "resnet":
+            pre_trained_model = ResNet50(
+              input_shape=self.image_shape,
+              include_top=False,
+              weights="imagenet",
+              name="mobilenet"
+          )
+        elif self.backbone == "efficientnet":
+            pre_trained_model = EfficientNetB0(
+              input_shape=self.image_shape,
+              include_top=False,
+              weights="imagenet",
+              name="efficientnetb0"
+          )
         pre_trained_model.trainable = False
 
         # Data augmentation pipeline
@@ -132,7 +151,8 @@ class HyperParameterTuning:
                  max_epochs: int = 20, 
                  objective: str = 'val_accuracy', 
                  directory: str = './tuner_logs', 
-                 project_name: str = 'Cleave_Tuner'):
+                 project_name: str = 'Cleave_Tuner',
+                 backbone: Optional[str] = "mobilenet"):
         """
         Initialize the hyperparameter tuner.
         
@@ -149,7 +169,8 @@ class HyperParameterTuning:
             
         self.image_shape = image_shape
         self.feature_shape = feature_shape
-        hypermodel = BuildHyperModel(self.image_shape, self.feature_shape)
+        self.backbone = backbone
+        hypermodel = BuildHyperModel(self.image_shape, self.feature_shape, self.backbone)
         self.tuner = Hyperband(
             hypermodel,
             objective=objective,
@@ -176,7 +197,7 @@ class HyperParameterTuning:
             pathname: Path where to save the model
         """
         best_model = self.get_best_model()
-        best_model.save(f"{pathname}.keras")
+        best_model.save(f"{pathname}")
 
     def get_best_model(self):
         """
@@ -203,7 +224,7 @@ class ImageOnlyHyperModel(HyperModel):
     HyperModel for image-only classification (no numerical parameters).
     """
     
-    def __init__(self, image_shape: Tuple[int, int, int], num_classes: int = 5):
+    def __init__(self, image_shape: Tuple[int, int, int], num_classes: int = 5, backbone: Optional[str] = "mobilenet"):
         """
         Initialize the image-only hypermodel.
         
@@ -216,6 +237,7 @@ class ImageOnlyHyperModel(HyperModel):
             
         self.image_shape = image_shape
         self.num_classes = num_classes
+        self.backbone = backbone
 
     def build(self, hp):
         """
@@ -227,12 +249,28 @@ class ImageOnlyHyperModel(HyperModel):
         Returns:
             tf.keras.Model: Compiled model
         """
-        pre_trained_model = MobileNetV2(
-            input_shape=self.image_shape,
-            include_top=False,
-            weights="imagenet",
-            name="mobilenet"
-        )
+        if self.backbone == "mobilenet":
+          pre_trained_model = MobileNetV2(
+              input_shape=self.image_shape,
+              include_top=False,
+              weights="imagenet",
+              name="mobilenet"
+          )
+        elif self.backbone == "resnet":
+            pre_trained_model = ResNet50(
+              input_shape=self.image_shape,
+              include_top=False,
+              weights="imagenet",
+              name="mobilenet"
+          )
+        elif self.backbone == "efficientnet":
+            pre_trained_model = EfficientNetB0(
+              input_shape=self.image_shape,
+              include_top=False,
+              weights="imagenet",
+              name="efficientnetb0"
+          )
+            
         pre_trained_model.trainable = False  
 
         # Data augmentation
@@ -249,9 +287,10 @@ class ImageOnlyHyperModel(HyperModel):
         x = GlobalAveragePooling2D()(x)
         x = Dropout(hp.Float('dropout', 0.1, 0.3, step=0.1))(x)
 
+        l2_factor = hp.Choice('l2_factor', [0.001, 0.0001, 0.0])
         x = Dense(
-            hp.Int('dense1', min_value=32, max_value=128, step=32),
-            activation='relu')(x)
+            hp.Int('dense1', min_value=64, max_value=256, step=32),
+            activation='relu', kernel_regularizer=l2(l2_factor))(x)
         x = Dropout(hp.Float('dropout_2', 0.1, 0.4, step=0.1))(x)
 
         output = Dense(self.num_classes, activation='softmax')(x)
@@ -343,7 +382,8 @@ class ImageHyperparameterTuning(HyperParameterTuning):
                  max_epochs: int = 20, 
                  objective: str = 'val_accuracy', 
                  directory: str = './tuner_logs', 
-                 project_name: str = 'CNN_Image_Only'):
+                 project_name: str = 'CNN_Image_Only',
+                 backbone: Optional[str] = "mobilenet"):
         """
         Initialize image-only hyperparameter tuning.
         
@@ -355,7 +395,7 @@ class ImageHyperparameterTuning(HyperParameterTuning):
             project_name: Name of the tuning project
         """
         self.image_shape = image_shape
-        hypermodel = ImageOnlyHyperModel(self.image_shape, num_classes=5)
+        hypermodel = ImageOnlyHyperModel(self.image_shape, num_classes=5, backbone=backbone)
         self.tuner = Hyperband(
             hypermodel,
             objective=objective,

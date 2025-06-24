@@ -14,6 +14,7 @@ A machine learning package for fiber cleave quality classification and tension p
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
 - [Usage Examples](#usage-examples)
+- [Tips for Better Accuracy](#tips-for-better-accuracy)
 - [Tech Stack](#tech-stack)
 - [Contributing](#contributing)
 - [License](#license)
@@ -87,10 +88,15 @@ cleave-app --help
 
 ## ⚙️ Configuration
 
-The application uses a JSON configuration file to specify all parameters. Here's an example:
+The application uses a JSON configuration file to specify all parameters. **Each mode uses a dedicated config class with its own required and optional fields.** The CLI automatically loads the correct config class for the selected mode.
+
+> **Note:** Not all parameters are required for every mode. Refer to the mode-specific config class for required/optional fields. The system will validate your config and provide clear errors if required fields are missing.
+
+### Example: `train_cnn` Configuration
 
 ```json
 {
+  "mode": "train_cnn",
   "csv_path": "data/cleave_metadata.csv",
   "img_folder": "data/images/",
   "feature_scaler_path": "models/feature_scaler.pkl",
@@ -100,7 +106,6 @@ The application uses a JSON configuration file to specify all parameters. Here's
   "test_size": 0.2,
   "buffer_size": 32,
   "batch_size": 8,
-  "mode": "train_cnn",
   "learning_rate": 0.001,
   "model_path": "models/cleave_classifier.keras",
   "max_epochs": 50,
@@ -109,25 +114,28 @@ The application uses a JSON configuration file to specify all parameters. Here's
 }
 ```
 
+### Example: `test_mlp` Configuration
+
+```json
+{
+  "mode": "test_mlp",
+  "csv_path": "data/cleave_metadata.csv",
+  "img_folder": "data/images/",
+  "feature_scaler_path": "models/feature_scaler.pkl",
+  "label_scaler_path": "models/label_scaler.pkl",
+  "image_shape": [224, 224, 3],
+  "feature_shape": [5],
+  "model_path": "models/mlp_model.keras",
+  "img_path": "data/images/sample.png",
+  "test_features": [0.1, 0.2, 0.3, 0.4, 0.5]
+}
+```
+
 ### Configuration Parameters
 
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `csv_path` | string | Path to CSV file with cleave metadata | Required |
-| `img_folder` | string | Directory containing cleave images | Required |
-| `feature_scaler_path` | string | Path to feature scaler (optional) | None |
-| `label_scaler_path` | string | Path to label scaler (optional) | None |
-| `image_shape` | list | Input image dimensions `[height, width, channels]` | `[224, 224, 3]` |
-| `feature_shape` | list | Numerical feature dimensions | `[6]` for CNN, `[5]` for MLP |
-| `test_size` | float | Fraction of data for testing | `0.2` |
-| `buffer_size` | int | Buffer size for dataset shuffling | `32` |
-| `batch_size` | int | Training batch size | `8` |
-| `mode` | string | Operation mode (see modes below) | Required |
-| `learning_rate` | float | Learning rate for optimization | `0.001` |
-| `model_path` | string | Path to save/load model | Required |
-| `max_epochs` | int | Maximum training epochs | `20` |
-| `early_stopping` | string | Enable early stopping (`"y"`/`"n"`) | `"n"` |
-| `patience` | int | Early stopping patience | `3` |
+- **`mode`**: Operation mode (see table below)
+- **Other fields**: See the mode-specific config class in `src/cleave_app/config_schema.py` for required/optional fields for each mode.
+- **Validation**: The CLI will validate your config and provide clear errors if required fields are missing or invalid for the selected mode.
 
 ### Available Modes
 
@@ -144,6 +152,8 @@ The application uses a JSON configuration file to specify all parameters. Here's
 | `train_kfold_cnn` | Train CNN with k-fold cross validation |
 | `train_kfold_mlp` | Train MLP with k-fold cross validation |
 | `grad_cam` | Generate GradCAM visualizations |
+
+> **Extensibility:** To add a new mode, simply add a new config class in `config_schema.py` and update the mode-to-config mapping.
 
 ## 📖 Usage Examples
 
@@ -181,6 +191,60 @@ cleave-app --file_path config_test_mlp.json
 cleave-app --file_path config_kfold.json
 ```
 
+## 🧠 Tips for Better Accuracy
+
+If your image-only model is not achieving the desired accuracy, consider the following strategies:
+
+- **Fine-tune the Pretrained Backbone:** Unfreeze the last 10–20 layers of MobileNetV2 and continue training with a low learning rate.
+- **Increase Model Capacity:** Add more dense layers or increase the number of units after the global average pooling layer.
+- **Tune Data Augmentation:** Use more aggressive or varied augmentations (e.g., `RandomFlip`, higher `RandomBrightness`/`RandomContrast`).
+- **Regularization:** Add or increase dropout, or use L2 regularization on dense layers.
+- **Learning Rate Scheduling:** Use a learning rate scheduler or `ReduceLROnPlateau` callback.
+- **Handle Class Imbalance:** Use class weights or oversample minority classes if your dataset is imbalanced.
+- **Hyperparameter Tuning:** Use Keras Tuner to search for the best architecture and training parameters.
+- **Image Preprocessing:** Ensure images are normalized to the range expected by the backbone (usually [0, 1] or [-1, 1]).
+- **Train Longer with Early Stopping:** Allow more epochs and use early stopping to avoid underfitting.
+
+### Example: Improved Image-Only Model Architecture
+
+```python
+pre_trained_model = MobileNetV2(
+    input_shape=image_shape, 
+    include_top=False, 
+    weights="imagenet", 
+    name="mobilenet"
+)
+pre_trained_model.trainable = True
+for layer in pre_trained_model.layers[:-20]:
+    layer.trainable = False
+
+data_augmentation = Sequential([
+    RandomRotation(factor=0.15),
+    RandomBrightness(factor=0.2),
+    RandomZoom(height_factor=0.15, width_factor=0.15),
+    RandomContrast(0.2),
+    RandomFlip("horizontal_and_vertical"),
+    GaussianNoise(stddev=0.02)
+])
+
+image_input = Input(shape=image_shape)
+x = data_augmentation(image_input)
+x = pre_trained_model(x)
+x = GlobalAveragePooling2D()(x)
+x = Dropout(0.2)(x)
+x = Dense(128, activation='relu', kernel_regularizer=l2(1e-4))(x)
+x = BatchNormalization()(x)
+x = Dropout(0.3)(x)
+x = Dense(48, activation='relu', kernel_regularizer=l2(1e-4))(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+z = Dense(5, activation='softmax')(x)
+
+model = Model(inputs=image_input, outputs=z)
+```
+
+For more details, see the [Configuration](#configuration) and [Usage Examples](#usage-examples) sections above.
+
 ## 🏗️ Tech Stack
 
 - **Deep Learning**: TensorFlow 2.19+, Keras
@@ -188,7 +252,7 @@ cleave-app --file_path config_kfold.json
 - **Data Processing**: NumPy, Pandas, scikit-learn
 - **Image Processing**: OpenCV, Pillow
 - **Visualization**: Matplotlib
-- **Configuration**: Pydantic
+- **Configuration**: Pydantic (mode-specific config classes)
 - **CLI**: Typer, Click
 - **Testing**: pytest
 
@@ -200,7 +264,7 @@ ImageProcessingClone/
 │   └── cleave_app/
 │       ├── __init__.py
 │       ├── main.py                 # CLI entry point
-│       ├── config_schema.py        # Configuration validation
+│       ├── config_schema.py        # Configuration validation (mode-specific)
 │       ├── data_processing.py      # Data loading and preprocessing
 │       ├── model_pipeline.py       # Model building and training
 │       ├── hyperparameter_tuning.py # Hyperparameter optimization

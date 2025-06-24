@@ -8,7 +8,6 @@ CNN and MLP models for fiber cleave quality classification and tension predictio
 import warnings
 import os
 import argparse
-import json
 from typing import Optional
 
 # Suppress TensorFlow warnings
@@ -16,7 +15,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 warnings.filterwarnings('ignore')
 
 # Import application modules
-from .config_schema import Config
+from .config_schema import load_config 
 from .data_processing import DataCollector, MLPDataCollector
 from .model_pipeline import CustomModel, BuildMLPModel
 from .prediction_testing import TestPredictions, TensionPredictor
@@ -26,6 +25,7 @@ from .hyperparameter_tuning import (
     MLPHyperparameterTuning
 )
 from .grad_cam import gradcam_driver, compute_saliency_map
+import pandas as pd
 
 try:
     import tensorflow as tf
@@ -34,34 +34,7 @@ except ImportError:
     tf = None
 
 
-def load_file(filepath: str) -> Config:
-    """
-    Load a JSON configuration file and parse it using the Config schema.
-
-    Args:
-        filepath: Path to the JSON configuration file
-    
-    Returns:
-        Config: Parsed configuration object
-        
-    Raises:
-        FileNotFoundError: If the configuration file doesn't exist
-        json.JSONDecodeError: If the JSON file is malformed
-        ValueError: If the configuration validation fails
-    """
-    try:
-        with open(filepath, 'r') as f:
-            data = json.load(f)
-        return Config(**data)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Configuration file not found: {filepath}")
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in configuration file: {e}")
-    except Exception as e:
-        raise ValueError(f"Configuration validation failed: {e}")
-
-
-def train_cnn(config: Config) -> None:
+def train_cnn(config) -> None:
     """
     Train a CNN model for fiber cleave classification.
 
@@ -72,7 +45,7 @@ def train_cnn(config: Config) -> None:
         raise ImportError("TensorFlow is required for CNN training")
         
     try:
-        data = DataCollector(config.csv_path, config.img_folder)
+        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone)
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images, features, labels, 
@@ -121,7 +94,7 @@ def train_cnn(config: Config) -> None:
             reduce_lr=reduce_lr if config.reduce_lr is not None else None,
             checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
             history_file=config.save_history_file,
-            model_file=config.save_model_file
+            save_model_file=config.save_model_file
         )
         
         # Plot training metrics
@@ -141,7 +114,7 @@ def train_cnn(config: Config) -> None:
         raise
 
 
-def train_mlp(config: Config) -> None:
+def train_mlp(config) -> None:
     """
     Train an MLP model for tension prediction.
 
@@ -187,7 +160,7 @@ def train_mlp(config: Config) -> None:
             reduce_lr=config.reduce_lr,
             checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
             history_file=config.save_history_file,
-            model_file=config.save_model_file
+            save_model_file=config.save_model_file
         )
         
         # Plot training metrics
@@ -207,7 +180,7 @@ def train_mlp(config: Config) -> None:
         raise
 
 
-def train_kfold_cnn(config: Config) -> None:
+def train_kfold_cnn(config) -> None:
     """
     Train CNN model using k-fold cross validation.
 
@@ -215,7 +188,7 @@ def train_kfold_cnn(config: Config) -> None:
         config: Configuration object containing training parameters
     """
     try:
-        data = DataCollector(config.csv_path, config.img_folder)
+        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone)
         images, features, labels = data.extract_data()
         datasets = data.create_kfold_datasets(
             images, features, labels, 
@@ -225,7 +198,7 @@ def train_kfold_cnn(config: Config) -> None:
         k_models, kfold_histories = CustomModel.train_kfold(
             datasets, config.image_shape, config.feature_shape, 
             config.learning_rate or 0.001, history_file=config.save_history_file,
-            model_file=config.save_model_file
+            save_model_file=config.save_model_file
         )
         
         CustomModel.get_averages_from_kfold(kfold_histories)
@@ -235,7 +208,7 @@ def train_kfold_cnn(config: Config) -> None:
         raise
 
 
-def train_kfold_mlp(config: Config) -> None:
+def train_kfold_mlp(config) -> None:
     """
     Train MLP model using k-fold cross validation.
 
@@ -243,7 +216,7 @@ def train_kfold_mlp(config: Config) -> None:
         config: Configuration object containing training parameters
     """
     try:
-        data = MLPDataCollector(config.csv_path, config.img_folder)
+        data = MLPDataCollector(config.csv_path, config.img_folder, backbone=config.backbone)
         images, features, labels = data.extract_data()
         datasets, scaler = data.create_kfold_datasets(
             images, features, labels, 
@@ -253,7 +226,7 @@ def train_kfold_mlp(config: Config) -> None:
         k_models, kfold_histories = BuildMLPModel.train_kfold_mlp(
             datasets, config.model_path, config.feature_shape, 
             config.learning_rate or 0.001, history_file=config.save_history_file,
-            model_file=config.save_model_file
+            save_model_file=config.save_model_file
         )
         
         BuildMLPModel.get_averages_from_kfold(kfold_histories, scaler)
@@ -263,7 +236,7 @@ def train_kfold_mlp(config: Config) -> None:
         raise
 
 
-def run_search_helper(config: Config, tuner, train_ds, test_ds) -> None:
+def run_search_helper(config, tuner, train_ds, test_ds, best_params_path=None) -> None:
     """
     Helper function for running hyperparameter search.
 
@@ -275,12 +248,19 @@ def run_search_helper(config: Config, tuner, train_ds, test_ds) -> None:
     """
     try:
         tuner.run_search(train_ds, test_ds)
-        print("Best hyperparameters:", tuner.get_best_hyperparameters().values)
-        
-        pathname = config.best_model_path
+        best_hp = tuner.get_best_hyperparameters().values
+        print("Best hyperparameters:", best_hp)
+        if best_params_path != None:
+            pd.DataFrame([best_hp]).to_csv(f"{best_params_path}")
+        else:
+            print("Best hyperparameters not saved")
+
+        pathname = config.save_model_file
         if pathname is None:
             print("Model not saved - no path specified")
         else:
+            if not pathname.endswith(".keras"):
+                pathname = pathname + ".keras"
             tuner.save_best_model(pathname)
             print(f"Model saved to: {pathname}")
             
@@ -289,7 +269,7 @@ def run_search_helper(config: Config, tuner, train_ds, test_ds) -> None:
         raise
 
 
-def cnn_hyperparameter(config: Config) -> None:
+def cnn_hyperparameter(config) -> None:
     """
     Perform hyperparameter search for CNN model.
 
@@ -297,7 +277,7 @@ def cnn_hyperparameter(config: Config) -> None:
         config: Configuration object containing training parameters
     """
     try:
-        data = DataCollector(config.csv_path, config.img_folder)
+        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone)
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images, features, labels, 
@@ -311,26 +291,23 @@ def cnn_hyperparameter(config: Config) -> None:
             tuner = HyperParameterTuning(
                 config.image_shape, config.feature_shape, 
                 max_epochs=max_epochs, project_name=config.project_name,
-                directory=config.tuner_directory, unfreeze_from=config.unfreeze_from
+                directory=config.tuner_directory, unfreeze_from=config.unfreeze_from, backbone=config.backbone
             )
         else:
             tuner = HyperParameterTuning(
                 config.image_shape, config.feature_shape, 
                 max_epochs=max_epochs, project_name=config.project_name,
-                directory=config.tuner_directory
+                directory=config.tuner_directory, backbone=config.backbone
             )
         
         run_search_helper(config, tuner, train_ds, test_ds)
-        
-        if config.tuner_path is not None:
-            tuner.save_best_model(config.tuner_path)
             
     except Exception as e:
         print(f"Error during CNN hyperparameter tuning: {e}")
         raise
 
 
-def mlp_hyperparameter(config: Config) -> None:
+def mlp_hyperparameter(config) -> None:
     """
     Perform hyperparameter search for MLP model.
 
@@ -354,16 +331,13 @@ def mlp_hyperparameter(config: Config) -> None:
         )
         
         run_search_helper(config, tuner, train_ds, test_ds)
-        
-        if config.tuner_path is not None:
-            tuner.save_best_model(config.tuner_path)
             
     except Exception as e:
         print(f"Error during MLP hyperparameter tuning: {e}")
         raise
 
 
-def test_cnn(config: Config) -> None:
+def test_cnn(config) -> None:
     """
     Test CNN model performance.
 
@@ -373,7 +347,7 @@ def test_cnn(config: Config) -> None:
     try:
         tester = TestPredictions(
             config.model_path, config.csv_path, 
-            config.feature_scaler_path, config.img_folder
+            config.feature_scaler_path, config.img_folder, backbone=config.backbone 
         )
         true_labels, pred_labels, predictions = tester.gather_predictions()
         
@@ -390,7 +364,7 @@ def test_cnn(config: Config) -> None:
         raise
 
 
-def test_mlp(config: Config) -> None:
+def test_mlp(config) -> None:
     """
     Test MLP model performance.
 
@@ -414,7 +388,7 @@ def test_mlp(config: Config) -> None:
         raise
 
 
-def grad_cam(config: Config) -> None:
+def grad_cam(config) -> None:
     """
     Generate GradCAM visualization.
 
@@ -437,7 +411,7 @@ def grad_cam(config: Config) -> None:
         raise
 
 
-def image_only(config: Config) -> None:
+def image_only(config) -> None:
     """
     Train image-only model (no parameter features).
 
@@ -448,7 +422,7 @@ def image_only(config: Config) -> None:
         raise ImportError("TensorFlow is required for image-only training")
         
     try:
-        data = DataCollector(config.csv_path, config.img_folder)
+        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone)
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images, features, labels, 
@@ -461,7 +435,8 @@ def image_only(config: Config) -> None:
         
         trainable_model = CustomModel(train_ds, test_ds)
         compiled_model = trainable_model.compile_image_only_model(
-            config.image_shape, config.learning_rate or 0.001
+            config.image_shape, config.learning_rate or 0.001, backbone=config.backbone, dropout1_rate=config.dropout1_rate,
+            dense_units=config.dense_units, dropout2_rate=config.dropout2_rate, l2_factor=config.l2_factor
         )
         
         # Setup callbacks
@@ -486,7 +461,7 @@ def image_only(config: Config) -> None:
             early_stopping=es if config.early_stopping == "y" and config.patience and config.monitor and config.method else None,
             checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
             history_file=config.save_history_file,
-            model_file=config.save_model_file
+            save_model_file=config.save_model_file
         )
         
         # Plot training metrics
@@ -505,8 +480,34 @@ def image_only(config: Config) -> None:
         print(f"Error during image-only training: {e}")
         raise
 
+def test_image_only(config) -> None:
+    """
+    Test CNN model performance on only images.
 
-def image_hyperparameter(config: Config) -> None:
+    Args:
+        config: Configuration object containing test parameters
+    """
+    try:
+        tester = TestPredictions(
+            config.model_path, config.csv_path, 
+            config.feature_scaler_path, config.img_folder, image_only=True, backbone=config.backbone
+        )
+        true_labels, pred_labels, predictions = tester.gather_predictions()
+        
+        if true_labels is not None:
+            tester.display_confusion_matrix(true_labels, pred_labels)
+            tester.display_classification_report(
+                true_labels, pred_labels, config.classification_path
+            )
+        else:
+            print("No predictions generated - check data paths")
+            
+    except Exception as e:
+        print(f"Error during CNN testing: {e}")
+        raise
+
+
+def image_hyperparameter(config) -> None:
     """
     Perform hyperparameter search for image-only model.
 
@@ -514,7 +515,7 @@ def image_hyperparameter(config: Config) -> None:
         config: Configuration object containing training parameters
     """
     try:
-        data = DataCollector(config.csv_path, config.img_folder)
+        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone)
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images, features, labels, 
@@ -528,20 +529,63 @@ def image_hyperparameter(config: Config) -> None:
         max_epochs = config.max_epochs or 20
         tuner = ImageHyperparameterTuning(
             config.image_shape, max_epochs=max_epochs,
-            project_name=config.project_name, directory=config.tuner_directory
+            project_name=config.project_name, directory=config.tuner_directory, backbone=config.backbone
         )
         
-        run_search_helper(config, tuner, train_ds, test_ds)
-        
-        if config.tuner_path is not None:
-            tuner.save_best_model(config.tuner_path)
-            
+        run_search_helper(config, tuner, train_ds, test_ds, best_params_path=config.best_tuner_params)
+    
     except Exception as e:
         print(f"Error during image hyperparameter tuning: {e}")
         raise
 
+def custom_model(config) -> None:
+    try:
+        data = DataCollector(config.csv_path, config.img_folder)
+        train_ds, test_ds = data.create_custom_dataset(config.image_shape, config.test_size, config.buffer_size, config.batch_size)
+        trainable_model = CustomModel(train_ds, test_ds)
 
-def choices(mode: str, config: Config) -> None:
+        compiled_model = trainable_model.compile_custom_model(config.image_shape, config.learning_rate)
+
+        callbacks = []
+        
+        if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method:
+            checkpoint = trainable_model.create_checkpoints(
+                config.checkpoint_filepath, config.monitor, config.method
+            )
+            callbacks.append(checkpoint)
+        
+        if config.early_stopping == "y" and config.patience and config.monitor and config.method:
+            es = trainable_model.create_early_stopping(
+                config.patience, config.method, config.monitor
+            )
+            callbacks.append(es)
+        
+        max_epochs = config.max_epochs or 20
+        
+        history = trainable_model.train_model(
+            compiled_model, epochs=max_epochs,
+            early_stopping=es if config.early_stopping == "y" and config.patience and config.monitor and config.method else None,
+            checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
+            history_file=config.save_history_file,
+            save_model_file=config.save_model_file
+        )
+        
+        # Plot training metrics
+        trainable_model.plot_metric(
+            "Loss vs. Val Loss", 
+            history.history['loss'], history.history['val_loss'],
+            'loss', 'val_loss', 'epochs', 'loss'
+        )
+        trainable_model.plot_metric(
+            "Accuracy vs. Val Accuracy", 
+            history.history['accuracy'], history.history['val_accuracy'],
+            'accuracy', 'val_accuracy', 'epochs', 'accuracy'
+        )
+    except Exception as e:
+        print(f"Error during custom training: {e}")
+        raise
+
+def choices(mode: str, config) -> None:
     """
     Route to appropriate function based on mode.
 
@@ -560,7 +604,9 @@ def choices(mode: str, config: Config) -> None:
         'train_kfold_mlp': train_kfold_mlp,
         'grad_cam': grad_cam,
         'train_image_only': image_only,
-        'image_hyperparameter': image_hyperparameter
+        'image_hyperparameter': image_hyperparameter,
+        'test_image_only': test_image_only,
+        'custom_model': custom_model
     }
     
     if mode in mode_functions:
@@ -599,7 +645,7 @@ Examples:
     parsed_args = parser.parse_args(args)
     
     try:
-        config = load_file(parsed_args.file_path)
+        config = load_config(parsed_args.file_path)  # <-- use new factory
         choices(config.mode, config)
         
     except Exception as e:

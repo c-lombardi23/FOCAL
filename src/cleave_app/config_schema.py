@@ -1,45 +1,25 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import List, Optional
+from typing import List, Optional, Type, Dict
 import os
 
-class Config(BaseModel):
-    # required inputs
+class EarlyStoppingMixin(BaseModel):
+    early_stopping: Optional[str] = "n"
+    patience: Optional[int] = 3
+    monitor: Optional[str] = "val_accuracy"
+    method: Optional[str] = "max"
+
+class CheckpointMixin(BaseModel):
+    checkpoints: Optional[str] = "n"
+    checkpoint_filepath: Optional[str] = None
+    monitor: Optional[str] = "val_accuracy"
+    method: Optional[str] = "max"
+
+class BaseConfig(BaseModel):
     csv_path: str
     img_folder: str
     mode: str
     image_shape: List[int]
     feature_shape: List[int]
-
-    # optional inputs
-    feature_scaler_path: Optional[str] = None 
-    label_scaler_path: Optional[str] = None
-    model_path: Optional[str] = None
-    learning_rate: Optional[float] = 0.001
-    buffer_size: Optional[int] = 32
-    batch_size: Optional[int] = 8
-    test_size: Optional[float] = 0.2
-    img_path: Optional[str] = None
-    test_features: Optional[List[float]] = None
-    max_epochs: Optional[int] = None
-    early_stopping: Optional[str] = "n"
-    tuner_directory: Optional[str] = None
-    checkpoints: Optional[str] = "n"
-    objective: Optional[str] = "val_accuracy"
-    method: Optional[str] = "max"
-    patience: Optional[int] = 3
-    checkpoint_filepath: Optional[str] = None
-    monitor: Optional[str] = "val_accuracy"
-    project_name: Optional[str] = None
-    save_model_file: Optional[str] = None
-    save_history_file: Optional[str] = None
-    best_model_path: Optional[str] = None
-    unfreeze_from: Optional[int] = None
-    reduce_lr: Optional[float] = None
-    reduce_lr_patience: Optional[int] = None
-    initial_epochs: Optional[int] = None
-    continue_train: Optional[str] = None
-    tuner_path: Optional[str] = None
-    classification_path: Optional[str] = None
 
     @field_validator("csv_path", "img_folder", mode="before")
     @classmethod
@@ -55,51 +35,178 @@ class Config(BaseModel):
             'train_cnn', 'train_mlp',
             'cnn_hyperparameter', 'mlp_hyperparameter',
             'test_cnn', 'test_mlp', 'train_kfold_cnn', 'train_kfold_mlp',
-            'grad_cam', 'train_image_only', 'image_hyperparameter'
+            'grad_cam', 'train_image_only', 'image_hyperparameter', 'custom_model'
         ]
         if value not in valid_modes:
             raise ValueError(f"{value} is not a valid mode!")
         return value
-    
+
+class TrainCNNConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
+    backbone: Optional[str] = "mobilenet"
+    feature_scaler_path: Optional[str] = None
+    label_scaler_path: Optional[str] = None
+    model_path: Optional[str] = None
+    learning_rate: Optional[float] = 0.001
+    buffer_size: Optional[int] = 32
+    batch_size: Optional[int] = 8
+    test_size: Optional[float] = 0.2
+    max_epochs: Optional[int] = None
+    tuner_directory: Optional[str] = None
+    objective: Optional[str] = "val_accuracy"
+    project_name: Optional[str] = None
+    save_model_file: Optional[str] = None
+    save_history_file: Optional[str] = None
+    unfreeze_from: Optional[int] = None
+    reduce_lr: Optional[float] = None
+    reduce_lr_patience: Optional[int] = None
+    initial_epochs: Optional[int] = None
+    continue_train: Optional[str] = None
+    classification_path: Optional[str] = None
+
     @model_validator(mode="after")
     def valid_shapes(self):
-        if self.mode in {"train_cnn", "cnn_hyperparameter"}:
-            if self.feature_shape != [6]:
-                raise ValueError("Feature shape must be 6 for CNN")
-            if self.image_shape != [224, 224, 3]:
-                raise ValueError("Image shape not compatible")
-        elif self.mode in {"train_mlp", "mlp_hyperparameter"}:
-            if self.feature_shape != [5]:
-                raise ValueError("Feature shape must be 5 for MLP")
-            if self.image_shape != [224, 224, 3]:
-                raise ValueError("Image shape not compatible")
+        if self.feature_shape != [6]:
+            raise ValueError("Feature shape must be 6 for CNN")
+        if self.image_shape != [224, 224, 3]:
+            raise ValueError("Image shape not compatible")
         return self
-    
+
+class TrainMLPConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
+    feature_scaler_path: Optional[str] = None
+    label_scaler_path: Optional[str] = None
+    model_path: Optional[str] = None
+    learning_rate: Optional[float] = 0.001
+    buffer_size: Optional[int] = 32
+    batch_size: Optional[int] = 8
+    test_size: Optional[float] = 0.2
+    max_epochs: Optional[int] = None
+    tuner_directory: Optional[str] = None
+    objective: Optional[str] = "val_mae"
+    project_name: Optional[str] = None
+    save_model_file: Optional[str] = None
+    save_history_file: Optional[str] = None
+    initial_epochs: Optional[int] = None
+    continue_train: Optional[str] = None
+    classification_path: Optional[str] = None
+
     @model_validator(mode="after")
-    def valid_params_modes(self):
-        checkpoints_required = [self.checkpoint_filepath, self.monitor, self.mode]
-        if self.checkpoints == "y":
-            for req in checkpoints_required:
-                if req == None:
-                    raise ValueError("Missing parameters for checkpoints flag")
-        es_required = [self.patience, self.monitor, self.mode]
-        if self.early_stopping == "y":
-            for req in es_required:
-                if req == None:
-                    raise ValueError("Missing parameters for early stopping flag")
-        testing_reqs = [self.feature_scaler_path, self.model_path]
-        if self.mode == "test_cnn" or self.mode == "test_mlp":
-            for req in testing_reqs:
-                if req == None:
-                    raise ValueError("Missing parameters for testing")
-        if self.mode == "test_mlp" and (self.img_path == None or self.label_scaler_path == None):
-            raise ValueError("Missing parameters for testing mlp. Require imgPath, label_scaler_path, feature_scaler_path, and mode_path.")
-        continue_train_reqs = [self.initial_epochs, self.model_path] 
-        if self.continue_train == "y": 
-            for req in continue_train_reqs:
-                if req == None:      
-                    raise ValueError("Missing parameters for retraining. Require intial epochs and model path")
-        
+    def valid_shapes(self):
+        if self.feature_shape != [5]:
+            raise ValueError("Feature shape must be 5 for MLP")
+        if self.image_shape != [224, 224, 3]:
+            raise ValueError("Image shape not compatible")
+        return self
+
+class CNNHyperparameterConfig(TrainCNNConfig):
+    pass
+
+class MLPHyperparameterConfig(TrainMLPConfig):
+    pass
+
+class TestCNNConfig(BaseConfig):
+    feature_scaler_path: Optional[str] = None
+    model_path: Optional[str] = None
+    test_features: Optional[List[float]] = None
+    img_path: Optional[str] = None
+    label_scaler_path: Optional[str] = None
+
+    @model_validator(mode="after")
+    def valid_shapes(self):
+        if self.feature_shape != [6]:
+            raise ValueError("Feature shape must be 6 for CNN")
+        if self.image_shape != [224, 224, 3]:
+            raise ValueError("Image shape not compatible")
+        return self
+
+class TestMLPConfig(BaseConfig):
+    feature_scaler_path: Optional[str] = None
+    label_scaler_path: Optional[str] = None
+    model_path: Optional[str] = None
+    img_path: Optional[str] = None
+    test_features: Optional[List[float]] = None
+
+    @model_validator(mode="after")
+    def valid_shapes(self):
+        if self.feature_shape != [5]:
+            raise ValueError("Feature shape must be 5 for MLP")
+        if self.image_shape != [224, 224, 3]:
+            raise ValueError("Image shape not compatible")
+        return self
+
+class TrainKFoldCNNConfig(TrainCNNConfig):
+    pass
+
+class TrainKFoldMLPConfig(TrainMLPConfig):
+    pass
+
+class GradCamConfig(BaseConfig):
+    model_path: Optional[str] = None
+    img_path: Optional[str] = None
+    test_features: Optional[List[float]] = None
+    backbone_name: Optional[str] = None
+    conv_layer_name: Optional[str] = None
+    heatmap_file: Optional[str] = None
+
+    @model_validator(mode="after")
+    def valid_shapes(self):
+        if self.image_shape != [224, 224, 3]:
+            raise ValueError("Image shape not compatible")
+        return self
+
+class TrainImageOnlyConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
+    backbone: Optional[str] = "mobilenet"
+    learning_rate: Optional[float] = 0.001
+    buffer_size: Optional[int] = 32
+    batch_size: Optional[int] = 8
+    test_size: Optional[float] = 0.2
+    dropout1_rate: Optional[float] = 0.1
+    dense_units: Optional[int] = 32
+    dropout2_rate: Optional[float] = 0.2
+    l2_factor: Optional[float] =None
+    max_epochs: Optional[int] = None
+    tuner_directory: Optional[str] = None
+    objective: Optional[str] = "val_accuracy"
+    project_name: Optional[str] = None
+    save_model_file: Optional[str] = None
+    save_history_file: Optional[str] = None
+    initial_epochs: Optional[int] = None
+    continue_train: Optional[str] = None
+    best_tuner_params: Optional[str] = None
+    classification_path: Optional[str] = None
+
+    @model_validator(mode="after")
+    def valid_shapes(self):
+        if self.image_shape != [224, 224, 3] and self.image_shape != [224, 224, 1]:
+            raise ValueError("Image shape not compatible")
+        return self
+
+class ImageHyperparameterConfig(TrainImageOnlyConfig):
+    pass
+
+MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
+    'train_cnn': TrainCNNConfig,
+    'train_mlp': TrainMLPConfig,
+    'cnn_hyperparameter': CNNHyperparameterConfig,
+    'mlp_hyperparameter': MLPHyperparameterConfig,
+    'test_cnn': TestCNNConfig,
+    'test_mlp': TestMLPConfig,
+    'train_kfold_cnn': TrainKFoldCNNConfig,
+    'train_kfold_mlp': TrainKFoldMLPConfig,
+    'grad_cam': GradCamConfig,
+    'train_image_only': TrainImageOnlyConfig,
+    'image_hyperparameter': ImageHyperparameterConfig,
+    'custom_model': TrainImageOnlyConfig
+}
+
+def load_config(filepath: str) -> BaseConfig:
+    import json
+    with open(filepath, 'r') as f:
+        data = json.load(f)
+    mode = data.get("mode")
+    config_cls = MODE_TO_CONFIG.get(mode)
+    if config_cls is None:
+        raise ValueError(f"Unknown or unimplemented mode: {mode}")
+    return config_cls(**data)
 
     
     

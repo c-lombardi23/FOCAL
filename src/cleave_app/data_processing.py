@@ -34,7 +34,7 @@ class DataCollector:
     and creating TensorFlow datasets for training machine learning models.
     """
     
-    def __init__(self, csv_path: str, img_folder: str):
+    def __init__(self, csv_path: str, img_folder: str, backbone: Optional[str] = "mobilenet"):
         """
         Initialize the data collector.
 
@@ -57,6 +57,7 @@ class DataCollector:
         self.feature_scaler = None
         self.label_scaler = None
         self.encoder = None
+        self.backbone = backbone
 
     def set_label(self) -> Optional[pd.DataFrame]:
         """
@@ -129,10 +130,19 @@ class DataCollector:
         Returns:
             tf.Tensor: Preprocessed image tensor
         """
+        if self.backbone == "mobilenet":
+            from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as backbone_preprocess
+        elif self.backbone == "resnet":
+            from tensorflow.keras.applications.resnet50 import preprocess_input as backbone_preprocess
+        elif self.backbone == "efficientnet":
+            from tensorflow.keras.applications.efficientnet import preprocess_input as backbone_preprocess
+        else:
+            raise ValueError(f"Invalid backbone: {self.backbone}")
+
         if tf is None:
             raise ImportError("TensorFlow is required for image processing")
             
-        def _load_image(file):
+        def _load_image(file, preprocess_input):
             """Load and preprocess a single image."""
             file = file.numpy().decode('utf-8')
             full_path = os.path.join(self.img_folder, file)
@@ -150,15 +160,81 @@ class DataCollector:
                 img = tf.image.decode_png(img_raw, channels=1)
                 img = tf.image.resize(img, [224, 224])
                 img = tf.image.grayscale_to_rgb(img)
-                img = img / 255.0
+                img = preprocess_input(img)
                 return img
             except Exception as e:
                 print(f"Error processing image {full_path}: {e}")
                 return None
 
-        img = tf.py_function(_load_image, [filename], tf.float32)
+        img = tf.py_function(
+        func=lambda f: _load_image(f, backbone_preprocess),
+        inp=[filename],
+        Tout=tf.float32
+    )
         img.set_shape([224, 224, 3])
         return img
+    
+    def create_custom_dataset(self,
+                                           image_shape: Tuple[int, int, int],
+                                           test_size: float = 0.2,
+                                           buffer_size: int = 32,
+                                           batch_size: int = 16) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
+      """
+      Create datasets using only grayscale images and labels with a custom image shape.
+
+      Args:
+          image_shape: Desired image shape (height, width, channels)
+          test_size: Fraction of data to use for testing
+          buffer_size: Buffer size for shuffling
+          batch_size: Batch size for training
+
+      Returns:
+          Tuple of (train_ds, test_ds)
+      """
+      if tf is None:
+          raise ImportError("TensorFlow is required for dataset creation")
+
+      images = self.df['ImagePath'].values
+      label_cols = [col for col in self.df.columns if col.startswith('Label_')]
+      labels = self.df[label_cols].values.astype(np.float32)
+
+      train_imgs, test_imgs, train_labels, test_labels = train_test_split(
+          images, labels, stratify=np.argmax(labels, axis=1), test_size=test_size, random_state=42
+      )
+
+      def _load_grayscale_image(filename):
+          file = filename.numpy().decode('utf-8')
+          full_path = os.path.join(self.img_folder, file)
+          try:
+              img_raw = tf.io.read_file(full_path)
+              img = tf.image.decode_png(img_raw, channels=1) 
+              img = tf.image.resize(img, image_shape[:2])
+              img = tf.cast(img, tf.float32) / 255.0
+              
+              # Convert grayscale to RGB if needed
+              if image_shape[2] == 3:
+                  img = tf.image.grayscale_to_rgb(img)
+              elif image_shape[2] != 1:
+                  raise ValueError(f"Unsupported number of channels: {image_shape[2]}")
+                  
+              return img
+          except Exception as e:
+              print(f"Failed to load image {full_path}: {e}")
+              return tf.zeros(image_shape, dtype=tf.float32)
+
+      def process_fn(filename, label):
+          img = tf.py_function(_load_grayscale_image, [filename], tf.float32)
+          img.set_shape(image_shape)
+          return img, label
+
+      train_ds = tf.data.Dataset.from_tensor_slices((train_imgs, train_labels)).map(process_fn)
+      test_ds = tf.data.Dataset.from_tensor_slices((test_imgs, test_labels)).map(process_fn)
+
+      train_ds = train_ds.shuffle(buffer_size=buffer_size).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+      test_ds = test_ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+
+      return train_ds, test_ds
+
 
     def extract_data(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
