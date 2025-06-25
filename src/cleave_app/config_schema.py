@@ -19,8 +19,8 @@ class BaseConfig(BaseModel):
     img_folder: str
     mode: str
     image_shape: List[int]
-    feature_shape: List[int]
-
+    set_mask: Optional[str]
+    
     @field_validator("csv_path", "img_folder", mode="before")
     @classmethod
     def path_exists(cls, value):
@@ -42,6 +42,7 @@ class BaseConfig(BaseModel):
         return value
 
 class TrainCNNConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
+    feature_shape: List[int]
     backbone: Optional[str] = "mobilenet"
     feature_scaler_path: Optional[str] = None
     label_scaler_path: Optional[str] = None
@@ -62,6 +63,7 @@ class TrainCNNConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     initial_epochs: Optional[int] = None
     continue_train: Optional[str] = None
     classification_path: Optional[str] = None
+    encoder_path: Optional[str] = None
 
     @model_validator(mode="after")
     def valid_shapes(self):

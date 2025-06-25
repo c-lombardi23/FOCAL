@@ -49,7 +49,7 @@ def train_cnn(config) -> None:
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images, features, labels, 
-            config.test_size, config.buffer_size, config.batch_size
+            config.test_size, config.buffer_size, config.batch_size, feature_scaler_path=config.feature_scaler_path
         )
         
         trainable_model = CustomModel(train_ds, test_ds)
@@ -399,9 +399,10 @@ def grad_cam(config) -> None:
         if config.img_path and config.test_features:
             gradcam_driver(
                 config.model_path, config.img_path, config.test_features,
-                backbone_name="mobilenetv2_1.00_224", 
-                conv_layer_name="out_relu", 
-                heatmap_file="heatmap.png"
+                backbone_name=config.backbone_name, 
+                class_index=4,
+                conv_layer_name='conv5_block3_out',
+                heatmap_file="heatmap_6_25.png"
             )
         else:
             print("Missing image path or test features for GradCAM")
@@ -422,7 +423,7 @@ def image_only(config) -> None:
         raise ImportError("TensorFlow is required for image-only training")
         
     try:
-        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone)
+        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone, set_mask=config.set_mask)
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images, features, labels, 
@@ -515,7 +516,7 @@ def image_hyperparameter(config) -> None:
         config: Configuration object containing training parameters
     """
     try:
-        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone)
+        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone, set_mask=config.set_mask)
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images, features, labels, 

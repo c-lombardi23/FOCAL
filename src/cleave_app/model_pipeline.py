@@ -58,41 +58,34 @@ class CustomModel:
         self.train_ds = train_ds
         self.test_ds = test_ds
     
-    def build_custom_model(self, 
-                           image_shape: Tuple[int, int, int],
-                           num_classes: Optional[int] = 5):
-        
-        # Data augmentation pipeline
-        data_augmentation = Sequential([
-            RandomRotation(factor=0.1),
-            RandomBrightness(factor=0.1),
-            RandomZoom(height_factor=0.1, width_factor=0.1),
-            GaussianNoise(stddev=0.01),
-            RandomContrast(0.1)
-        ])
-        image_input = Input(shape=image_shape)
-        x = data_augmentation(image_input)
-        x = SeparableConv2D(32, (3, 3), padding="same")(x)
-        x = BatchNormalization()(x)
-        x = Activation('relu')(x)
-        x = MaxPooling2D(pool_size=(2,2))(x)
-
-        x = SeparableConv2D(64, (3, 3), padding="same")(x)
-        x = BatchNormalization()(x)
-        x = Activation('relu')(x)
-        x = MaxPooling2D(pool_size=(2, 2))(x)
-
-
-        x = GlobalAveragePooling2D()(x)
-        x = Dense(64, activation='relu')(x)
-
-        output = Dense(num_classes, activation='softmax')(x)
-
-        model = Model(inputs=image_input, outputs=output)
-        model.summary()
-
-        return model
-
+    def build_custom_model(self, image_shape, num_classes=5):
+      data_augmentation = Sequential([
+          RandomRotation(factor=0.02),  
+          RandomBrightness(factor=0.02), 
+      ])
+      
+      image_input = Input(shape=image_shape)
+      x = data_augmentation(image_input)
+      
+      x = Conv2D(16, (5, 5), padding="same")(x)  
+      x = BatchNormalization()(x)
+      x = Activation('relu')(x)
+      x = MaxPooling2D(pool_size=(4, 4))(x)  
+      x = Dropout(0.25)(x)
+      
+      x = Conv2D(32, (3, 3), padding="same")(x)
+      x = BatchNormalization()(x)
+      x = Activation('relu')(x)
+      x = GlobalAveragePooling2D()(x)  
+      
+      x = Dense(16, activation='relu')(x) 
+      x = Dropout(0.5)(x) 
+      
+      output = Dense(num_classes, activation='softmax')(x)
+      
+      model = Model(inputs=image_input, outputs=output)
+      return model
+      
     def build_pretrained_model(self, 
                               image_shape: Tuple[int, int, int], 
                               param_shape: Tuple[int, ...],

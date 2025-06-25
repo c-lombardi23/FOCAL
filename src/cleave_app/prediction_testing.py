@@ -8,15 +8,22 @@ import os
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+from .data_processing import DataCollector
 
 
-
-class TestPredictions:
+class TestPredictions(DataCollector):
     """
     This class is used to test model performance on unseen data using metrics such as
     accuracy, precision, recall, and confusion matrix. Supports both image+feature and image-only CNNs.
     """
-    def __init__(self, model_path: str, csv_path: str, scalar_path: str, img_folder: str, image_only: bool = False, backbone: str = "mobilenet"):
+    def __init__(self, model_path: str, 
+                 csv_path: str, 
+                 scalar_path: str, 
+                 img_folder: str,
+                 encoder_path: str, 
+                 image_only: bool = False,
+                 backbone: str = "mobilenet",
+                 ):
         """
         Initialize TestPredictions.
 
@@ -27,45 +34,13 @@ class TestPredictions:
             img_folder (str): Path to image folder.
             image_only (bool): If True, test only with images (no features).
         """
+        super().__init__(csv_path, img_folder, backbone)
         self.scalar_path = scalar_path
-        self.img_folder = img_folder
+        self.encoder_path = encoder_path
         self.model = tf.keras.models.load_model(model_path)
-        self.csv_path = csv_path
         self.image_only = image_only
-        self.df = self.clean_data()
-        self.scaler = None
-        self.backbone = backbone
         if not self.image_only and self.scalar_path:
-            self.scaler = joblib.load(self.scalar_path)
-
-    def set_label(self) -> 'pd.DataFrame | None':
-        """
-        Read CSV file and add cleave quality labels based on criteria.
-
-        Returns:
-            pd.DataFrame | None: DataFrame with added CleaveCategory column, or None if file not found.
-        """
-        try:
-            df = pd.read_csv(self.csv_path)
-        except FileNotFoundError:
-            print("CSV file not found!")
-            return None
-        def label(row):
-            good_angle = row['CleaveAngle'] <= 0.45
-            no_defects = not row['Hackle'] and not row['Misting']
-            good_diameter = row['ScribeDiameter'] < 17
-            if good_angle and no_defects and good_diameter:
-                return "Good"
-            elif (good_angle and not no_defects and good_diameter):
-                return "Misting_Hackle"
-            elif (good_angle and no_defects and not good_diameter):
-                return "Bad_Scribe_Mark"
-            elif (not good_angle and no_defects and good_diameter):
-                return "Bad_Angle"
-            else:
-                return "Multiple_Errors"
-        df["CleaveCategory"] = df.apply(label, axis=1)
-        return df
+            self.feature_scaler = joblib.load(self.scalar_path)
 
     def clean_data(self) -> 'pd.DataFrame | None':
         """
@@ -82,69 +57,13 @@ class TestPredictions:
         # Clean image path
         df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
         # One-hot encode CleaveCategory
-        ohe = OneHotEncoder()
-        onehot_labels = ohe.fit_transform(df[['CleaveCategory']]).toarray()
-        class_names = ohe.categories_[0]
+        self.ohe = joblib.load(self.encoder_path)
+        onehot_labels = self.ohe.transform(df[['CleaveCategory']]).toarray()
+        class_names = self.ohe.categories_[0]
         for idx, class_name in enumerate(class_names):
             df[f"Label_{class_name}"] = onehot_labels[:, idx]
-        self.encoder = ohe
         self.class_names = class_names
         return df
-
-    def load_process_images(self, filename) -> tf.Tensor:
-        """
-        Load and preprocess image from file path.
-
-        Args:
-            filename: Image filename or path
-
-        Returns:
-            tf.Tensor: Preprocessed image tensor
-        """
-        if self.backbone == "mobilenet":
-            from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as backbone_preprocess
-        elif self.backbone == "resnet":
-            from tensorflow.keras.applications.resnet50 import preprocess_input as backbone_preprocess
-        elif self.backbone == "efficientnet":
-            from tensorflow.keras.applications.efficientnet import preprocess_input as backbone_preprocess
-        else:
-            raise ValueError(f"Invalid backbone: {self.backbone}")
-
-        if tf is None:
-            raise ImportError("TensorFlow is required for image processing")
-            
-        def _load_image(file, preprocess_input):
-            """Load and preprocess a single image."""
-            file = file.numpy().decode('utf-8')
-            full_path = os.path.join(self.img_folder, file)
-            
-            try:
-                img_raw = tf.io.read_file(full_path)
-            except FileNotFoundError:
-                print(f"Image file not found: {full_path}")
-                return None
-            except Exception as e:
-                print(f"Error loading image {full_path}: {e}")
-                return None
-                
-            try:
-                img = tf.image.decode_png(img_raw, channels=1)
-                img = tf.image.resize(img, [224, 224])
-                img = tf.image.grayscale_to_rgb(img)
-                img = preprocess_input(img)
-                return img
-            except Exception as e:
-                print(f"Error processing image {full_path}: {e}")
-                return None
-
-        img = tf.py_function(
-        func=lambda f: _load_image(f, backbone_preprocess),
-        inp=[filename],
-        Tout=tf.float32
-    )
-        img.set_shape([224, 224, 3])
-        return img
-
 
     def test_prediction(self, image_path: str, feature_vector: 'np.ndarray | None' = None) -> 'np.ndarray':
         """

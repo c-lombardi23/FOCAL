@@ -73,7 +73,7 @@ class GradCAM:
         overlay = cv2.addWeighted(image, 1 - alpha, heatmap_color, alpha, 0)
         return overlay
 
-def gradcam_driver(model_path, image_path, param_vector, class_index=0, backbone_name=None, conv_layer_name=None, heatmap_file=None):
+def gradcam_driver(model_path, image_path, param_vector, class_index, backbone_name=None, conv_layer_name=None, heatmap_file=None):
    
     img = cv2.imread(image_path)
     if img is None:

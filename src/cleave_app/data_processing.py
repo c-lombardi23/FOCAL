@@ -34,13 +34,14 @@ class DataCollector:
     and creating TensorFlow datasets for training machine learning models.
     """
     
-    def __init__(self, csv_path: str, img_folder: str, backbone: Optional[str] = "mobilenet"):
+    def __init__(self, csv_path: str, img_folder: str, backbone: Optional[str] = "mobilenet", set_mask: Optional[str] = "n"):
         """
         Initialize the data collector.
 
         Args:
             csv_path: Path to CSV file containing cleave metadata
             img_folder: Path to folder containing cleave images
+            backbone: Optional pre-trained model to use as frozen layer
         """
         if csv_path is None or img_folder is None:
             raise ValueError("Must provide both csv_path and img_folder")
@@ -58,6 +59,7 @@ class DataCollector:
         self.label_scaler = None
         self.encoder = None
         self.backbone = backbone
+        self.set_mask = set_mask
 
     def set_label(self) -> Optional[pd.DataFrame]:
         """
@@ -94,21 +96,31 @@ class DataCollector:
 
         df["CleaveCategory"] = df.apply(label, axis=1)
         return df
+    
+    def save_scaler_encoder(self, obj, filepath: str) -> None:
+        """
+        Save a scaler or encoder to disk for future use
+        
+        Args:
+          filepath: Path to save scaler or encoder
+          obj: Scaler or Encoder object
+        """
+        if not os.path.exists(filepath):
+            joblib.dump(obj, filepath)
+        else:
+            raise FileExistsError("File Already exists!")
 
-    def clean_data(self) -> Optional[pd.DataFrame]:
+    def clean_data(self, filepath: Optional[str] = None) -> Optional[pd.DataFrame]:
         """
         Read CSV file and prepare data with cleave quality labels and one-hot encoding.
-
+        
         Returns:
             pd.DataFrame: Processed DataFrame with labels and one-hot encoding
         """
         df = self.set_label()
         if df is None:
             return None
-
-        # Clean image path by removing the base folder path
-        df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
-
+        
         # One-hot encode CleaveCategory
         ohe = OneHotEncoder(sparse_output=False)
         onehot_labels = ohe.fit_transform(df[['CleaveCategory']])
@@ -118,7 +130,41 @@ class DataCollector:
             df[f"Label_{class_name}"] = onehot_labels[:, idx]
 
         self.encoder = ohe
+        if filepath != None:
+            self.save_scaler_encoder(ohe, filepath)
+            print(f"Encoder saved to {filepath}")
+
+        # Clean image path by removing the base folder path
+        df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
         return df
+    
+    def mask_background(self, img: tf.Tensor) -> tf.Tensor:
+      """
+      Mask background to prevent model from focusing on sharp gradient near edges.
+
+      Args:
+          img: Image tensor of shape (H, W, C)
+
+      Returns:
+          tf.Tensor: Image with circular mask applied
+      """
+      h = tf.shape(img)[0]
+      w = tf.shape(img)[1]
+      y_range = tf.range(h)
+      x_range = tf.range(w)
+      yy, xx = tf.meshgrid(y_range, x_range, indexing='ij')  
+      center_x = tf.cast(w, tf.float32) / 2.0
+      center_y = tf.cast(h, tf.float32) / 2.0
+      radius = tf.minimum(center_x, center_y)
+      dist_from_center = tf.sqrt(
+          (tf.cast(xx, tf.float32) - center_x) ** 2 +
+          (tf.cast(yy, tf.float32) - center_y) ** 2
+      )
+      
+      mask = tf.cast(dist_from_center <= radius, tf.float32)
+      mask = tf.expand_dims(mask, axis=-1)
+      return img * mask
+
 
     def load_process_images(self, filename) -> tf.Tensor:
         """
@@ -160,6 +206,8 @@ class DataCollector:
                 img = tf.image.decode_png(img_raw, channels=1)
                 img = tf.image.resize(img, [224, 224])
                 img = tf.image.grayscale_to_rgb(img)
+                if self.set_mask == "y":
+                    img = self.mask_background(img)
                 img = preprocess_input(img)
                 return img
             except Exception as e:
@@ -209,7 +257,10 @@ class DataCollector:
               img_raw = tf.io.read_file(full_path)
               img = tf.image.decode_png(img_raw, channels=1) 
               img = tf.image.resize(img, image_shape[:2])
+              if self.set_mask == "y":
+                  img = self.mask_background(img)
               img = tf.cast(img, tf.float32) / 255.0
+              
               
               # Convert grayscale to RGB if needed
               if image_shape[2] == 3:
@@ -321,7 +372,8 @@ class DataCollector:
                        test_size: float, 
                        buffer_size: int, 
                        batch_size: int, 
-                       feature_scaler_path: Optional[str] = None) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
+                       feature_scaler_path: Optional[str] = None,
+                       encoder_path: Optional[str] = None) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
         """
         Create train and test datasets with feature scaling.
 
@@ -333,6 +385,7 @@ class DataCollector:
             buffer_size: Buffer size for dataset shuffling
             batch_size: Batch size for training
             feature_scaler_path: Optional path to save feature scaler
+            encoder_path: Optional path to save one-hot-encoder
 
         Returns:
             Tuple of (train_ds, test_ds)
@@ -351,7 +404,7 @@ class DataCollector:
         self.feature_scaler = scaler
         train_features = scaler.fit_transform(train_features)
         test_features = scaler.transform(test_features)
-        
+
         # Save scaler if path provided
         if feature_scaler_path:
             os.makedirs(os.path.dirname(feature_scaler_path), exist_ok=True)
@@ -447,7 +500,7 @@ class MLPDataCollector(DataCollector):
         if tf is None:
             raise ImportError("TensorFlow is required for dataset creation")
             
-        # Split data (no stratification for regression)
+        # Split data 
         train_imgs, test_imgs, train_features, test_features, train_labels, test_labels = train_test_split(
             images, features, labels, test_size=test_size, random_state=42
         )
