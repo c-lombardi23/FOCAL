@@ -20,6 +20,8 @@ class BaseConfig(BaseModel):
     mode: str
     image_shape: List[int]
     set_mask: Optional[str]
+    feature_shape: Optional[List[int]] = None
+
     
     @field_validator("csv_path", "img_folder", mode="before")
     @classmethod
@@ -35,7 +37,7 @@ class BaseConfig(BaseModel):
             'train_cnn', 'train_mlp',
             'cnn_hyperparameter', 'mlp_hyperparameter',
             'test_cnn', 'test_mlp', 'train_kfold_cnn', 'train_kfold_mlp',
-            'grad_cam', 'train_image_only', 'image_hyperparameter', 'custom_model'
+            'grad_cam', 'train_image_only', 'image_hyperparameter', 'test_image_only', 'custom_model'
         ]
         if value not in valid_modes:
             raise ValueError(f"{value} is not a valid mode!")
@@ -64,11 +66,13 @@ class TrainCNNConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     continue_train: Optional[str] = None
     classification_path: Optional[str] = None
     encoder_path: Optional[str] = None
+    num_classes: Optional[int] = 5
 
     @model_validator(mode="after")
     def valid_shapes(self):
-        if self.feature_shape != [6]:
-            raise ValueError("Feature shape must be 6 for CNN")
+        if self.feature_shape:
+            if self.feature_shape != [6]:
+                raise ValueError("Feature shape must be 6 for CNN")
         if self.image_shape != [224, 224, 3]:
             raise ValueError("Image shape not compatible")
         return self
@@ -110,7 +114,9 @@ class TestCNNConfig(BaseConfig):
     model_path: Optional[str] = None
     test_features: Optional[List[float]] = None
     img_path: Optional[str] = None
-    label_scaler_path: Optional[str] = None
+    label_scaler_path: Optional[str] = None,
+    encoder_path: Optional[str] = None
+    backbone: Optional[str] = None
 
     @model_validator(mode="after")
     def valid_shapes(self):
@@ -134,6 +140,12 @@ class TestMLPConfig(BaseConfig):
         if self.image_shape != [224, 224, 3]:
             raise ValueError("Image shape not compatible")
         return self
+    
+class TestImageOnlyConfig(BaseConfig):
+    model_path: Optional[str] = None
+    encoder_path: str  
+    img_path: Optional[str] = None
+    backbone: Optional[str] = None
 
 class TrainKFoldCNNConfig(TrainCNNConfig):
     pass
@@ -175,6 +187,11 @@ class TrainImageOnlyConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     continue_train: Optional[str] = None
     best_tuner_params: Optional[str] = None
     classification_path: Optional[str] = None
+    num_classes: Optional[int] = 5
+    reduce_lr: Optional[float] = None
+    reduce_lr_patience: Optional[int] = None,
+    unfreeze_from: Optional[int] = None,
+    encoder_path: Optional[str] = None
 
     @model_validator(mode="after")
     def valid_shapes(self):
@@ -196,6 +213,7 @@ MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     'train_kfold_mlp': TrainKFoldMLPConfig,
     'grad_cam': GradCamConfig,
     'train_image_only': TrainImageOnlyConfig,
+    'test_image_only':TestImageOnlyConfig,
     'image_hyperparameter': ImageHyperparameterConfig,
     'custom_model': TrainImageOnlyConfig
 }

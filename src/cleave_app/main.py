@@ -419,11 +419,12 @@ def image_only(config) -> None:
     Args:
         config: Configuration object containing training parameters
     """
+    import traceback
     if tf is None:
         raise ImportError("TensorFlow is required for image-only training")
         
     try:
-        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone, set_mask=config.set_mask)
+        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone, set_mask=config.set_mask, encoder_path=config.encoder_path)
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images, features, labels, 
@@ -437,7 +438,8 @@ def image_only(config) -> None:
         trainable_model = CustomModel(train_ds, test_ds)
         compiled_model = trainable_model.compile_image_only_model(
             config.image_shape, config.learning_rate or 0.001, backbone=config.backbone, dropout1_rate=config.dropout1_rate,
-            dense_units=config.dense_units, dropout2_rate=config.dropout2_rate, l2_factor=config.l2_factor
+            dense_units=config.dense_units, dropout2_rate=config.dropout2_rate, l2_factor=config.l2_factor, num_classes=config.num_classes,
+            unfreeze_from=config.unfreeze_from
         )
         
         # Setup callbacks
@@ -454,6 +456,17 @@ def image_only(config) -> None:
                 config.patience, config.method, config.monitor
             )
             callbacks.append(es)
+            
+        if config.reduce_lr is not None:
+            if config.reduce_lr_patience is not None:
+                reduce_lr = trainable_model.reduce_on_plateau(
+                    patience=config.reduce_lr_patience, factor=config.reduce_lr
+                )
+            else:
+                reduce_lr = trainable_model.reduce_on_plateau(factor=config.reduce_lr)
+            callbacks.append(reduce_lr)
+        else:
+            reduce_lr = None
         
         max_epochs = config.max_epochs or 20
         
@@ -462,7 +475,8 @@ def image_only(config) -> None:
             early_stopping=es if config.early_stopping == "y" and config.patience and config.monitor and config.method else None,
             checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
             history_file=config.save_history_file,
-            save_model_file=config.save_model_file
+            save_model_file=config.save_model_file,
+            reduce_lr=reduce_lr
         )
         
         # Plot training metrics
@@ -476,9 +490,10 @@ def image_only(config) -> None:
             history.history['accuracy'], history.history['val_accuracy'],
             'accuracy', 'val_accuracy', 'epochs', 'accuracy'
         )
-        
+    
     except Exception as e:
         print(f"Error during image-only training: {e}")
+        traceback.print_exc()
         raise
 
 def test_image_only(config) -> None:
@@ -488,10 +503,12 @@ def test_image_only(config) -> None:
     Args:
         config: Configuration object containing test parameters
     """
+    import traceback
     try:
         tester = TestPredictions(
-            config.model_path, config.csv_path, 
-            config.feature_scaler_path, config.img_folder, image_only=True, backbone=config.backbone
+            model_path=config.model_path, csv_path=config.csv_path, 
+             img_folder=config.img_folder, scalar_path=None, image_only=True, backbone=config.backbone,
+            encoder_path=config.encoder_path
         )
         true_labels, pred_labels, predictions = tester.gather_predictions()
         
@@ -505,6 +522,7 @@ def test_image_only(config) -> None:
             
     except Exception as e:
         print(f"Error during CNN testing: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -530,7 +548,8 @@ def image_hyperparameter(config) -> None:
         max_epochs = config.max_epochs or 20
         tuner = ImageHyperparameterTuning(
             config.image_shape, max_epochs=max_epochs,
-            project_name=config.project_name, directory=config.tuner_directory, backbone=config.backbone
+            project_name=config.project_name, directory=config.tuner_directory, backbone=config.backbone,
+            num_classes=config.num_classes
         )
         
         run_search_helper(config, tuner, train_ds, test_ds, best_params_path=config.best_tuner_params)

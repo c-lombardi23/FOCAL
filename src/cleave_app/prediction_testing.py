@@ -34,9 +34,8 @@ class TestPredictions(DataCollector):
             img_folder (str): Path to image folder.
             image_only (bool): If True, test only with images (no features).
         """
-        super().__init__(csv_path, img_folder, backbone)
+        super().__init__(csv_path, img_folder, backbone, encoder_path=encoder_path)
         self.scalar_path = scalar_path
-        self.encoder_path = encoder_path
         self.model = tf.keras.models.load_model(model_path)
         self.image_only = image_only
         if not self.image_only and self.scalar_path:
@@ -58,7 +57,7 @@ class TestPredictions(DataCollector):
         df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
         # One-hot encode CleaveCategory
         self.ohe = joblib.load(self.encoder_path)
-        onehot_labels = self.ohe.transform(df[['CleaveCategory']]).toarray()
+        onehot_labels = self.ohe.transform(df[['CleaveCategory']])
         class_names = self.ohe.categories_[0]
         for idx, class_name in enumerate(class_names):
             df[f"Label_{class_name}"] = onehot_labels[:, idx]

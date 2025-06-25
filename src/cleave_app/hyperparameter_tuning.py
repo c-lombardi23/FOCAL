@@ -41,7 +41,8 @@ class BuildHyperModel(HyperModel):
     with numerical parameters for fiber cleave classification.
     """
     
-    def __init__(self, image_shape: Tuple[int, int, int], param_shape: Tuple[int, ...],
+    def __init__(self, image_shape: Tuple[int, int, int], 
+                 param_shape: Tuple[int, ...],
                  backbone: Optional[str] = "mobilenet"):
         """
         Initialize the hypermodel builder.
@@ -224,7 +225,9 @@ class ImageOnlyHyperModel(HyperModel):
     HyperModel for image-only classification (no numerical parameters).
     """
     
-    def __init__(self, image_shape: Tuple[int, int, int], num_classes: int = 5, backbone: Optional[str] = "mobilenet"):
+    def __init__(self, image_shape: Tuple[int, int, int], 
+                 num_classes: int = 5, 
+                 backbone: Optional[str] = "mobilenet"):
         """
         Initialize the image-only hypermodel.
         
@@ -383,7 +386,8 @@ class ImageHyperparameterTuning(HyperParameterTuning):
                  objective: str = 'val_accuracy', 
                  directory: str = './tuner_logs', 
                  project_name: str = 'CNN_Image_Only',
-                 backbone: Optional[str] = "mobilenet"):
+                 backbone: Optional[str] = "mobilenet", 
+                 num_classes: Optional[int] = 5):
         """
         Initialize image-only hyperparameter tuning.
         
@@ -395,7 +399,7 @@ class ImageHyperparameterTuning(HyperParameterTuning):
             project_name: Name of the tuning project
         """
         self.image_shape = image_shape
-        hypermodel = ImageOnlyHyperModel(self.image_shape, num_classes=5, backbone=backbone)
+        hypermodel = ImageOnlyHyperModel(self.image_shape, num_classes=num_classes, backbone=backbone)
         self.tuner = Hyperband(
             hypermodel,
             objective=objective,

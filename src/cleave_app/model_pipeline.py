@@ -169,7 +169,8 @@ class CustomModel:
                                dropout1_rate: Optional[float] = 0.1,
                                dense_units: Optional[int] = 32,
                                dropout2_rate: Optional[float] = 0.2,
-                               l2_factor: Optional[float] =None) -> tf.keras.Model:
+                               l2_factor: Optional[float] =None,
+                               unfreeze_from: Optional[int] = None) -> tf.keras.Model:
         """
         Build a model that uses only the image input (no parameter features).
 
@@ -204,9 +205,12 @@ class CustomModel:
               weights="imagenet", 
               name="efficientnetb0"
           )
+        pre_trained_model.trainable = unfreeze_from is not None
+        
+        if unfreeze_from is not None:
+            for layer in pre_trained_model.layers[:unfreeze_from]:
+                layer.trainable = False
             
-        pre_trained_model.trainable = False
-
         data_augmentation = Sequential([
             RandomRotation(factor=0.1),
             RandomBrightness(factor=0.1),
@@ -241,7 +245,8 @@ class CustomModel:
                                 dropout1_rate: Optional[float] = 0.1,
                                 dense_units: Optional[int] = 32,
                                 dropout2_rate: Optional[float] = 0.2,
-                                l2_factor: Optional[float] = None) -> tf.keras.Model:
+                                l2_factor: Optional[float] = None,
+                                unfreeze_from: Optional = None) -> tf.keras.Model:
         """
         Compile an image-only model.
 
@@ -257,9 +262,10 @@ class CustomModel:
             metrics = ['accuracy']
             
         model = self.build_image_only_model(image_shape, backbone=backbone, dropout1_rate=dropout1_rate, 
-                                            dense_units=dense_units, dropout2_rate=dropout2_rate, num_classes=num_classes, l2_factor=l2_factor)
+                                            dense_units=dense_units, dropout2_rate=dropout2_rate, num_classes=num_classes, l2_factor=l2_factor, unfreeze_from=None)
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=metrics)
+        loss = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.2)
+        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
         return model
     
     def compile_custom_model(self, 

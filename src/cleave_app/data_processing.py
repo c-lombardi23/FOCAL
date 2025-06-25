@@ -34,7 +34,8 @@ class DataCollector:
     and creating TensorFlow datasets for training machine learning models.
     """
     
-    def __init__(self, csv_path: str, img_folder: str, backbone: Optional[str] = "mobilenet", set_mask: Optional[str] = "n"):
+    def __init__(self, csv_path: str, img_folder: str, backbone: Optional[str] = "mobilenet", set_mask: Optional[str] = "n",
+                 encoder_path: Optional[str] = None):
         """
         Initialize the data collector.
 
@@ -54,10 +55,11 @@ class DataCollector:
             
         self.csv_path = csv_path
         self.img_folder = img_folder
-        self.df = self.clean_data()
         self.feature_scaler = None
         self.label_scaler = None
         self.encoder = None
+        self.encoder_path = encoder_path
+        self.df = self.clean_data()
         self.backbone = backbone
         self.set_mask = set_mask
 
@@ -87,10 +89,8 @@ class DataCollector:
                 return "Good"
             elif good_angle and not no_defects and good_diameter:
                 return "Misting_Hackle"
-            elif good_angle and no_defects and not good_diameter:
-                return "Bad_Scribe_Mark"
-            elif not good_angle and no_defects and good_diameter:
-                return "Bad_Angle"
+            elif (good_angle and no_defects and not good_diameter) or (not good_angle and no_defects and good_diameter):
+                return "Bad_Scribe_Mark or Angle"
             else:
                 return "Multiple_Errors"
 
@@ -110,7 +110,7 @@ class DataCollector:
         else:
             raise FileExistsError("File Already exists!")
 
-    def clean_data(self, filepath: Optional[str] = None) -> Optional[pd.DataFrame]:
+    def clean_data(self) -> Optional[pd.DataFrame]:
         """
         Read CSV file and prepare data with cleave quality labels and one-hot encoding.
         
@@ -130,9 +130,9 @@ class DataCollector:
             df[f"Label_{class_name}"] = onehot_labels[:, idx]
 
         self.encoder = ohe
-        if filepath != None:
-            self.save_scaler_encoder(ohe, filepath)
-            print(f"Encoder saved to {filepath}")
+        if self.encoder_path != None:
+            self.save_scaler_encoder(ohe, self.encoder_path)
+            print(f"Encoder saved to {self.encoder_path}")
 
         # Clean image path by removing the base folder path
         df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
@@ -155,7 +155,7 @@ class DataCollector:
       yy, xx = tf.meshgrid(y_range, x_range, indexing='ij')  
       center_x = tf.cast(w, tf.float32) / 2.0
       center_y = tf.cast(h, tf.float32) / 2.0
-      radius = tf.minimum(center_x, center_y)
+      radius = tf.minimum(center_x, center_y) 
       dist_from_center = tf.sqrt(
           (tf.cast(xx, tf.float32) - center_x) ** 2 +
           (tf.cast(yy, tf.float32) - center_y) ** 2
