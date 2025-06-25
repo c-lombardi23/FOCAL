@@ -426,7 +426,7 @@ def image_only(config) -> None:
     try:
         data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone, set_mask=config.set_mask, encoder_path=config.encoder_path)
         images, features, labels = data.extract_data()
-        train_ds, test_ds = data.create_datasets(
+        train_ds, test_ds, class_weights = data.create_datasets(
             images, features, labels, 
             config.test_size, config.buffer_size, config.batch_size
         )
@@ -470,7 +470,7 @@ def image_only(config) -> None:
         
         max_epochs = config.max_epochs or 20
         
-        history = trainable_model.train_model(
+        history = trainable_model.train_model(class_weights,
             compiled_model, epochs=max_epochs,
             early_stopping=es if config.early_stopping == "y" and config.patience and config.monitor and config.method else None,
             checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,

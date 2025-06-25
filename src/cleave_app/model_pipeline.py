@@ -230,7 +230,7 @@ class CustomModel:
         else:
             x = Dense(dense_units, name="dense1", activation='relu')(x)    
         x = Dropout(dropout2_rate, name='dropout_2')(x)
-        output = Dense(num_classes, name="output_layer", activation='softmax')(x)
+        output = Dense(num_classes, name="output_layer", activation='sigmoid')(x)
 
         model = Model(inputs=image_input, outputs=output)
         model.summary()
@@ -259,13 +259,12 @@ class CustomModel:
             tf.keras.Model: Compiled image-only model
         """
         if metrics is None:
-            metrics = ['accuracy']
+            metrics = ['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()]
             
         model = self.build_image_only_model(image_shape, backbone=backbone, dropout1_rate=dropout1_rate, 
                                             dense_units=dense_units, dropout2_rate=dropout2_rate, num_classes=num_classes, l2_factor=l2_factor, unfreeze_from=None)
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-        loss = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.2)
-        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+        model.compile(optimizer=optimizer, loss="binary_crossentropy", metrics=metrics)
         return model
     
     def compile_custom_model(self, 
@@ -417,7 +416,7 @@ class CustomModel:
         """
         return TensorBoard(log_dir=log_dir, histogram_freq=histogram_freq)
     
-    def train_model(self, 
+    def train_model(self, class_weights,
                    model: tf.keras.Model, 
                    checkpoints: Optional[ModelCheckpoint] = None, 
                    epochs: int = 5, 
@@ -461,7 +460,7 @@ class CustomModel:
                 epochs=epochs, 
                 initial_epoch=initial_epoch,
                 validation_data=self.test_ds, 
-                callbacks=callbacks
+                callbacks=callbacks, class_weight=class_weights
             )
         else:
             print("Training without callbacks")

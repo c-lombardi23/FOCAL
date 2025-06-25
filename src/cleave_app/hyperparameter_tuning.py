@@ -296,7 +296,7 @@ class ImageOnlyHyperModel(HyperModel):
             activation='relu', kernel_regularizer=l2(l2_factor))(x)
         x = Dropout(hp.Float('dropout_2', 0.1, 0.4, step=0.1))(x)
 
-        output = Dense(self.num_classes, activation='softmax')(x)
+        output = Dense(self.num_classes, activation='sigmoid')(x)
 
         model = Model(inputs=image_input, outputs=output)
 
@@ -304,7 +304,7 @@ class ImageOnlyHyperModel(HyperModel):
             optimizer=tf.keras.optimizers.Adam(
                 learning_rate=hp.Choice('learning_rate', [5e-4, 1e-3, 5e-3, 0.01])
             ),
-            loss='categorical_crossentropy',
+            loss='binary_crossentropy',
             metrics=['accuracy']
         )
 

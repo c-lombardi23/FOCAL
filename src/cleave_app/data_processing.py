@@ -18,7 +18,7 @@ warnings.filterwarnings('ignore')
 try:
     import tensorflow as tf
     from sklearn.model_selection import train_test_split, StratifiedKFold, KFold
-    from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+    from sklearn.preprocessing import MinMaxScaler, MultiLabelBinarizer
     from sklearn.utils.class_weight import compute_class_weight
 except ImportError as e:
     print(f"Warning: Required ML libraries not found: {e}")
@@ -78,23 +78,13 @@ class DataCollector:
         except Exception as e:
             print(f"Error reading CSV file: {e}")
             return None
-
-        def label(row):
-            """Label cleave quality based on angle, defects, and diameter."""
-            good_angle = row['CleaveAngle'] <= 0.45
-            no_defects = not row['Hackle'] and not row['Misting']
-            good_diameter = row['ScribeDiameter'] < 17
-            
-            if good_angle and no_defects and good_diameter:
-                return "Good"
-            elif good_angle and not no_defects and good_diameter:
-                return "Misting_Hackle"
-            elif (good_angle and no_defects and not good_diameter) or (not good_angle and no_defects and good_diameter):
-                return "Bad_Scribe_Mark or Angle"
-            else:
-                return "Multiple_Errors"
-
-        df["CleaveCategory"] = df.apply(label, axis=1)
+      
+        df["CleaveCategory"] = df.apply(
+        lambda row: 1 if row["CleaveAngle"] <= 0.45 and row["ScribeDiameter"] < 17 and (not row["Hackle"] and not row["Misting"])
+        else 0,
+        axis=1
+          )
+        print(df['CleaveCategory'].value_counts())
         return df
     
     def save_scaler_encoder(self, obj, filepath: str) -> None:
@@ -120,20 +110,6 @@ class DataCollector:
         df = self.set_label()
         if df is None:
             return None
-        
-        # One-hot encode CleaveCategory
-        ohe = OneHotEncoder(sparse_output=False)
-        onehot_labels = ohe.fit_transform(df[['CleaveCategory']])
-        class_names = ohe.categories_[0]
-
-        for idx, class_name in enumerate(class_names):
-            df[f"Label_{class_name}"] = onehot_labels[:, idx]
-
-        self.encoder = ohe
-        if self.encoder_path != None:
-            self.save_scaler_encoder(ohe, self.encoder_path)
-            print(f"Encoder saved to {self.encoder_path}")
-
         # Clean image path by removing the base folder path
         df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
         return df
@@ -299,8 +275,7 @@ class DataCollector:
             
         images = self.df['ImagePath'].values
         features = self.df[['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values.astype(np.float32)
-        label_cols = [col for col in self.df.columns if col.startswith('Label_')]
-        labels = self.df[label_cols].values.astype(np.float32)
+        labels = self.df['CleaveCategory'].values.astype(np.float32)
         
         return images, features, labels
 
@@ -394,9 +369,10 @@ class DataCollector:
             raise ImportError("TensorFlow is required for dataset creation")
             
         # Stratified split for classification
-        stratify_labels = labels.argmax(axis=1)
+        class_weights_array = compute_class_weight(class_weight='balanced', classes=np.unique(labels), y=labels)
+        class_weights = dict(enumerate(class_weights_array))
         train_imgs, test_imgs, train_features, test_features, train_labels, test_labels = train_test_split(
-            images, features, labels, stratify=stratify_labels, test_size=test_size, random_state=42
+            images, features, labels, stratify=labels, test_size=test_size, random_state=42
         )
         
         # Scale features
@@ -423,7 +399,7 @@ class DataCollector:
         train_ds = train_ds.shuffle(buffer_size=buffer_size).batch(batch_size).prefetch(tf.data.AUTOTUNE)
         test_ds = test_ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
-        return train_ds, test_ds
+        return train_ds, test_ds, class_weights
 
     def image_only_dataset(self, original_dataset: tf.data.Dataset) -> tf.data.Dataset:
         """
