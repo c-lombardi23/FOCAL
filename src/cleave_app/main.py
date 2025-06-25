@@ -509,7 +509,7 @@ def test_image_only(config) -> None:
 
 def image_hyperparameter(config) -> None:
     """
-    Perform hyperparameter search for image-only model.
+    Perform hyperparameter search for image-only model
 
     Args:
         config: Configuration object containing training parameters
