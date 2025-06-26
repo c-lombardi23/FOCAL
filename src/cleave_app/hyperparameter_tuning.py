@@ -21,8 +21,9 @@ try:
         RandomFlip, RandomRotation, RandomBrightness, RandomZoom,
         RandomContrast, GaussianNoise, BatchNormalization
     )
-    from keras_tuner import HyperModel, Hyperband
+    from keras_tuner import HyperModel, Hyperband, BayesianOptimization
     from tensorflow.keras.regularizers import l2
+    from tensorflow.keras.callbacks import EarlyStopping
     from keras.applications import MobileNetV2, ResNet50, EfficientNetB0
     from .data_processing import DataCollector
 except ImportError as e:
@@ -31,6 +32,7 @@ except ImportError as e:
     tf = None
     HyperModel = None
     Hyperband = None
+    BayesianOptimization = None
 
 
 class BuildHyperModel(HyperModel):
@@ -91,14 +93,21 @@ class BuildHyperModel(HyperModel):
               weights="imagenet",
               name="efficientnetb0"
           )
-        pre_trained_model.trainable = False
-
+            
+        unfreeze_from = hp.Int("unfreeze_from", min_value=0, max_value=20, step=5)
+        if (unfreeze_from > 0):
+          for layer in pre_trained_model.layers[-unfreeze_from:]:
+              layer.trainable = True
+        else:
+            pre_trained_model.trainable = False
+    
         # Data augmentation pipeline
         data_augmentation = Sequential([
-            RandomRotation(factor=0.1),
-            RandomBrightness(factor=0.3),
-            RandomZoom(height_factor=0.1, width_factor=0.1),
-            RandomContrast(0.1)
+            RandomRotation(factor = hp.Float("rot", 0.0, 0.3, step=0.05)),
+            RandomBrightness(factor = hp.Float("bright", 0.0, 0.3, step = 0.5)),
+            RandomZoom(height_factor= hp.Float("height", 0.0, 0.2, step =0.5), 
+                       width_factor= hp.Float("width", 0.0, 0.2, step = 0.5)),
+            RandomContrast(factor = hp.Float("contrast", 0.0, 0.2, step = 0.5))
         ])
 
         # Image input and processing
@@ -106,7 +115,7 @@ class BuildHyperModel(HyperModel):
         x = data_augmentation(image_input)
         x = pre_trained_model(x)
         x = GlobalAveragePooling2D()(x)
-        x = Dropout(hp.Float('dropout', 0.1, 0.3, step=0.1))(x)
+        x = Dropout(hp.Float('dropout', 0.0, 0.3, step=0.1))(x)
 
         # Param input and processing
         param_input = Input(shape=self.param_shape)
@@ -125,7 +134,7 @@ class BuildHyperModel(HyperModel):
             hp.Int('dense_combined', min_value=32, max_value=64, step=16),
             activation='relu')(combined)
         z = BatchNormalization()(z)
-        z = Dropout(hp.Float('dropout_combined', 0.1, 0.3, step=0.1))(z)
+        z = Dropout(hp.Float('dropout_combined', 0.0, 0.3, step=0.1))(z)
         z = Dense(5, activation='softmax')(z)
 
         model = Model(inputs=[image_input, param_input], outputs=z)
@@ -153,7 +162,8 @@ class HyperParameterTuning:
                  objective: str = 'val_accuracy', 
                  directory: str = './tuner_logs', 
                  project_name: str = 'Cleave_Tuner',
-                 backbone: Optional[str] = "mobilenet"):
+                 backbone: Optional[str] = "mobilenet",
+                 class_weights: Optional[str] = None):
         """
         Initialize the hyperparameter tuner.
         
@@ -165,13 +175,23 @@ class HyperParameterTuning:
             directory: Directory path to store hyperparameters
             project_name: Name of the tuning project
         """
-        if tf is None or HyperModel is None or Hyperband is None:
+        if tf is None or HyperModel is None or Hyperband is None or BayesianOptimization is None:
             raise ImportError("TensorFlow and Keras Tuner are required for hyperparameter tuning")
             
         self.image_shape = image_shape
         self.feature_shape = feature_shape
         self.backbone = backbone
+        self.class_weights = class_weights
         hypermodel = BuildHyperModel(self.image_shape, self.feature_shape, self.backbone)
+        self.tuner = BayesianOptimization(
+            hypermodel,
+            objective=objective,
+            max_trials=max_epochs,
+            num_initial_points=5,
+            directory=directory,
+            project_name=project_name
+        )
+        '''
         self.tuner = Hyperband(
             hypermodel,
             objective=objective,
@@ -179,6 +199,7 @@ class HyperParameterTuning:
             directory=directory,
             project_name=project_name
         )
+        '''
         
     def run_search(self, train_ds, test_ds):
         """
@@ -188,7 +209,8 @@ class HyperParameterTuning:
             train_ds: tf.data.Dataset - Training dataset
             test_ds: tf.data.Dataset - Testing dataset
         """
-        self.tuner.search(train_ds, validation_data=test_ds)
+        es = EarlyStopping(monitor="val_loss", patience=5, mode='auto')
+        self.tuner.search(train_ds, validation_data=test_ds, epochs=20, class_weight=self.class_weights, callbacks = [es])
   
     def save_best_model(self, pathname: str):
         """
@@ -227,7 +249,8 @@ class ImageOnlyHyperModel(HyperModel):
     
     def __init__(self, image_shape: Tuple[int, int, int], 
                  num_classes: int = 5, 
-                 backbone: Optional[str] = "mobilenet"):
+                 backbone: Optional[str] = "mobilenet",
+                 classification_type: Optional[str] = "binary"):
         """
         Initialize the image-only hypermodel.
         
@@ -241,6 +264,7 @@ class ImageOnlyHyperModel(HyperModel):
         self.image_shape = image_shape
         self.num_classes = num_classes
         self.backbone = backbone
+        self.classification_type = classification_type
 
     def build(self, hp):
         """
@@ -273,38 +297,49 @@ class ImageOnlyHyperModel(HyperModel):
               weights="imagenet",
               name="efficientnetb0"
           )
-            
-        pre_trained_model.trainable = False  
-
-        # Data augmentation
+       
+        #unfreeze_from = hp.Int("unfreeze_from", min_value=0, max_value=20, step=5)
+        #if (unfreeze_from > 0):
+          #for layer in pre_trained_model.layers[-unfreeze_from:]:
+           #   layer.trainable = True
+        #else:
+        pre_trained_model.trainable = False
+      
+       # Data augmentation pipeline
         data_augmentation = Sequential([
-            RandomRotation(factor=0.1),
-            RandomBrightness(factor=0.3),
-            RandomZoom(height_factor=0.1, width_factor=0.1),
-            RandomContrast(0.1),
+            RandomRotation(factor = hp.Float("rot", 0.0, 0.3, step=0.05)),
+            RandomBrightness(factor = hp.Float("bright", 0.0, 0.3, step = 0.5)),
+            RandomZoom(height_factor= hp.Float("height", 0.0, 0.2, step =0.5), 
+                       width_factor= hp.Float("width", 0.0, 0.2, step = 0.5)),
+            RandomContrast(factor = hp.Float("contrast", 0.0, 0.2, step = 0.5))
         ])
 
         image_input = Input(shape=self.image_shape)
         x = data_augmentation(image_input)
         x = pre_trained_model(x)
         x = GlobalAveragePooling2D()(x)
-        x = Dropout(hp.Float('dropout', 0.1, 0.3, step=0.1))(x)
+        x = Dropout(hp.Float('dropout', 0.0, 0.3, step=0.1))(x)
 
         l2_factor = hp.Choice('l2_factor', [0.001, 0.0001, 0.0])
         x = Dense(
             hp.Int('dense1', min_value=64, max_value=256, step=32),
             activation='relu', kernel_regularizer=l2(l2_factor))(x)
-        x = Dropout(hp.Float('dropout_2', 0.1, 0.4, step=0.1))(x)
-
-        output = Dense(self.num_classes, activation='sigmoid')(x)
+        x = Dropout(hp.Float('dropout_2', 0.0, 0.4, step=0.1))(x)
+        if self.classification_type == "binary":
+            activation= 'sigmoid'
+            loss = 'binary_crossentropy'
+        elif self.classification_type == "multiclass":
+            activation == "softmax"
+            loss = 'categorical_crossentropy'
+        output = Dense(self.num_classes, activation=activation)(x)
 
         model = Model(inputs=image_input, outputs=output)
-
+        
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(
+            optimizer=tf.keras.optimizers.AdamW(
                 learning_rate=hp.Choice('learning_rate', [5e-4, 1e-3, 5e-3, 0.01])
             ),
-            loss='binary_crossentropy',
+            loss=loss,
             metrics=['accuracy']
         )
 
@@ -362,7 +397,7 @@ class BuildMLPHyperModel(HyperModel):
         z = Dense(1)(z)
 
         mlp_hypermodel = Model(inputs=[self.image_input, feature_input], outputs=z)
-        mlp_hypermodel.summary()
+        #mlp_hypermodel.summary()
 
         mlp_hypermodel.compile(
             optimizer=tf.keras.optimizers.Adam(
@@ -387,7 +422,8 @@ class ImageHyperparameterTuning(HyperParameterTuning):
                  directory: str = './tuner_logs', 
                  project_name: str = 'CNN_Image_Only',
                  backbone: Optional[str] = "mobilenet", 
-                 num_classes: Optional[int] = 5):
+                 num_classes: Optional[int] = 5,
+                 class_weights: Optional[str] = None):
         """
         Initialize image-only hyperparameter tuning.
         
@@ -398,8 +434,19 @@ class ImageHyperparameterTuning(HyperParameterTuning):
             directory: Directory for tuner logs
             project_name: Name of the tuning project
         """
+        self.class_weights = class_weights
         self.image_shape = image_shape
         hypermodel = ImageOnlyHyperModel(self.image_shape, num_classes=num_classes, backbone=backbone)
+
+        self.tuner = BayesianOptimization(
+            hypermodel,
+            objective=objective,
+            max_trials=max_epochs,
+            num_initial_points=5, 
+            directory=directory,
+            project_name=project_name
+        )
+        '''
         self.tuner = Hyperband(
             hypermodel,
             objective=objective,
@@ -407,7 +454,7 @@ class ImageHyperparameterTuning(HyperParameterTuning):
             directory=directory,
             project_name=project_name
         )
-    
+        '''
     
 class MLPHyperparameterTuning(HyperParameterTuning):
     """

@@ -23,19 +23,19 @@ A machine learning package for fiber cleave quality classification and tension p
 
 This project implements a comprehensive machine learning pipeline for analyzing fiber cleave quality using images from the THORLABS Fiber Cleave Analyzer (FCA). The system consists of two main components:
 
-1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features
+1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features alone or inclusiong of numerical features
 2. **MLP Regression Model**: Predicts optimal tension parameters for producing good cleaves
 
-The models use transfer learning with MobileNetV2 as the backbone and are optimized using Keras Tuner for hyperparameter optimization.
+The models use transfer learning with either MobileNetV2, ResNet, or EfficientNetB0 as the backbone and are optimized using Keras Tuner for hyperparameter optimization.
 
 ## ✨ Key Features
 
-- **Transfer Learning**: Uses pre-trained MobileNetV2 for robust feature extraction
+- **Transfer Learning**: Uses pre-trained models for robust feature extraction
 - **Multi-Modal Input**: Combines image features with numerical parameters
 - **Hyperparameter Optimization**: Automated tuning using Keras Tuner
 - **Flexible Architecture**: Supports both classification and regression tasks
 - **K-Fold Cross Validation**: Robust model evaluation
-- **GradCAM Visualization**: Model interpretability through attention maps
+- **GradCAM Visualization**: Model interpretability through heatmaps
 - **Command Line Interface**: Easy-to-use CLI for training and inference
 - **Comprehensive Logging**: Training history and model checkpoints
 
@@ -77,7 +77,7 @@ cleave-app --help
 
 1. **Prepare your data**:
    - Organize cleave images in a folder
-   - Create a CSV file with metadata (tension, angle, etc.)
+   - Create a CSV file with metadata (tension, angle, scribe diameter, misting, hackle, tearing)
 
 2. **Create a configuration file** (see [Configuration](#configuration) section)
 
@@ -90,7 +90,7 @@ cleave-app --help
 
 The application uses a JSON configuration file to specify all parameters. **Each mode uses a dedicated config class with its own required and optional fields.** The CLI automatically loads the correct config class for the selected mode.
 
-> **Note:** Not all parameters are required for every mode. Refer to the mode-specific config class for required/optional fields. The system will validate your config and provide clear errors if required fields are missing.
+> **Note:** Not all parameters are required for every mode. Refer to the mode-specific config class or config.schema.json file for required/optional fields. The system will validate your config and provide clear errors if required fields are missing.
 
 ### Example: `train_cnn` Configuration
 
@@ -195,14 +195,14 @@ cleave-app --file_path config_kfold.json
 
 If your image-only model is not achieving the desired accuracy, consider the following strategies:
 
-- **Fine-tune the Pretrained Backbone:** Unfreeze the last 10–20 layers of MobileNetV2 and continue training with a low learning rate.
+- **Fine-tune the Pretrained Backbone:** Unfreeze the last 10–20 layers of the pre-trained and continue training with a low learning rate.
 - **Increase Model Capacity:** Add more dense layers or increase the number of units after the global average pooling layer.
 - **Tune Data Augmentation:** Use more aggressive or varied augmentations (e.g., `RandomFlip`, higher `RandomBrightness`/`RandomContrast`).
 - **Regularization:** Add or increase dropout, or use L2 regularization on dense layers.
 - **Learning Rate Scheduling:** Use a learning rate scheduler or `ReduceLROnPlateau` callback.
 - **Handle Class Imbalance:** Use class weights or oversample minority classes if your dataset is imbalanced.
 - **Hyperparameter Tuning:** Use Keras Tuner to search for the best architecture and training parameters.
-- **Image Preprocessing:** Ensure images are normalized to the range expected by the backbone (usually [0, 1] or [-1, 1]).
+- **Image Preprocessing:** Ensure images are normalized to the range expected by the backbone (done in code already).
 - **Train Longer with Early Stopping:** Allow more epochs and use early stopping to avoid underfitting.
 
 ### Example: Improved Image-Only Model Architecture
@@ -285,12 +285,12 @@ We welcome contributions! Please feel free to submit a Pull Request. For major c
 ### Development Setup
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
+2. Create a feature branch: `git checkout -b feature/new_feature`
 3. Install in development mode: `pip install -e ".[dev]"`
 4. Make your changes and add tests
 5. Run tests: `pytest`
-6. Commit your changes: `git commit -m 'Add amazing feature'`
-7. Push to the branch: `git push origin feature/amazing-feature`
+6. Commit your changes: `git commit -m 'Add new feature'`
+7. Push to the branch: `git push origin feature/new_feature`
 8. Open a Pull Request
 
 ## 📄 License
@@ -300,7 +300,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - THORLABS for the Fiber Cleave Analyzer (FCA)
-- TensorFlow and Keras teams for the excellent deep learning framework
+- TensorFlow and Keras 
 - The open-source community for various tools and libraries
 
 ## 📞 Support

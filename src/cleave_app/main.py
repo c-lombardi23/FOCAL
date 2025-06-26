@@ -26,12 +26,65 @@ from .hyperparameter_tuning import (
 )
 from .grad_cam import gradcam_driver, compute_saliency_map
 import pandas as pd
+from typer import List, Callable
 
 try:
     import tensorflow as tf
 except ImportError:
     print("Warning: TensorFlow not found. Please install tensorflow>=2.19.0")
     tf = None
+
+def setup_callbacks(config, trainable_model) -> List[Callable]:
+    """
+    Setup training callbacks based on configuration.
+    
+    Args:
+        config: Configuration object containing callback parameters
+        trainable_model: Model instance that has callback creation methods
+        
+    Returns:
+        List[Callable]: List of configured callbacks
+    """
+    callbacks = []
+    
+    # Setup checkpoint callback
+    if (config.checkpoints == "y" and 
+        config.checkpoint_filepath and 
+        config.monitor and 
+        config.method):
+        checkpoint = trainable_model.create_checkpoints(
+            config.checkpoint_filepath, 
+            config.monitor, 
+            config.method
+        )
+        callbacks.append(checkpoint)
+    
+    # Setup early stopping callback
+    if (config.early_stopping == "y" and 
+        config.patience and 
+        config.monitor and 
+        config.method):
+        es = trainable_model.create_early_stopping(
+            config.patience, 
+            config.method, 
+            config.monitor
+        )
+        callbacks.append(es)
+    
+    # Setup learning rate reduction callback
+    if config.reduce_lr is not None:
+        if config.reduce_lr_patience is not None:
+            reduce_lr = trainable_model.reduce_on_plateau(
+                patience=config.reduce_lr_patience, 
+                factor=config.reduce_lr
+            )
+        else:
+            reduce_lr = trainable_model.reduce_on_plateau(
+                factor=config.reduce_lr
+            )
+        callbacks.append(reduce_lr)
+    
+    return callbacks
 
 
 def train_cnn(config) -> None:
@@ -45,25 +98,24 @@ def train_cnn(config) -> None:
         raise ImportError("TensorFlow is required for CNN training")
         
     try:
-        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone)
+        data = DataCollector(config.csv_path, config.img_folder, classification_type=config.classification_type, backbone=config.backbone)
         images, features, labels = data.extract_data()
-        train_ds, test_ds = data.create_datasets(
+        train_ds, test_ds, class_weights= data.create_datasets(
             images, features, labels, 
             config.test_size, config.buffer_size, config.batch_size, feature_scaler_path=config.feature_scaler_path
         )
         
-        trainable_model = CustomModel(train_ds, test_ds)
+        trainable_model = CustomModel(train_ds, test_ds, classification_type=config.classification_type)
         
         if config.continue_train == "y":
             compiled_model = tf.keras.models.load_model(config.model_path)
         else:
             compiled_model = trainable_model.compile_model(
                 config.image_shape, config.feature_shape, 
-                config.learning_rate or 0.001, unfreeze_from=config.unfreeze_from
+                config.learning_rate or 0.001, unfreeze_from=config.unfreeze_from, backbone=config.backbone
             )
         
         # Setup callbacks
-        callbacks = []
         
         if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method:
             checkpoint = trainable_model.create_checkpoints(
@@ -85,11 +137,13 @@ def train_cnn(config) -> None:
             else:
                 reduce_lr = trainable_model.reduce_on_plateau(factor=config.reduce_lr)
             callbacks.append(reduce_lr)
+        callbacks = setup_callbacks(config, )
+        
         
         max_epochs = config.max_epochs or 20
         
-        history = trainable_model.train_model(
-            compiled_model, epochs=max_epochs, 
+        history = trainable_model.train_model(class_weights=class_weights,
+            model=compiled_model, epochs=max_epochs, 
             early_stopping=es if config.early_stopping == "y" and config.patience and config.monitor and config.method else None,
             reduce_lr=reduce_lr if config.reduce_lr is not None else None,
             checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
@@ -338,6 +392,7 @@ def mlp_hyperparameter(config) -> None:
 
 
 def test_cnn(config) -> None:
+    import traceback
     """
     Test CNN model performance.
 
@@ -347,7 +402,7 @@ def test_cnn(config) -> None:
     try:
         tester = TestPredictions(
             config.model_path, config.csv_path, 
-            config.feature_scaler_path, config.img_folder, backbone=config.backbone 
+            config.feature_scaler_path, config.img_folder, image_only=False, backbone=config.backbone 
         )
         true_labels, pred_labels, predictions = tester.gather_predictions()
         
@@ -361,6 +416,7 @@ def test_cnn(config) -> None:
             
     except Exception as e:
         print(f"Error during CNN testing: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -424,7 +480,7 @@ def image_only(config) -> None:
         raise ImportError("TensorFlow is required for image-only training")
         
     try:
-        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone, set_mask=config.set_mask, encoder_path=config.encoder_path)
+        data = DataCollector(config.csv_path, config.img_folder, classification_type=config.classification_type, backbone=config.backbone, set_mask=config.set_mask, encoder_path=config.encoder_path)
         images, features, labels = data.extract_data()
         train_ds, test_ds, class_weights = data.create_datasets(
             images, features, labels, 
@@ -435,13 +491,15 @@ def image_only(config) -> None:
         train_ds = data.image_only_dataset(train_ds)
         test_ds = data.image_only_dataset(test_ds)
         
-        trainable_model = CustomModel(train_ds, test_ds)
-        compiled_model = trainable_model.compile_image_only_model(
-            config.image_shape, config.learning_rate or 0.001, backbone=config.backbone, dropout1_rate=config.dropout1_rate,
-            dense_units=config.dense_units, dropout2_rate=config.dropout2_rate, l2_factor=config.l2_factor, num_classes=config.num_classes,
-            unfreeze_from=config.unfreeze_from
-        )
-        
+        trainable_model = CustomModel(train_ds, test_ds, classification_type=data.classification_type)
+        if config.continue_train == "y":
+            compiled_model = tf.keras.models.load_model(config.model_path)
+        else:
+            compiled_model = trainable_model.compile_image_only_model(
+                config.image_shape, config.learning_rate or 0.001, backbone=config.backbone, dropout1_rate=config.dropout1_rate,
+                dense_units=config.dense_units, dropout2_rate=config.dropout2_rate, l2_factor=config.l2_factor, num_classes=config.num_classes,
+                unfreeze_from=config.unfreeze_from
+            )
         # Setup callbacks
         callbacks = []
         
@@ -508,7 +566,7 @@ def test_image_only(config) -> None:
         tester = TestPredictions(
             model_path=config.model_path, csv_path=config.csv_path, 
              img_folder=config.img_folder, scalar_path=None, image_only=True, backbone=config.backbone,
-            encoder_path=config.encoder_path
+            encoder_path=config.encoder_path, classification_type=config.classification_type
         )
         true_labels, pred_labels, predictions = tester.gather_predictions()
         
@@ -533,10 +591,11 @@ def image_hyperparameter(config) -> None:
     Args:
         config: Configuration object containing training parameters
     """
+    import traceback
     try:
-        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone, set_mask=config.set_mask)
+        data = DataCollector(config.csv_path, config.img_folder, backbone=config.backbone, set_mask=config.set_mask, classification_type=config.classification_type)
         images, features, labels = data.extract_data()
-        train_ds, test_ds = data.create_datasets(
+        train_ds, test_ds, class_weights = data.create_datasets(
             images, features, labels, 
             config.test_size, config.buffer_size, config.batch_size
         )
@@ -549,13 +608,14 @@ def image_hyperparameter(config) -> None:
         tuner = ImageHyperparameterTuning(
             config.image_shape, max_epochs=max_epochs,
             project_name=config.project_name, directory=config.tuner_directory, backbone=config.backbone,
-            num_classes=config.num_classes
+            num_classes=config.num_classes, class_weights=class_weights
         )
         
         run_search_helper(config, tuner, train_ds, test_ds, best_params_path=config.best_tuner_params)
     
     except Exception as e:
         print(f"Error during image hyperparameter tuning: {e}")
+        traceback.print_exc()
         raise
 
 def custom_model(config) -> None:

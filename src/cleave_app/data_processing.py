@@ -17,8 +17,9 @@ warnings.filterwarnings('ignore')
 
 try:
     import tensorflow as tf
+    import sklearn
     from sklearn.model_selection import train_test_split, StratifiedKFold, KFold
-    from sklearn.preprocessing import MinMaxScaler, MultiLabelBinarizer
+    from sklearn.preprocessing import MinMaxScaler, MultiLabelBinarizer, OneHotEncoder
     from sklearn.utils.class_weight import compute_class_weight
 except ImportError as e:
     print(f"Warning: Required ML libraries not found: {e}")
@@ -34,7 +35,7 @@ class DataCollector:
     and creating TensorFlow datasets for training machine learning models.
     """
     
-    def __init__(self, csv_path: str, img_folder: str, backbone: Optional[str] = "mobilenet", set_mask: Optional[str] = "n",
+    def __init__(self, csv_path: str, img_folder: str, classification_type: Optional[str] = "binary", backbone: Optional[str] = "mobilenet", set_mask: Optional[str] = "n",
                  encoder_path: Optional[str] = None):
         """
         Initialize the data collector.
@@ -43,6 +44,7 @@ class DataCollector:
             csv_path: Path to CSV file containing cleave metadata
             img_folder: Path to folder containing cleave images
             backbone: Optional pre-trained model to use as frozen layer
+            classifcation_type: multiclass, multi_label, binary
         """
         if csv_path is None or img_folder is None:
             raise ValueError("Must provide both csv_path and img_folder")
@@ -59,13 +61,15 @@ class DataCollector:
         self.label_scaler = None
         self.encoder = None
         self.encoder_path = encoder_path
+        self.classification_type = classification_type
         self.df = self.clean_data()
         self.backbone = backbone
         self.set_mask = set_mask
-
+        
+        
     def set_label(self) -> Optional[pd.DataFrame]:
         """
-        Read CSV file and add cleave quality labels based on criteria.
+        Read CSV file and add cleave quality labels based on certain criteria.
 
         Returns:
             pd.DataFrame: DataFrame with added CleaveCategory column
@@ -78,14 +82,33 @@ class DataCollector:
         except Exception as e:
             print(f"Error reading CSV file: {e}")
             return None
-      
-        df["CleaveCategory"] = df.apply(
-        lambda row: 1 if row["CleaveAngle"] <= 0.45 and row["ScribeDiameter"] < 17 and (not row["Hackle"] and not row["Misting"])
-        else 0,
-        axis=1
-          )
-        print(df['CleaveCategory'].value_counts())
-        return df
+        
+        def label(row):
+            good_angle = row['CleaveAngle'] <= 0.45
+            no_defects = not row['Hackle'] and not row['Misting']
+            good_diameter = row['ScribeDiameter'] < 17
+            
+            if good_angle and no_defects and good_diameter:
+                return "Good"
+            elif good_angle and not no_defects and good_diameter:
+                return "Misting_Hackle"
+            elif (good_angle and no_defects and not good_diameter) or (not good_angle and no_defects and good_diameter):
+                return "Bad_Scribe_Mark or Angle"
+            else:
+                return "Multiple_Errors"
+            
+        if self.classification_type == "multiclass":
+            df["CleaveCategory"] = df.apply(label, axis=1)
+            return df
+        elif self.classification_type == "binary":
+            df["CleaveCategory"] = df.apply(
+            lambda row: 1 if row["CleaveAngle"] <= 0.45 and row["ScribeDiameter"] < 17 and (not row["Hackle"] and not row["Misting"])
+            else 0,
+            axis=1)
+            print(df['CleaveCategory'].value_counts())
+            return df
+        else:
+            raise ValueError(f"Unsupported Mode {self.classification_type}")
     
     def save_scaler_encoder(self, obj, filepath: str) -> None:
         """
@@ -110,6 +133,19 @@ class DataCollector:
         df = self.set_label()
         if df is None:
             return None
+        if self.classification_type == "multiclass":
+            ohe = OneHotEncoder(sparse_output=False)
+            onehot_labels = ohe.fit_transform(df[['CleaveCategory']])
+            class_names = ohe.categories_[0]
+
+            for idx, class_name in enumerate(class_names):
+                df[f"Label_{class_name}"] = onehot_labels[:, idx]
+
+            self.encoder = ohe
+            if self.encoder_path != None:
+                self.save_scaler_encoder(ohe, self.encoder_path)
+                print(f"Encoder saved to {self.encoder_path}")
+
         # Clean image path by removing the base folder path
         df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
         return df
@@ -140,6 +176,30 @@ class DataCollector:
       mask = tf.cast(dist_from_center <= radius, tf.float32)
       mask = tf.expand_dims(mask, axis=-1)
       return img * mask
+    
+    def get_backbone_preprocessor(self, backbone: str):
+        """
+        Get the appropriate preprocessing function for the specified backbone.
+        
+        Args:
+            backbone: Type of backbone model ("mobilenet", "resnet", "efficientnet")
+            
+        Returns:
+            Callable: Preprocessing function for the backbone
+            
+        Raises:
+            ValueError: If backbone type is not supported
+        """
+        if backbone == "mobilenet":
+            from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as backbone_preprocess
+        elif backbone == "resnet":
+            from tensorflow.keras.applications.resnet50 import preprocess_input as backbone_preprocess
+        elif backbone == "efficientnet":
+            from tensorflow.keras.applications.efficientnet import preprocess_input as backbone_preprocess
+        else:
+            raise ValueError(f"Invalid backbone: {backbone}. Supported backbones: mobilenet, resnet, efficientnet")
+        
+        return backbone_preprocess
 
 
     def load_process_images(self, filename) -> tf.Tensor:
@@ -152,14 +212,7 @@ class DataCollector:
         Returns:
             tf.Tensor: Preprocessed image tensor
         """
-        if self.backbone == "mobilenet":
-            from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as backbone_preprocess
-        elif self.backbone == "resnet":
-            from tensorflow.keras.applications.resnet50 import preprocess_input as backbone_preprocess
-        elif self.backbone == "efficientnet":
-            from tensorflow.keras.applications.efficientnet import preprocess_input as backbone_preprocess
-        else:
-            raise ValueError(f"Invalid backbone: {self.backbone}")
+        backbone_preprocess = self.get_backbone_preprocessor(self.backbone)
 
         if tf is None:
             raise ImportError("TensorFlow is required for image processing")
@@ -219,11 +272,16 @@ class DataCollector:
           raise ImportError("TensorFlow is required for dataset creation")
 
       images = self.df['ImagePath'].values
-      label_cols = [col for col in self.df.columns if col.startswith('Label_')]
-      labels = self.df[label_cols].values.astype(np.float32)
+      if self.classification_type == "multiclass":
+        label_cols = [col for col in self.df.columns if col.startswith('Label_')]
+        labels = self.df[label_cols].values.astype(np.float32)
+        stratify = np.argmax(labels, axis=1)
+      elif self.classification_type == "binary":
+        labels = self.df['CleaveCategory'].values
+        stratify = labels
 
       train_imgs, test_imgs, train_labels, test_labels = train_test_split(
-          images, labels, stratify=np.argmax(labels, axis=1), test_size=test_size, random_state=42
+          images, labels, stratify=stratify, test_size=test_size, random_state=42
       )
 
       def _load_grayscale_image(filename):
@@ -278,6 +336,20 @@ class DataCollector:
         labels = self.df['CleaveCategory'].values.astype(np.float32)
         
         return images, features, labels
+    
+    @staticmethod
+    def mask_features(images, features, p =0.3):
+        """
+        Randomly mask features to prevent reliance on numerical data
+        """
+        def mask():
+            return tf.zeros_like(features)
+        features = tf.cond(
+            tf.random.uniform([]) < p,
+            mask,
+            lambda: features
+        )
+        return (images, features)
 
     def process_images_features(self, inputs: Tuple, label: np.ndarray) -> Tuple[Tuple, np.ndarray]:
         """
@@ -320,7 +392,10 @@ class DataCollector:
             
         kf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=24)
         datasets = []
-        single_labels = np.argmax(labels, axis=1)
+        if self.classification_type == "multiclass":
+            single_labels = np.argmax(labels, axis=1)
+        elif self.classification_type == "binary":
+            single_labels = labels
 
         for train_index, test_index in kf.split(X=features, y=single_labels):
             train_imgs, test_imgs = images[train_index], images[test_index]
@@ -348,7 +423,7 @@ class DataCollector:
                        buffer_size: int, 
                        batch_size: int, 
                        feature_scaler_path: Optional[str] = None,
-                       encoder_path: Optional[str] = None) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
+                       ) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
         """
         Create train and test datasets with feature scaling.
 
@@ -369,10 +444,16 @@ class DataCollector:
             raise ImportError("TensorFlow is required for dataset creation")
             
         # Stratified split for classification
-        class_weights_array = compute_class_weight(class_weight='balanced', classes=np.unique(labels), y=labels)
-        class_weights = dict(enumerate(class_weights_array))
+        if self.classification_type == "binary":
+            class_weights_array = compute_class_weight(class_weight='balanced', classes=np.array([0,1]), y=labels)
+            class_weights = dict(enumerate(class_weights_array))
+            stratify = labels
+        elif self.classification_type == "multiclass":
+            stratify = labels.argmax(axis=1)
+            class_weights = None
+
         train_imgs, test_imgs, train_features, test_features, train_labels, test_labels = train_test_split(
-            images, features, labels, stratify=labels, test_size=test_size, random_state=42
+            images, features, labels, stratify=stratify, test_size=test_size, random_state=42
         )
         
         # Scale features
@@ -395,7 +476,8 @@ class DataCollector:
 
         train_ds = train_ds.map(lambda x, y: self.process_images_features(x, y))
         test_ds = test_ds.map(lambda x, y: self.process_images_features(x, y))
-
+        train_ds = train_ds.map(lambda x, y: (DataCollector.mask_features(x[0], x[1], p=0.6), y))
+        test_ds = test_ds.map(lambda x, y: (DataCollector.mask_features(x[0], x[1], p=0.7), y))
         train_ds = train_ds.shuffle(buffer_size=buffer_size).batch(batch_size).prefetch(tf.data.AUTOTUNE)
         test_ds = test_ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 

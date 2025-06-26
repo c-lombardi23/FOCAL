@@ -44,7 +44,7 @@ class CustomModel:
     CNN models for fiber cleave classification.
     """
     
-    def __init__(self, train_ds, test_ds):
+    def __init__(self, train_ds, test_ds, classification_type: Optional[str] = "binary"):
         """
         Initialize the custom model.
         
@@ -57,6 +57,46 @@ class CustomModel:
             
         self.train_ds = train_ds
         self.test_ds = test_ds
+        self.classification_type = classification_type
+    def get_backbone_model(self, backbone: str, image_shape: Tuple[int, int, int]) -> tf.keras.Model:
+        """
+        Get pretrained backbone model based on specified backbone type.
+        
+        Args:
+            backbone: Type of backbone model ("mobilenet", "resnet", "efficientnet")
+            image_shape: Input image shape (height, width, channels)
+            
+        Returns:
+            tf.keras.Model: Pretrained backbone model
+            
+        Raises:
+            ValueError: If backbone type is not supported
+        """
+        if backbone == "mobilenet":
+            pre_trained_model = MobileNetV2(
+                input_shape=image_shape, 
+                include_top=False, 
+                weights="imagenet", 
+                name="mobilenet"
+            )
+        elif backbone == "resnet":
+            pre_trained_model = ResNet50(
+                input_shape=image_shape, 
+                include_top=False, 
+                weights="imagenet", 
+                name="resnet50"
+            )
+        elif backbone == "efficientnet":
+            pre_trained_model = EfficientNetB0(
+                input_shape=image_shape, 
+                include_top=False, 
+                weights="imagenet", 
+                name="efficientnetb0"
+            )
+        else:
+            raise ValueError(f"Unsupported backbone: {backbone}. Supported backbones: mobilenet, resnet, efficientnet")
+        
+        return pre_trained_model
     
     def build_custom_model(self, image_shape, num_classes=5):
       data_augmentation = Sequential([
@@ -102,27 +142,7 @@ class CustomModel:
         Returns:
             tf.keras.Model: Compiled model ready for training
         """
-        if backbone == "mobilenet":
-          pre_trained_model = MobileNetV2(
-              input_shape=image_shape, 
-              include_top=False, 
-              weights="imagenet", 
-              name="mobilenet"
-          )
-        elif backbone == "resnet":
-            pre_trained_model = ResNet50(
-              input_shape=image_shape, 
-              include_top=False, 
-              weights="imagenet", 
-              name="resnet50"
-          )
-        elif backbone == "efficientnet":
-            pre_trained_model = EfficientNetB0(
-              input_shape=image_shape, 
-              include_top=False, 
-              weights="imagenet", 
-              name="efficientnetb0"
-          )
+        pre_trained_model = self.get_backbone_model(backbone=backbone, image_shape=image_shape)
         pre_trained_model.trainable = unfreeze_from is not None
         
         if unfreeze_from is not None:
@@ -131,11 +151,11 @@ class CustomModel:
 
         # Data augmentation pipeline
         data_augmentation = Sequential([
-            RandomRotation(factor=0.1),
-            RandomBrightness(factor=0.1),
-            RandomZoom(height_factor=0.1, width_factor=0.1),
-            GaussianNoise(stddev=0.01),
-            RandomContrast(0.1)
+            RandomRotation(factor=0.0),
+            RandomBrightness(factor=0.0),
+            RandomZoom(height_factor=0.0, width_factor=0.0),
+            GaussianNoise(stddev=0.00),
+            RandomContrast(0.0)
         ])
         
         # CNN for images
@@ -147,8 +167,7 @@ class CustomModel:
 
         # Numerical features section
         params_input = Input(shape=param_shape)
-        y = Dense(24, name="dense_param1", activation='relu')(params_input)
-        y = Dense(16, name="dense_param2", activation='relu')(y)
+        y = Dense(16, name="dense_param1", activation='relu')(params_input)
         y = Dropout(0.6, name="dropout_2")(y)  # Added to remove reliance on features
         y = BatchNormalization()(y)
 
@@ -156,7 +175,7 @@ class CustomModel:
         z = Dense(48, name="dense_combined", activation='relu')(combined)
         z = BatchNormalization(name="batch_norm")(z)
         z = Dropout(0.2, name="dropout_combined")(z)
-        z = Dense(5, name="output_layer", activation='softmax')(z)
+        z = Dense(1, name="output_layer", activation='sigmoid')(z)
 
         model = Model(inputs=[image_input, params_input], outputs=z)
         model.summary()
@@ -184,27 +203,7 @@ class CustomModel:
         Returns:
             tf.keras.Model: Image-only classification model
         """
-        if backbone == "mobilenet":
-          pre_trained_model = MobileNetV2(
-              input_shape=image_shape, 
-              include_top=False, 
-              weights="imagenet", 
-              name="mobilenet"
-          )
-        elif backbone == "resnet":
-            pre_trained_model = ResNet50(
-              input_shape=image_shape, 
-              include_top=False, 
-              weights="imagenet", 
-              name="resnet"
-          )
-        elif backbone == "efficientnet":
-            pre_trained_model = EfficientNetB0(
-              input_shape=image_shape, 
-              include_top=False, 
-              weights="imagenet", 
-              name="efficientnetb0"
-          )
+        pre_trained_model = self.get_backbone_model(backbone=backbone, image_shape=image_shape)
         pre_trained_model.trainable = unfreeze_from is not None
         
         if unfreeze_from is not None:
@@ -212,11 +211,11 @@ class CustomModel:
                 layer.trainable = False
             
         data_augmentation = Sequential([
-            RandomRotation(factor=0.1),
-            RandomBrightness(factor=0.1),
-            RandomZoom(height_factor=0.1, width_factor=0.1),
-            GaussianNoise(stddev=0.01),
-            RandomContrast(0.1)
+            RandomRotation(factor=0.0),
+            RandomBrightness(factor=0.0),
+            RandomZoom(height_factor=0.0, width_factor=0.0),
+            GaussianNoise(stddev=0.00),
+            RandomContrast(0.0)
         ])
 
         image_input = Input(shape=image_shape)
@@ -228,9 +227,15 @@ class CustomModel:
           x = Dense(dense_units, name="dense1", activation='relu',
                   kernel_regularizer=l2(l2_factor))(x)
         else:
-            x = Dense(dense_units, name="dense1", activation='relu')(x)    
+            x = Dense(dense_units, name="dense1", activation='relu')(x)
+
         x = Dropout(dropout2_rate, name='dropout_2')(x)
-        output = Dense(num_classes, name="output_layer", activation='sigmoid')(x)
+        if self.classification_type == "binary":
+            activation = 'sigmoid'
+        elif self.classification_type == "multiclass":
+            activation = "softmax"
+        print(activation)
+        output = Dense(num_classes, name="output_layer", activation=activation)(x)
 
         model = Model(inputs=image_input, outputs=output)
         model.summary()
@@ -263,8 +268,12 @@ class CustomModel:
             
         model = self.build_image_only_model(image_shape, backbone=backbone, dropout1_rate=dropout1_rate, 
                                             dense_units=dense_units, dropout2_rate=dropout2_rate, num_classes=num_classes, l2_factor=l2_factor, unfreeze_from=None)
-        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-        model.compile(optimizer=optimizer, loss="binary_crossentropy", metrics=metrics)
+        optimizer = tf.keras.optimizers.AdamW(learning_rate=learning_rate)
+        if self.classification_type == "binary":
+            loss = "binary_crossentropy"
+        elif self.classification_type == "multiclass":
+            loss = "categorical_crossentropy"
+        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
         return model
     
     def compile_custom_model(self, 
@@ -291,7 +300,11 @@ class CustomModel:
             
         model = self.build_custom_model(image_shape, num_classes=num_classes)
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=metrics)
+        if self.classification_type == "binary":
+            loss = "binary_crossentropy"
+        elif self.classification_type == "multiclass":
+            loss = "categorical_crossentropy"
+        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
         return model
 
     def compile_model(self, 
@@ -315,11 +328,15 @@ class CustomModel:
             tf.keras.Model: Compiled model ready for training
         """
         if metrics is None:
-            metrics = ['accuracy']
+            metrics = ['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()]
             
         model = self.build_pretrained_model(image_shape, param_shape, unfreeze_from=unfreeze_from, backbone=backbone)
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=metrics)
+        if self.classification_type == "binary":
+            loss = "binary_crossentropy"
+        elif self.classification_type == "multiclass":
+            loss = "categorical_crossentropy"
+        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
         return model
     
     def create_checkpoints(self, 
@@ -468,7 +485,8 @@ class CustomModel:
                 self.train_ds, 
                 epochs=epochs, 
                 initial_epoch=initial_epoch,
-                validation_data=self.test_ds
+                validation_data=self.test_ds,
+                class_weight=class_weights
             )
             
         # Save training history

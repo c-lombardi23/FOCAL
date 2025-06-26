@@ -20,9 +20,10 @@ class TestPredictions(DataCollector):
                  csv_path: str, 
                  scalar_path: str, 
                  img_folder: str,
-                 encoder_path: str, 
+                 encoder_path: str = None, 
                  image_only: bool = False,
                  backbone: str = "mobilenet",
+                 classification_type: str = "binary"
                  ):
         """
         Initialize TestPredictions.
@@ -34,7 +35,11 @@ class TestPredictions(DataCollector):
             img_folder (str): Path to image folder.
             image_only (bool): If True, test only with images (no features).
         """
-        super().__init__(csv_path, img_folder, backbone, encoder_path=encoder_path)
+        super().__init__(csv_path, img_folder=img_folder, backbone=backbone, encoder_path=encoder_path, classification_type=classification_type)
+        if self.classification_type == "multiclass":
+            self.class_names = self.encoder.categories_[0].tolist()
+        elif self.classification_type == "binary":
+            self.class_names = [0, 1]
         self.scalar_path = scalar_path
         self.model = tf.keras.models.load_model(model_path)
         self.image_only = image_only
@@ -56,12 +61,13 @@ class TestPredictions(DataCollector):
         # Clean image path
         df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
         # One-hot encode CleaveCategory
-        self.ohe = joblib.load(self.encoder_path)
-        onehot_labels = self.ohe.transform(df[['CleaveCategory']])
-        class_names = self.ohe.categories_[0]
-        for idx, class_name in enumerate(class_names):
-            df[f"Label_{class_name}"] = onehot_labels[:, idx]
-        self.class_names = class_names
+        if self.classification_type == "multiclass":
+            self.ohe = joblib.load(self.encoder_path)
+            onehot_labels = self.ohe.transform(df[['CleaveCategory']])
+            class_names = self.ohe.categories_[0]
+            for idx, class_name in enumerate(class_names):
+                df[f"Label_{class_name}"] = onehot_labels[:, idx]
+            self.class_names = class_names
         return df
 
     def test_prediction(self, image_path: str, feature_vector: 'np.ndarray | None' = None) -> 'np.ndarray':
@@ -81,6 +87,7 @@ class TestPredictions(DataCollector):
             prediction = self.model.predict(image)
         else:
             feature_vector = np.expand_dims(feature_vector, axis=0)
+            feature_vector = np.zeros_like(feature_vector)
             prediction = self.model.predict([image, feature_vector])
         return prediction
 
@@ -98,8 +105,8 @@ class TestPredictions(DataCollector):
             pred_features = None
         else:
             pred_features = self.df[['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values
-            if self.scaler is not None:
-                pred_features = self.scaler.transform(pred_features)
+            #if self.scaler is not None:
+                #pred_features = self.scaler.transform(pred_features)
         predictions = []
         if self.image_only:
             for img_path in pred_image_paths:
@@ -113,9 +120,16 @@ class TestPredictions(DataCollector):
             else:
                 print("No features available for prediction.")
                 return None, None, None
+            
         # Set prediction labels based on max of ohe
         pred_labels = [np.argmax(pred[0]) for pred in predictions]
+        if self.classification_type == "binary":
+            pred_labels = [(pred[0,0] > 0.5).astype(int) for pred in predictions]
+        elif self.classification_type =="multiclass":
+            pred_labels = [np.argmax(pred[0]) for pred in predictions]
+        
         true_labels = self.df["CleaveCategory"].map({label: idx for idx, label in enumerate(self.class_names)}).values
+
         return true_labels, pred_labels, predictions
 
     def display_confusion_matrix(self, true_labels: 'np.ndarray', pred_labels: 'list[int]') -> None:
@@ -126,14 +140,20 @@ class TestPredictions(DataCollector):
             true_labels (np.ndarray): Array of true labels.
             pred_labels (list[int]): List of predicted labels.
         """
-        labels = list(range(len(self.class_names)))
+        if self.classification_type == "binary":
+            labels = np.array([0,1])
+        elif self.classification_type == "multiclass":
+            labels = list(range(len(self.class_names)))
         cm = confusion_matrix(true_labels, pred_labels, labels=labels)
         disp = ConfusionMatrixDisplay(confusion_matrix=cm,
                                   display_labels=self.class_names)
         disp.plot()
         plt.show()
 
-    def display_classification_report(self, true_labels: 'np.ndarray', pred_labels: 'list[int]', classification_path: str = None) -> None:
+    def display_classification_report(self, 
+                                      true_labels: 'np.ndarray', 
+                                      pred_labels: 'list[int]', 
+                                      classification_path: str = None) -> None:
         """
         Display classification report comparing true labels to predicted labels.
 
@@ -145,7 +165,11 @@ class TestPredictions(DataCollector):
         if classification_path:
             df = pd.DataFrame(classification_report(true_labels, pred_labels, target_names=self.class_names, output_dict=True)).transpose()
             df.to_csv(classification_path, index=True)
-        print(classification_report(true_labels, pred_labels, target_names=self.class_names))
+        if self.classification_type == "binary":
+            str_names = [str(c) for c in self.class_names]
+            print(classification_report(true_labels, pred_labels, target_names=str_names))
+        else:
+            print(classification_report(true_labels, pred_labels, target_names=self.class_names))
 
     def plot_roc(self, title: str, true_labels: 'np.ndarray', pred_probabilites: 'np.ndarray') -> None:
         """
@@ -173,7 +197,11 @@ class TensionPredictor:
     """
     Predicts tension values using a trained MLP model and preprocessed image/features.
     """
-    def __init__(self, model: 'tf.keras.Model', image_folder: str, image_path: str, tension_scaler_path: str, feature_scaler_path: str):
+    def __init__(self, model: 'tf.keras.Model', 
+                 image_folder: str, 
+                 image_path: str, 
+                 tension_scaler_path: str, 
+                 feature_scaler_path: str):
         """
         Initialize TensionPredictor.
 
@@ -232,7 +260,14 @@ class TensionPredictor:
         predicted_tension = self.tension_scaler.inverse_transform(predicted_tension)
         return predicted_tension[0][0]
 
-    def plot_metric(self, title: str, X: 'list[float]', y: 'list[float]', x_label: str, y_label: str, x_legend: str, y_legend: str) -> None:
+    def plot_metric(self, 
+                    title: str, 
+                    X: 'list[float]', 
+                    y: 'list[float]', 
+                    x_label: str, 
+                    y_label: str, 
+                    x_legend: str, 
+                    y_legend: str) -> None:
         """
         Plot a metric for model evaluation.
 
