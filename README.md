@@ -255,6 +255,7 @@ For more details, see the [Configuration](#configuration) and [Usage Examples](#
 - **Configuration**: Pydantic (mode-specific config classes)
 - **CLI**: Typer, Click
 - **Testing**: pytest
+- **DevTools**: Pydantic, Black, Pylint, Flake8
 
 ## 📁 Project Structure
 
