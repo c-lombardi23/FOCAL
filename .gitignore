@@ -51,6 +51,11 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# Sphinx build outputs
+docs/build/
+docs/source/_build/    # if you chose separate source/build under docs
+docs/source/.doctrees/
+
 # Translations
 *.mo
 *.pot
