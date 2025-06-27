@@ -1,3 +1,11 @@
+"""
+Prediction model pipeline for testing CNN model or MLP model.
+
+This module provides classes for gathering data and then testing on either 
+the cnn model or the regression model.
+"""
+
+
 # import libraries
 import pandas as pd
 import numpy as np
@@ -11,7 +19,6 @@ from sklearn.metrics import (
     classification_report,
     ConfusionMatrixDisplay,
 )
-from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from .data_processing import DataCollector
 
 
@@ -56,6 +63,7 @@ class TestPredictions(DataCollector):
         self.scalar_path = scalar_path
         self.model = tf.keras.models.load_model(model_path)
         self.image_only = image_only
+        self.ohe = None
         if not self.image_only and self.scalar_path:
             self.feature_scaler = joblib.load(self.scalar_path)
 
@@ -67,7 +75,7 @@ class TestPredictions(DataCollector):
             pd.DataFrame | None: DataFrame with cleave quality and one-hot labels, or None if file not found.
         """
         try:
-            df = self.set_label()
+            df = self._set_label()
         except FileNotFoundError:
             print("CSV file not found!")
             return None
@@ -166,7 +174,7 @@ class TestPredictions(DataCollector):
             .values
         )
 
-        return true_labels, pred_labels, predictions
+        return true_labels, pred_labels
 
     def display_confusion_matrix(
         self, true_labels: "np.ndarray", pred_labels: "list[int]"
@@ -242,7 +250,7 @@ class TestPredictions(DataCollector):
             pred_probabilites (np.ndarray): Array of predicted probabilities.
         """
         pred_probabilites = np.array(pred_probabilites).flatten()
-        fpr, tpr, thresholds = roc_curve(true_labels, pred_probabilites)
+        fpr, tpr = roc_curve(true_labels, pred_probabilites)
         auc = roc_auc_score(true_labels, pred_probabilites)
         plt.plot(fpr, tpr, label=f"ROC Curve (AUC={auc:.2f}%)")
         plt.plot([0, 1], [0, 1], "k--")

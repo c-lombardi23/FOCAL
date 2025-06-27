@@ -17,12 +17,15 @@ warnings.filterwarnings("ignore")
 
 try:
     import tensorflow as tf
-    import sklearn
     from sklearn.model_selection import (
         train_test_split,
         StratifiedKFold,
         KFold,
     )
+    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as _mobilenet_preprocess
+    from tensorflow.keras.applications.resnet50      import preprocess_input as _resnet_preprocess
+    from tensorflow.keras.applications.efficientnet   import preprocess_input as _efficientnet_preprocess
+
     from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
     from sklearn.utils.class_weight import compute_class_weight
 except ImportError as e:
@@ -128,21 +131,21 @@ class DataCollector:
             no_defects = not row["Hackle"] and not row["Misting"]
             good_diameter = row["ScribeDiameter"] < 17
 
+            bad_angle = not good_angle and no_defects and good_diameter
+            bad_diameter = good_angle and no_defects and not good_diameter
+
             if good_angle and no_defects and good_diameter:
                 return "Good"
-            elif good_angle and not no_defects and good_diameter:
+            if good_angle and not no_defects and good_diameter:
                 return "Misting_Hackle"
-            elif (good_angle and no_defects and not good_diameter) or (
-                not good_angle and no_defects and good_diameter
-            ):
+            if bad_angle or bad_diameter:
                 return "Bad_Scribe_Mark or Angle"
-            else:
-                return "Multiple_Errors"
+            return "Multiple_Errors"
 
         if self.classification_type == "multiclass":
             df["CleaveCategory"] = df.apply(label, axis=1)
             return df
-        elif self.classification_type == "binary":
+        if self.classification_type == "binary":
             df["CleaveCategory"] = df.apply(
                 lambda row: (
                     1
@@ -232,35 +235,31 @@ class DataCollector:
 
     def get_backbone_preprocessor(self, backbone: str):
         """
-        Get the appropriate preprocessing function for the specified backbone.
+        Return the preprocessing function for the specified backbone model.
 
         Args:
-            backbone: Type of backbone model ("mobilenet", "resnet", "efficientnet")
+            backbone (str): Name of the backbone to use. Must be one of:
+                - "mobilenet"
+                - "resnet"
+                - "efficientnet"
 
         Returns:
-            Callable: Preprocessing function for the backbone
+            Callable: The `preprocess_input` function tied to the chosen backbone.
 
         Raises:
-            ValueError: If backbone type is not supported
+            ValueError: If `backbone` is not one of the supported options.
         """
-        if backbone == "mobilenet":
-            from tensorflow.keras.applications.mobilenet_v2 import (
-                preprocess_input as backbone_preprocess,
-            )
-        elif backbone == "resnet":
-            from tensorflow.keras.applications.resnet50 import (
-                preprocess_input as backbone_preprocess,
-            )
-        elif backbone == "efficientnet":
-            from tensorflow.keras.applications.efficientnet import (
-                preprocess_input as backbone_preprocess,
-            )
-        else:
+        mapping = {
+            "mobilenet":   _mobilenet_preprocess,
+            "resnet":      _resnet_preprocess,
+            "efficientnet":_efficientnet_preprocess,
+        }
+        try:
+            return mapping[backbone]
+        except KeyError:
             raise ValueError(
-                f"Invalid backbone: {backbone}. Supported backbones: mobilenet, resnet, efficientnet"
+                f"Invalid backbone: {backbone}.  Supported: {', '.join(mapping)}"
             )
-
-        return backbone_preprocess
 
     def load_process_images(self, filename) -> tf.Tensor:
         """
@@ -678,7 +677,7 @@ class MLPDataCollector(DataCollector):
     including proper scaling of both features and labels.
     """
 
-    def __init__(self, csv_path: str, img_folder: str):
+    def __init__(self, csv_path: str, img_folder: str, backbone: Optional[str] = None):
         """
         Initialize the MLP data collector.
 
@@ -686,7 +685,7 @@ class MLPDataCollector(DataCollector):
             csv_path: Path to CSV file containing cleave metadata
             img_folder: Path to folder containing cleave images
         """
-        super().__init__(csv_path, img_folder)
+        super().__init__(csv_path, img_folder, backbone=backbone)
 
     def extract_data(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """

@@ -1,9 +1,28 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import List, Optional, Type, Dict
+"""
+Configuration schema module for the Fiber Cleave Processing application.
+
+This module defines Pydantic models for validating and loading JSON
+configuration files for all CLI modes. Each mode has its own config class,
+inheriting common fields and validators from BaseConfig, EarlyStoppingMixin, 
+and CheckpointMixin.
+"""
 import os
+import json
+from typing import List, Optional, Type, Dict
+from pydantic import BaseModel, field_validator, model_validator
+
 
 
 class EarlyStoppingMixin(BaseModel):
+    """
+    Adds early-stopping configuration parameters.
+
+    Fields:
+      - early_stopping (str): 'y' to enable early stopping, 'n' to disable.
+      - patience (int): Number of epochs to wait for improvement.
+      - monitor (str): Metric to monitor (e.g. 'val_loss', 'val_accuracy').
+      - method (str): 'min' or 'max' to indicate direction of improvement.
+    """
     early_stopping: Optional[str] = "n"
     patience: Optional[int] = 3
     monitor: Optional[str] = "val_accuracy"
@@ -11,6 +30,15 @@ class EarlyStoppingMixin(BaseModel):
 
 
 class CheckpointMixin(BaseModel):
+    """
+    Adds model-checkpointing configuration parameters.
+
+    Fields:
+      - checkpoints (str): 'y' to enable checkpoints, 'n' to disable.
+      - checkpoint_filepath (str): Path where to save the checkpoint file.
+      - monitor (str): Metric to monitor for saving best model.
+      - method (str): 'min' or 'max' depending on the monitored metric. 
+    """
     checkpoints: Optional[str] = "n"
     checkpoint_filepath: Optional[str] = None
     monitor: Optional[str] = "val_accuracy"
@@ -18,6 +46,17 @@ class CheckpointMixin(BaseModel):
 
 
 class BaseConfig(BaseModel):
+    """
+    Basic config for all classes.
+
+    Fields:
+      - csv_path: (str) : path to csv data for images
+      - img_folder (str): folder containing images
+      - mode: (str) : differnente modes e.g. test_cnn, train_cnn, etc.
+      - set_mask (str): y/n for masking images to remove background
+      - image_shape (list): array of image dimensions
+      - feature_shape (list): array of feature dimensions
+    """
     csv_path: str
     img_folder: str
     mode: str
@@ -228,7 +267,6 @@ MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
 
 
 def load_config(filepath: str) -> BaseConfig:
-    import json
 
     with open(filepath, "r") as f:
         data = json.load(f)

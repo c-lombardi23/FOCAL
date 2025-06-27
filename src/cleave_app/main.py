@@ -5,10 +5,14 @@ This module provides the command-line interface for training and testing
 CNN and MLP models for fiber cleave quality classification and tension prediction.
 """
 
+import sys
 import warnings
 import os
 import argparse
-from typing import Optional
+import traceback
+from typing import Optional, List, Callable
+import pandas as pd
+
 
 # Suppress TensorFlow warnings
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -24,9 +28,7 @@ from .hyperparameter_tuning import (
     ImageHyperparameterTuning,
     MLPHyperparameterTuning,
 )
-from .grad_cam import gradcam_driver, compute_saliency_map
-import pandas as pd
-from typing import List, Callable
+from .grad_cam import gradcam_driver
 
 try:
     import tensorflow as tf
@@ -200,7 +202,7 @@ def _train_mlp(config) -> None:
         max_epochs = config.max_epochs or 20
 
         history = trainable_model.train_model(
-            compiled_model,
+            model=compiled_model,
             epochs=max_epochs,
             callbacks=callbacks,
             history_file=config.save_history_file,
@@ -248,7 +250,7 @@ def _train_kfold_cnn(config) -> None:
             images, features, labels, config.buffer_size, config.batch_size
         )
 
-        k_models, kfold_histories = CustomModel.train_kfold(
+        kfold_histories = CustomModel.train_kfold(
             datasets,
             config.image_shape,
             config.feature_shape,
@@ -273,14 +275,14 @@ def _train_kfold_mlp(config) -> None:
     """
     try:
         data = MLPDataCollector(
-            config.csv_path, config.img_folder, backbone=config.backbone
+            config.csv_path, config.img_folder, backbone=None
         )
         images, features, labels = data.extract_data()
         datasets, scaler = data.create_kfold_datasets(
             images, features, labels, config.buffer_size, config.batch_size
         )
 
-        k_models, kfold_histories = BuildMLPModel.train_kfold_mlp(
+        kfold_histories = BuildMLPModel.train_kfold_mlp(
             datasets,
             config.model_path,
             config.feature_shape,
@@ -312,7 +314,7 @@ def _run_search_helper(
         tuner.run_search(train_ds, test_ds)
         best_hp = tuner.get_best_hyperparameters().values
         print("Best hyperparameters:", best_hp)
-        if best_params_path != None:
+        if best_params_path is not None:
             pd.DataFrame([best_hp]).to_csv(f"{best_params_path}")
         else:
             print("Best hyperparameters not saved")
@@ -355,25 +357,14 @@ def _cnn_hyperparameter(config) -> None:
 
         max_epochs = config.max_epochs or 20
 
-        if config.unfreeze_from is not None:
-            tuner = HyperParameterTuning(
-                config.image_shape,
-                config.feature_shape,
-                max_epochs=max_epochs,
-                project_name=config.project_name,
-                directory=config.tuner_directory,
-                unfreeze_from=config.unfreeze_from,
-                backbone=config.backbone,
-            )
-        else:
-            tuner = HyperParameterTuning(
-                config.image_shape,
-                config.feature_shape,
-                max_epochs=max_epochs,
-                project_name=config.project_name,
-                directory=config.tuner_directory,
-                backbone=config.backbone,
-            )
+        tuner = HyperParameterTuning(
+            config.image_shape,
+            config.feature_shape,
+            max_epochs=max_epochs,
+            project_name=config.project_name,
+            directory=config.tuner_directory,
+            backbone=config.backbone,
+        )
 
         _run_search_helper(config, tuner, train_ds, test_ds)
 
@@ -419,7 +410,6 @@ def _mlp_hyperparameter(config) -> None:
 
 
 def _test_cnn(config) -> None:
-    import traceback
 
     """
     Test CNN model performance.
@@ -436,7 +426,7 @@ def _test_cnn(config) -> None:
             image_only=False,
             backbone=config.backbone,
         )
-        true_labels, pred_labels, predictions = tester.gather_predictions()
+        true_labels, pred_labels = tester.gather_predictions()
 
         if true_labels is not None:
             tester.display_confusion_matrix(true_labels, pred_labels)
@@ -512,7 +502,6 @@ def _image_only(config) -> None:
     Args:
         config: Configuration object containing training parameters
     """
-    import traceback
 
     if tf is None:
         raise ImportError("TensorFlow is required for image-only training")
@@ -603,7 +592,6 @@ def _test_image_only(config) -> None:
     Args:
         config: Configuration object containing test parameters
     """
-    import traceback
 
     try:
         tester = TestPredictions(
@@ -616,7 +604,7 @@ def _test_image_only(config) -> None:
             encoder_path=config.encoder_path,
             classification_type=config.classification_type,
         )
-        true_labels, pred_labels, predictions = tester.gather_predictions()
+        true_labels, pred_labels  = tester.gather_predictions()
 
         if true_labels is not None:
             tester.display_confusion_matrix(true_labels, pred_labels)
@@ -639,7 +627,6 @@ def _image_hyperparameter(config) -> None:
     Args:
         config: Configuration object containing training parameters
     """
-    import traceback
 
     try:
         data = DataCollector(
@@ -707,8 +694,9 @@ def _custom_model(config) -> None:
         max_epochs = config.max_epochs or 20
 
         history = trainable_model.train_model(
-            compiled_model,
+            model=compiled_model,
             epochs=max_epochs,
+            class_weights=None,
             callbacks=callbacks,
             history_file=config.save_history_file,
             save_model_file=config.save_model_file,
@@ -809,4 +797,4 @@ Examples:
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

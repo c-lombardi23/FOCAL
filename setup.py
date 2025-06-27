@@ -1,3 +1,10 @@
+"""
+Package installation script for FiberCleaveProcessing.
+
+Defines metadata, dependencies, and entry points for
+building and distributing the Fiber Cleave Processing CLI/toolkit.
+"""
+
 from setuptools import setup, find_packages
 
 setup(
