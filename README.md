@@ -1,6 +1,7 @@
 # Fiber Cleave Processing
 
-![alt text](https://www.thorlabs.com/images/thorlabs-logo.png)
+![alt text](image.png)
+
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![TensorFlow 2.19+](https://img.shields.io/badge/tensorflow-2.19+-orange.svg)](https://tensorflow.org/)
