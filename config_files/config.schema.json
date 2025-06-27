@@ -1,0 +1,66 @@
+{
+  "$schema": "",
+  "title": "Image Processing Config",
+  "type": "object",
+  "properties": {
+    "csv_path": { "type": "string", "description": "Path to the CSV file with data" },
+    "img_folder": { "type": "string", "description": "Path to the image folder" },
+    "feature_scaler_path": { "type": "string", "description": "Path to feature scaler" },
+    "label_scaler_path": { "type": "string", "description": "Path to label scaler" },
+    "classification_path": { "type": "string", "description": "Path for classification output" },
+    "img_path": { "type": "string", "description": "Path to a single image for testing" },
+
+    "image_shape": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "Shape of input images [height, width, channels]"
+    },
+    "feature_shape": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "description": "Shape of feature vector"
+    },
+    "test_features": {
+      "type": "array",
+      "items": { "type": "number" },
+      "description": "Feature vector for testing"
+    },
+
+    "mode": { "type": "string", "description": "Mode of operation (e.g., image_hyperparameter, train_cnn, custom_model)" },
+    "backbone": { "type": "string", "description": "Model backbone (e.g., efficientnet, mobilenet)" },
+    "backbone_name": { "type": "string", "description": "Alternative backbone name (for GradCAM, etc.)" },
+    "model_path": { "type": "string", "description": "Path to save/load model" },
+    "project_name": { "type": "string", "description": "Project name" },
+    "num_classes": { "type": "integer", "description": "Number of output classes" },
+    "classification_type": { "type": "string", "description": "Type of classification (binary, multiclass, multilabel)" },
+
+    "learning_rate": { "type": "number", "description": "Learning rate for optimizer" },
+    "batch_size": { "type": "integer", "description": "Batch size for training" },
+    "buffer_size": { "type": "integer", "description": "Buffer size for data loading" },
+    "test_size": { "type": "number", "description": "Fraction of data for testing" },
+    "max_epochs": { "type": "integer", "description": "Maximum number of epochs" },
+    "objective": { "type": "string", "description": "Objective metric for tuning" },
+
+    "dropout1_rate": { "type": "number", "description": "Dropout rate for first dropout layer" },
+    "dropout2_rate": { "type": "number", "description": "Dropout rate for second dropout layer" },
+    "dense_units": { "type": "integer", "description": "Number of units in dense layer" },
+    "l2_factor": { "type": "number", "description": "L2 regularization factor" },
+
+    "early_stopping": { "type": "string", "description": "Enable early stopping (y/n)" },
+    "patience": { "type": "integer", "description": "Patience for early stopping" },
+    "monitor": { "type": "string", "description": "Metric to monitor for early stopping" },
+    "method": { "type": "string", "description": "Method for monitoring (max/min)" },
+    "checkpoints": { "type": "string", "description": "Enable checkpoints (y/n)" },
+    "checkpoint_filepath": { "type": "string", "description": "Path to save best checkpoint" },
+
+    "tuner_directory": { "type": "string", "description": "Directory for hyperparameter tuner" },
+    "save_model_file": { "type": "string", "description": "File to save final model" },
+
+    "set_mask": { "type": "string", "description": "Set mask option (y/n)" }
+  },
+  "required": [
+    "csv_path", "img_folder", "image_shape", "feature_shape", "mode"
+  ]
+}

@@ -35,7 +35,12 @@ class DataCollector:
     and creating TensorFlow datasets for training machine learning models.
     """
     
-    def __init__(self, csv_path: str, img_folder: str, classification_type: Optional[str] = "binary", backbone: Optional[str] = "mobilenet", set_mask: Optional[str] = "n",
+    def __init__(self, 
+                 csv_path: str, 
+                 img_folder: str, 
+                 classification_type: Optional[str] = "binary", 
+                 backbone: Optional[str] = "mobilenet", 
+                 set_mask: Optional[str] = "n",
                  encoder_path: Optional[str] = None):
         """
         Initialize the data collector.
@@ -54,7 +59,8 @@ class DataCollector:
             
         if not os.path.exists(img_folder):
             raise FileNotFoundError(f"Image folder not found: {img_folder}")
-            
+        
+       
         self.csv_path = csv_path
         self.img_folder = img_folder
         self.feature_scaler = None
@@ -62,12 +68,30 @@ class DataCollector:
         self.encoder = None
         self.encoder_path = encoder_path
         self.classification_type = classification_type
-        self.df = self.clean_data()
+        self._df = None
         self.backbone = backbone
         self.set_mask = set_mask
+
+    @property
+    def df(self):
+        """Lazy loading for memory efficiency"""
+        if self._df is None:
+            try:
+                df = pd.read_csv(self.csv_path)
+                required_columns = ['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing', 'ImagePath']
+                missing_columns = [col for col in required_columns if col not in df.columns]
+                if missing_columns:
+                    raise ValueError(f"CSV missing required columns: {missing_columns}")
+            except pd.errors.EmptyDataError:
+                raise ValueError(f"CSV file is empty: {self.csv_path}")
+            except pd.errors.ParserError as e:
+                raise ValueError(f"Invalid CSV format: {e}")
+            
+            self._df = self._clean_data()
+        return self._df
         
         
-    def set_label(self) -> Optional[pd.DataFrame]:
+    def _set_label(self) -> Optional[pd.DataFrame]:
         """
         Read CSV file and add cleave quality labels based on certain criteria.
 
@@ -118,19 +142,22 @@ class DataCollector:
           filepath: Path to save scaler or encoder
           obj: Scaler or Encoder object
         """
+        if not filepath.endswith('.pkl'):
+            filepath = filepath + '.pkl'
+
         if not os.path.exists(filepath):
             joblib.dump(obj, filepath)
         else:
             raise FileExistsError("File Already exists!")
 
-    def clean_data(self) -> Optional[pd.DataFrame]:
+    def _clean_data(self) -> Optional[pd.DataFrame]:
         """
         Read CSV file and prepare data with cleave quality labels and one-hot encoding.
         
         Returns:
             pd.DataFrame: Processed DataFrame with labels and one-hot encoding
         """
-        df = self.set_label()
+        df = self._set_label()
         if df is None:
             return None
         if self.classification_type == "multiclass":
@@ -150,7 +177,7 @@ class DataCollector:
         df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
         return df
     
-    def mask_background(self, img: tf.Tensor) -> tf.Tensor:
+    def _mask_background(self, img: tf.Tensor) -> tf.Tensor:
       """
       Mask background to prevent model from focusing on sharp gradient near edges.
 
@@ -212,7 +239,8 @@ class DataCollector:
         Returns:
             tf.Tensor: Preprocessed image tensor
         """
-        backbone_preprocess = self.get_backbone_preprocessor(self.backbone)
+        
+        backbone_preprocess = self.get_backbone_preprocessor(self.backbone or "efficientnet")
 
         if tf is None:
             raise ImportError("TensorFlow is required for image processing")
@@ -236,7 +264,7 @@ class DataCollector:
                 img = tf.image.resize(img, [224, 224])
                 img = tf.image.grayscale_to_rgb(img)
                 if self.set_mask == "y":
-                    img = self.mask_background(img)
+                    img = self._mask_background(img)
                 img = preprocess_input(img)
                 return img
             except Exception as e:
@@ -270,7 +298,6 @@ class DataCollector:
       """
       if tf is None:
           raise ImportError("TensorFlow is required for dataset creation")
-
       images = self.df['ImagePath'].values
       if self.classification_type == "multiclass":
         label_cols = [col for col in self.df.columns if col.startswith('Label_')]
@@ -292,7 +319,7 @@ class DataCollector:
               img = tf.image.decode_png(img_raw, channels=1) 
               img = tf.image.resize(img, image_shape[:2])
               if self.set_mask == "y":
-                  img = self.mask_background(img)
+                  img = self._mask_background(img)
               img = tf.cast(img, tf.float32) / 255.0
               
               
@@ -328,9 +355,6 @@ class DataCollector:
         Returns:
             Tuple of (images, features, labels) arrays
         """
-        if self.df is None:
-            raise ValueError("No data available. Check if CSV file was loaded correctly.")
-            
         images = self.df['ImagePath'].values
         features = self.df[['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values.astype(np.float32)
         labels = self.df['CleaveCategory'].values.astype(np.float32)
@@ -338,7 +362,7 @@ class DataCollector:
         return images, features, labels
     
     @staticmethod
-    def mask_features(images, features, p =0.3):
+    def _mask_features(images, features, p =0.3):
         """
         Randomly mask features to prevent reliance on numerical data
         """
@@ -351,7 +375,7 @@ class DataCollector:
         )
         return (images, features)
 
-    def process_images_features(self, inputs: Tuple, label: np.ndarray) -> Tuple[Tuple, np.ndarray]:
+    def _process_images_features(self, inputs: Tuple, label: np.ndarray) -> Tuple[Tuple, np.ndarray]:
         """
         Process image and feature inputs for dataset creation.
 
@@ -365,6 +389,44 @@ class DataCollector:
         image_input, features = inputs
         image = self.load_process_images(image_input)
         return (image, features), label
+    
+    def _dataset_helper(self, imgs: np.ndarray, 
+                       features: np.ndarray, 
+                       labels: np.ndarray, 
+                       train: bool, 
+                       batch_size: int, 
+                       buffer_size: int,
+                       masking: bool,
+                       p: Optional[float] = None) -> tf.data.Dataset:
+        """
+        Helper function to create datasets from tensor slices and map image processing to each element
+
+        Args:
+            imgs: Array of images paths
+            features: Array of numerical features for the images
+            labels: Target output (CleaveCategory in this case)
+            train: Whether is train set or test set
+            batch_size: Set the batch size to use during each training run
+            buffer_size: Sets the size of the random buffer to introduce shuffling of data
+            masking: Whether to use masking of feature array in training 
+            p: Probability of masking dataset
+        
+        Returns:
+            tf.data.Dataset
+        """
+        ds = tf.data.Dataset.from_tensor_slices(((imgs, features), labels))
+        ds = ds.map(lambda x, y: self._process_images_features(x, y))
+
+        if masking:
+            if p is not None:
+                ds = ds.map(lambda x, y: (DataCollector._mask_features(x[0], x[1], p=p), y))
+            else:
+                raise ValueError("P value cannot be None!")
+        if train:
+            ds = ds.shuffle(buffer_size=buffer_size).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+        else:
+            ds = ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+        return ds
 
     def create_kfold_datasets(self, 
                             images: np.ndarray, 
@@ -402,14 +464,10 @@ class DataCollector:
             train_features, test_features = features[train_index], features[test_index]
             train_labels, test_labels = labels[train_index], labels[test_index]
 
-            train_ds = tf.data.Dataset.from_tensor_slices(((train_imgs, train_features), train_labels))
-            test_ds = tf.data.Dataset.from_tensor_slices(((test_imgs, test_features), test_labels))
-
-            train_ds = train_ds.map(lambda x, y: self.process_images_features(x, y))
-            test_ds = test_ds.map(lambda x, y: self.process_images_features(x, y))
-
-            train_ds = train_ds.shuffle(buffer_size=buffer_size).batch(batch_size).prefetch(tf.data.AUTOTUNE)
-            test_ds = test_ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+            train_ds = self._dataset_helper(train_imgs, train_features, train_labels, train=True, 
+                                           batch_size=batch_size, buffer_size=buffer_size, masking=False)
+            test_ds = self._dataset_helper(test_imgs, test_features, test_labels, train=False,
+                                          batch_size=batch_size, buffer_size=buffer_size, masking=False)
 
             datasets.append((train_ds, test_ds))
 
@@ -423,7 +481,7 @@ class DataCollector:
                        buffer_size: int, 
                        batch_size: int, 
                        feature_scaler_path: Optional[str] = None,
-                       ) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
+                       ) -> Tuple[tf.data.Dataset, tf.data.Dataset, Optional[dict[int, float]]]:
         """
         Create train and test datasets with feature scaling.
 
@@ -464,22 +522,14 @@ class DataCollector:
 
         # Save scaler if path provided
         if feature_scaler_path:
-            os.makedirs(os.path.dirname(feature_scaler_path), exist_ok=True)
-            if not feature_scaler_path.endswith(".pkl"):
-                feature_scaler_path = feature_scaler_path + ".pkl"
-            joblib.dump(scaler, feature_scaler_path)
+            self.save_scaler_encoder(scaler, feature_scaler_path)
             print(f"Feature scaler saved to: {feature_scaler_path}")
         
         # Create datasets
-        train_ds = tf.data.Dataset.from_tensor_slices(((train_imgs, train_features), train_labels))
-        test_ds = tf.data.Dataset.from_tensor_slices(((test_imgs, test_features), test_labels))
-
-        train_ds = train_ds.map(lambda x, y: self.process_images_features(x, y))
-        test_ds = test_ds.map(lambda x, y: self.process_images_features(x, y))
-        train_ds = train_ds.map(lambda x, y: (DataCollector.mask_features(x[0], x[1], p=0.6), y))
-        test_ds = test_ds.map(lambda x, y: (DataCollector.mask_features(x[0], x[1], p=0.7), y))
-        train_ds = train_ds.shuffle(buffer_size=buffer_size).batch(batch_size).prefetch(tf.data.AUTOTUNE)
-        test_ds = test_ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+        train_ds = self._dataset_helper(train_imgs, train_features, train_labels, train=True, 
+                                       batch_size=batch_size, buffer_size=buffer_size, masking=True, p=0.6)
+        test_ds = self._dataset_helper(test_imgs, test_features, test_labels, train=False, 
+                                      batch_size=batch_size, buffer_size=buffer_size, masking=False, p=0.7)
 
         return train_ds, test_ds, class_weights
 
@@ -569,7 +619,7 @@ class MLPDataCollector(DataCollector):
         train_features = feature_scaler.fit_transform(train_features)
         test_features = feature_scaler.transform(test_features)
         
-        # Scale labels (tension values)
+        # Scale labels 
         tension_scaler = MinMaxScaler()
         self.label_scaler = tension_scaler
         train_labels = tension_scaler.fit_transform(train_labels.reshape(-1, 1))
@@ -577,28 +627,18 @@ class MLPDataCollector(DataCollector):
 
         # Save scalers if paths provided
         if feature_scaler_path:
-            os.makedirs(os.path.dirname(feature_scaler_path), exist_ok=True)
-            if not feature_scaler_path.endswith(".pkl"):
-                feature_scaler_path = feature_scaler_path + ".pkl"
-            joblib.dump(feature_scaler, feature_scaler_path)
+            self.save_scaler_encoder(feature_scaler, feature_scaler_path)
             print(f"Feature scaler saved to: {feature_scaler_path}")
             
         if tension_scaler_path:
-            os.makedirs(os.path.dirname(tension_scaler_path), exist_ok=True)
-            if not tension_scaler_path.endswith(".pkl"):
-                tension_scaler_path = tension_scaler_path + ".pkl"
-            joblib.dump(tension_scaler, tension_scaler_path)
+            self.save_scaler_encoder(tension_scaler, tension_scaler_path)
             print(f"Tension scaler saved to: {tension_scaler_path}")
 
         # Create datasets
-        train_ds = tf.data.Dataset.from_tensor_slices(((train_imgs, train_features), train_labels))
-        test_ds = tf.data.Dataset.from_tensor_slices(((test_imgs, test_features), test_labels))
-
-        train_ds = train_ds.map(lambda x, y: self.process_images_features(x, y))
-        test_ds = test_ds.map(lambda x, y: self.process_images_features(x, y))
-
-        train_ds = train_ds.shuffle(buffer_size=buffer_size).batch(batch_size).prefetch(tf.data.AUTOTUNE)
-        test_ds = test_ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+        train_ds = self._dataset_helper(train_imgs, train_features, train_labels, train=True, 
+                                           batch_size=batch_size, buffer_size=buffer_size, masking=False)
+        test_ds = self._dataset_helper(test_imgs, test_features, test_labels, train=False, 
+                                          batch_size=batch_size, buffer_size=buffer_size, masking=False)
 
         return train_ds, test_ds
 
@@ -641,14 +681,10 @@ class MLPDataCollector(DataCollector):
             train_features, test_features = scaled_features[train_index], scaled_features[test_index]
             train_labels, test_labels = scaled_labels[train_index], scaled_labels[test_index]
 
-            train_ds = tf.data.Dataset.from_tensor_slices(((train_imgs, train_features), train_labels))
-            test_ds = tf.data.Dataset.from_tensor_slices(((test_imgs, test_features), test_labels))
-
-            train_ds = train_ds.map(lambda x, y: self.process_images_features(x, y))
-            test_ds = test_ds.map(lambda x, y: self.process_images_features(x, y))
-
-            train_ds = train_ds.shuffle(buffer_size=buffer_size).batch(batch_size).prefetch(tf.data.AUTOTUNE)
-            test_ds = test_ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+            train_ds = self._dataset_helper(train_imgs, train_features, train_labels, train=True, 
+                                           batch_size=batch_size, buffer_size=buffer_size, masking=False)
+            test_ds = self._dataset_helper(test_imgs, test_features, test_labels, train=False, 
+                                          batch_size=batch_size, buffer_size=buffer_size, masking=False)
 
             datasets.append((train_ds, test_ds))
             

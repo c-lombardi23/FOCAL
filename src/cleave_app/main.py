@@ -26,7 +26,7 @@ from .hyperparameter_tuning import (
 )
 from .grad_cam import gradcam_driver, compute_saliency_map
 import pandas as pd
-from typer import List, Callable
+from typing import List, Callable
 
 try:
     import tensorflow as tf
@@ -34,7 +34,7 @@ except ImportError:
     print("Warning: TensorFlow not found. Please install tensorflow>=2.19.0")
     tf = None
 
-def setup_callbacks(config, trainable_model) -> List[Callable]:
+def _setup_callbacks(config, trainable_model) -> List[Callable]:
     """
     Setup training callbacks based on configuration.
     
@@ -87,7 +87,7 @@ def setup_callbacks(config, trainable_model) -> List[Callable]:
     return callbacks
 
 
-def train_cnn(config) -> None:
+def _train_cnn(config) -> None:
     """
     Train a CNN model for fiber cleave classification.
 
@@ -116,37 +116,12 @@ def train_cnn(config) -> None:
             )
         
         # Setup callbacks
-        
-        if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method:
-            checkpoint = trainable_model.create_checkpoints(
-                config.checkpoint_filepath, config.monitor, config.method
-            )
-            callbacks.append(checkpoint)
-        
-        if config.early_stopping == "y" and config.patience and config.monitor and config.method:
-            es = trainable_model.create_early_stopping(
-                config.patience, config.method, config.monitor
-            )
-            callbacks.append(es)
-        
-        if config.reduce_lr is not None:
-            if config.reduce_lr_patience is not None:
-                reduce_lr = trainable_model.reduce_on_plateau(
-                    patience=config.reduce_lr_patience, factor=config.reduce_lr
-                )
-            else:
-                reduce_lr = trainable_model.reduce_on_plateau(factor=config.reduce_lr)
-            callbacks.append(reduce_lr)
-        callbacks = setup_callbacks(config, )
-        
-        
+        callbacks = _setup_callbacks(config, trainable_model)
         max_epochs = config.max_epochs or 20
         
         history = trainable_model.train_model(class_weights=class_weights,
-            model=compiled_model, epochs=max_epochs, 
-            early_stopping=es if config.early_stopping == "y" and config.patience and config.monitor and config.method else None,
-            reduce_lr=reduce_lr if config.reduce_lr is not None else None,
-            checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
+            model=compiled_model, epochs=max_epochs,
+            callbacks = callbacks,
             history_file=config.save_history_file,
             save_model_file=config.save_model_file
         )
@@ -168,7 +143,7 @@ def train_cnn(config) -> None:
         raise
 
 
-def train_mlp(config) -> None:
+def _train_mlp(config) -> None:
     """
     Train an MLP model for tension prediction.
 
@@ -192,27 +167,12 @@ def train_mlp(config) -> None:
         compiled_model = trainable_model.compile_model(config.feature_shape)
         
         # Setup callbacks
-        callbacks = []
-        
-        if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method:
-            checkpoint = trainable_model.create_checkpoints(
-                config.checkpoint_filepath, config.monitor, config.method
-            )
-            callbacks.append(checkpoint)
-        
-        if config.early_stopping == "y" and config.patience and config.monitor and config.method:
-            es = trainable_model.create_early_stopping(
-                config.patience, config.method, config.monitor
-            )
-            callbacks.append(es)
-        
+        callbacks = _setup_callbacks(config, trainable_model)
         max_epochs = config.max_epochs or 20
         
         history = trainable_model.train_model(
             compiled_model, epochs=max_epochs,
-            early_stopping=es if config.early_stopping == "y" and config.patience and config.monitor and config.method else None,
-            reduce_lr=config.reduce_lr,
-            checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
+            callbacks=callbacks,
             history_file=config.save_history_file,
             save_model_file=config.save_model_file
         )
@@ -234,7 +194,7 @@ def train_mlp(config) -> None:
         raise
 
 
-def train_kfold_cnn(config) -> None:
+def _train_kfold_cnn(config) -> None:
     """
     Train CNN model using k-fold cross validation.
 
@@ -262,7 +222,7 @@ def train_kfold_cnn(config) -> None:
         raise
 
 
-def train_kfold_mlp(config) -> None:
+def _train_kfold_mlp(config) -> None:
     """
     Train MLP model using k-fold cross validation.
 
@@ -290,7 +250,7 @@ def train_kfold_mlp(config) -> None:
         raise
 
 
-def run_search_helper(config, tuner, train_ds, test_ds, best_params_path=None) -> None:
+def _run_search_helper(config, tuner, train_ds, test_ds, best_params_path=None) -> None:
     """
     Helper function for running hyperparameter search.
 
@@ -323,7 +283,7 @@ def run_search_helper(config, tuner, train_ds, test_ds, best_params_path=None) -
         raise
 
 
-def cnn_hyperparameter(config) -> None:
+def _cnn_hyperparameter(config) -> None:
     """
     Perform hyperparameter search for CNN model.
 
@@ -361,7 +321,7 @@ def cnn_hyperparameter(config) -> None:
         raise
 
 
-def mlp_hyperparameter(config) -> None:
+def _mlp_hyperparameter(config) -> None:
     """
     Perform hyperparameter search for MLP model.
 
@@ -391,7 +351,7 @@ def mlp_hyperparameter(config) -> None:
         raise
 
 
-def test_cnn(config) -> None:
+def _test_cnn(config) -> None:
     import traceback
     """
     Test CNN model performance.
@@ -420,7 +380,7 @@ def test_cnn(config) -> None:
         raise
 
 
-def test_mlp(config) -> None:
+def _test_mlp(config) -> None:
     """
     Test MLP model performance.
 
@@ -444,7 +404,7 @@ def test_mlp(config) -> None:
         raise
 
 
-def grad_cam(config) -> None:
+def _grad_cam(config) -> None:
     """
     Generate GradCAM visualization.
 
@@ -468,7 +428,7 @@ def grad_cam(config) -> None:
         raise
 
 
-def image_only(config) -> None:
+def _image_only(config) -> None:
     """
     Train image-only model (no parameter features).
 
@@ -501,40 +461,14 @@ def image_only(config) -> None:
                 unfreeze_from=config.unfreeze_from
             )
         # Setup callbacks
-        callbacks = []
-        
-        if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method:
-            checkpoint = trainable_model.create_checkpoints(
-                config.checkpoint_filepath, config.monitor, config.method
-            )
-            callbacks.append(checkpoint)
-        
-        if config.early_stopping == "y" and config.patience and config.monitor and config.method:
-            es = trainable_model.create_early_stopping(
-                config.patience, config.method, config.monitor
-            )
-            callbacks.append(es)
-            
-        if config.reduce_lr is not None:
-            if config.reduce_lr_patience is not None:
-                reduce_lr = trainable_model.reduce_on_plateau(
-                    patience=config.reduce_lr_patience, factor=config.reduce_lr
-                )
-            else:
-                reduce_lr = trainable_model.reduce_on_plateau(factor=config.reduce_lr)
-            callbacks.append(reduce_lr)
-        else:
-            reduce_lr = None
-        
+        callbacks = _setup_callbacks(config, trainable_model)
         max_epochs = config.max_epochs or 20
         
         history = trainable_model.train_model(class_weights,
             compiled_model, epochs=max_epochs,
-            early_stopping=es if config.early_stopping == "y" and config.patience and config.monitor and config.method else None,
-            checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
+            callbacks=callbacks,
             history_file=config.save_history_file,
-            save_model_file=config.save_model_file,
-            reduce_lr=reduce_lr
+            save_model_file=config.save_model_file
         )
         
         # Plot training metrics
@@ -554,7 +488,7 @@ def image_only(config) -> None:
         traceback.print_exc()
         raise
 
-def test_image_only(config) -> None:
+def _test_image_only(config) -> None:
     """
     Test CNN model performance on only images.
 
@@ -584,7 +518,7 @@ def test_image_only(config) -> None:
         raise
 
 
-def image_hyperparameter(config) -> None:
+def _image_hyperparameter(config) -> None:
     """
     Perform hyperparameter search for image-only model
 
@@ -618,7 +552,7 @@ def image_hyperparameter(config) -> None:
         traceback.print_exc()
         raise
 
-def custom_model(config) -> None:
+def _custom_model(config) -> None:
     try:
         data = DataCollector(config.csv_path, config.img_folder)
         train_ds, test_ds = data.create_custom_dataset(config.image_shape, config.test_size, config.buffer_size, config.batch_size)
@@ -626,26 +560,12 @@ def custom_model(config) -> None:
 
         compiled_model = trainable_model.compile_custom_model(config.image_shape, config.learning_rate)
 
-        callbacks = []
-        
-        if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method:
-            checkpoint = trainable_model.create_checkpoints(
-                config.checkpoint_filepath, config.monitor, config.method
-            )
-            callbacks.append(checkpoint)
-        
-        if config.early_stopping == "y" and config.patience and config.monitor and config.method:
-            es = trainable_model.create_early_stopping(
-                config.patience, config.method, config.monitor
-            )
-            callbacks.append(es)
-        
+        callbacks = _setup_callbacks(config, trainable_model)
         max_epochs = config.max_epochs or 20
         
         history = trainable_model.train_model(
             compiled_model, epochs=max_epochs,
-            early_stopping=es if config.early_stopping == "y" and config.patience and config.monitor and config.method else None,
-            checkpoints=checkpoint if config.checkpoints == "y" and config.checkpoint_filepath and config.monitor and config.method else None,
+            callbacks=callbacks,
             history_file=config.save_history_file,
             save_model_file=config.save_model_file
         )
@@ -674,19 +594,19 @@ def choices(mode: str, config) -> None:
         config: Configuration object
     """
     mode_functions = {
-        'train_cnn': train_cnn,
-        'train_mlp': train_mlp,
-        'cnn_hyperparameter': cnn_hyperparameter,
-        'mlp_hyperparameter': mlp_hyperparameter,
-        'test_cnn': test_cnn,
-        'test_mlp': test_mlp,
-        'train_kfold_cnn': train_kfold_cnn,
-        'train_kfold_mlp': train_kfold_mlp,
-        'grad_cam': grad_cam,
-        'train_image_only': image_only,
-        'image_hyperparameter': image_hyperparameter,
-        'test_image_only': test_image_only,
-        'custom_model': custom_model
+        'train_cnn': _train_cnn,
+        'train_mlp': _train_mlp,
+        'cnn_hyperparameter': _cnn_hyperparameter,
+        'mlp_hyperparameter': _mlp_hyperparameter,
+        'test_cnn': _test_cnn,
+        'test_mlp': _test_mlp,
+        'train_kfold_cnn': _train_kfold_cnn,
+        'train_kfold_mlp': _train_kfold_mlp,
+        'grad_cam': _grad_cam,
+        'train_image_only': _image_only,
+        'image_hyperparameter': _image_hyperparameter,
+        'test_image_only': _test_image_only,
+        'custom_model': _custom_model
     }
     
     if mode in mode_functions:

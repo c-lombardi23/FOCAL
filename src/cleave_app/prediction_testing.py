@@ -46,7 +46,7 @@ class TestPredictions(DataCollector):
         if not self.image_only and self.scalar_path:
             self.feature_scaler = joblib.load(self.scalar_path)
 
-    def clean_data(self) -> 'pd.DataFrame | None':
+    def _clean_data(self) -> 'pd.DataFrame | None':
         """
         Read CSV file into DataFrame and add column for cleave quality and one-hot encoded labels.
 

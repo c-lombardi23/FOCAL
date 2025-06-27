@@ -58,7 +58,7 @@ class CustomModel:
         self.train_ds = train_ds
         self.test_ds = test_ds
         self.classification_type = classification_type
-    def get_backbone_model(self, backbone: str, image_shape: Tuple[int, int, int]) -> tf.keras.Model:
+    def _get_backbone_model(self, backbone: str, image_shape: Tuple[int, int, int]) -> tf.keras.Model:
         """
         Get pretrained backbone model based on specified backbone type.
         
@@ -98,7 +98,7 @@ class CustomModel:
         
         return pre_trained_model
     
-    def build_custom_model(self, image_shape, num_classes=5):
+    def _build_custom_model(self, image_shape, num_classes=5):
       data_augmentation = Sequential([
           RandomRotation(factor=0.02),  
           RandomBrightness(factor=0.02), 
@@ -126,7 +126,7 @@ class CustomModel:
       model = Model(inputs=image_input, outputs=output)
       return model
       
-    def build_pretrained_model(self, 
+    def _build_pretrained_model(self, 
                               image_shape: Tuple[int, int, int], 
                               param_shape: Tuple[int, ...],
                               backbone: Optional[str] = "mobilenet", 
@@ -142,7 +142,7 @@ class CustomModel:
         Returns:
             tf.keras.Model: Compiled model ready for training
         """
-        pre_trained_model = self.get_backbone_model(backbone=backbone, image_shape=image_shape)
+        pre_trained_model = self._get_backbone_model(backbone=backbone, image_shape=image_shape)
         pre_trained_model.trainable = unfreeze_from is not None
         
         if unfreeze_from is not None:
@@ -181,7 +181,7 @@ class CustomModel:
         model.summary()
         return model
     
-    def build_image_only_model(self, 
+    def _build_image_only_model(self, 
                                image_shape: Tuple[int, int, int],
                                backbone: Optional[str] = "mobilenet",
                                num_classes = 5,
@@ -203,7 +203,7 @@ class CustomModel:
         Returns:
             tf.keras.Model: Image-only classification model
         """
-        pre_trained_model = self.get_backbone_model(backbone=backbone, image_shape=image_shape)
+        pre_trained_model = self._get_backbone_model(backbone=backbone, image_shape=image_shape)
         pre_trained_model.trainable = unfreeze_from is not None
         
         if unfreeze_from is not None:
@@ -251,7 +251,7 @@ class CustomModel:
                                 dense_units: Optional[int] = 32,
                                 dropout2_rate: Optional[float] = 0.2,
                                 l2_factor: Optional[float] = None,
-                                unfreeze_from: Optional = None) -> tf.keras.Model:
+                                unfreeze_from: Optional[int] = None) -> tf.keras.Model:
         """
         Compile an image-only model.
 
@@ -266,7 +266,7 @@ class CustomModel:
         if metrics is None:
             metrics = ['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()]
             
-        model = self.build_image_only_model(image_shape, backbone=backbone, dropout1_rate=dropout1_rate, 
+        model = self._build_image_only_model(image_shape, backbone=backbone, dropout1_rate=dropout1_rate, 
                                             dense_units=dense_units, dropout2_rate=dropout2_rate, num_classes=num_classes, l2_factor=l2_factor, unfreeze_from=None)
         optimizer = tf.keras.optimizers.AdamW(learning_rate=learning_rate)
         if self.classification_type == "binary":
@@ -298,7 +298,7 @@ class CustomModel:
         if metrics is None:
             metrics = ['accuracy']
             
-        model = self.build_custom_model(image_shape, num_classes=num_classes)
+        model = self._build_custom_model(image_shape, num_classes=num_classes)
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         if self.classification_type == "binary":
             loss = "binary_crossentropy"
@@ -330,7 +330,7 @@ class CustomModel:
         if metrics is None:
             metrics = ['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()]
             
-        model = self.build_pretrained_model(image_shape, param_shape, unfreeze_from=unfreeze_from, backbone=backbone)
+        model = self._build_pretrained_model(image_shape, param_shape, unfreeze_from=unfreeze_from, backbone=backbone)
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         if self.classification_type == "binary":
             loss = "binary_crossentropy"
@@ -435,12 +435,9 @@ class CustomModel:
     
     def train_model(self, class_weights,
                    model: tf.keras.Model, 
-                   checkpoints: Optional[ModelCheckpoint] = None, 
                    epochs: int = 5, 
                    initial_epoch: int = 0, 
-                   early_stopping: Optional[EarlyStopping] = None, 
-                   reduce_lr: Optional[ReduceLROnPlateau] = None, 
-                   tensorboard: Optional[TensorBoard] = None, 
+                   callbacks: Optional[List] = None, 
                    history_file: Optional[str] = None, 
                    save_model_file: Optional[str] = None) -> tf.keras.callbacks.History:
         """
@@ -460,7 +457,7 @@ class CustomModel:
         Returns:
             tf.keras.callbacks.History: Training history
         """
-        callbacks = []
+        '''callbacks = []
         
         if early_stopping:
             callbacks.append(early_stopping)
@@ -469,7 +466,7 @@ class CustomModel:
         if tensorboard:
             callbacks.append(tensorboard)
         if reduce_lr:
-            callbacks.append(reduce_lr) 
+            callbacks.append(reduce_lr) '''
 
         if callbacks:
             history = model.fit(
@@ -681,7 +678,7 @@ class BuildMLPModel(CustomModel):
         self.image_input = self.cnn_model.input[0]
         self.feature_output = self.cnn_model.get_layer('dropout').output
 
-    def build_pretrained_model(self, param_shape: Tuple[int, ...]) -> tf.keras.Model:
+    def _build_pretrained_model(self, param_shape: Tuple[int, ...]) -> tf.keras.Model:
         """
         Build MLP model for tension prediction.
 
@@ -721,7 +718,7 @@ class BuildMLPModel(CustomModel):
         if metrics is None:
             metrics = ['mae']
             
-        model = self.build_pretrained_model(param_shape)
+        model = self._build_pretrained_model(param_shape)
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         model.compile(optimizer=optimizer, loss='mse', metrics=metrics)
         return model
