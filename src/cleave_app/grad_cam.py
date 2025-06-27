@@ -2,8 +2,15 @@ import tensorflow as tf
 import numpy as np
 import cv2
 
+
 class GradCAM:
-    def __init__(self, model_path, class_index=0, backbone_name=None, conv_layer_name=None):
+    def __init__(
+        self,
+        model_path,
+        class_index=0,
+        backbone_name=None,
+        conv_layer_name=None,
+    ):
         self.model = tf.keras.models.load_model(model_path)
         self.class_index = class_index
         self.backbone_name = backbone_name
@@ -30,19 +37,20 @@ class GradCAM:
             self.target_layer = self.model.get_layer(conv_layer_name)
 
     def compute_heatmap(self, image, param_vector, eps=1e-8):
-    
+
         img = np.array(image, dtype=np.float32)
         if img.max() > 1.0:
             img = img / 255.0
-        img_resized = cv2.resize(img, (self.model.input[0].shape[1], self.model.input[0].shape[2]))
+        img_resized = cv2.resize(
+            img, (self.model.input[0].shape[1], self.model.input[0].shape[2])
+        )
         input_image = np.expand_dims(img_resized, axis=0)
 
         backbone = self.model.get_layer(self.backbone_name)
         last_conv_layer = backbone.get_layer(self.target_layer.name)
 
         grad_model = tf.keras.models.Model(
-            inputs=backbone.input,
-            outputs=last_conv_layer.output
+            inputs=backbone.input, outputs=last_conv_layer.output
         )
 
         with tf.GradientTape() as tape:
@@ -60,11 +68,15 @@ class GradCAM:
         heatmap = tf.maximum(heatmap, 0)
         heatmap = heatmap.numpy()
         heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
-        heatmap = (heatmap - np.min(heatmap)) / (np.max(heatmap) - np.min(heatmap) + eps)
+        heatmap = (heatmap - np.min(heatmap)) / (
+            np.max(heatmap) - np.min(heatmap) + eps
+        )
         heatmap = np.uint8(255 * heatmap)
         return heatmap
 
-    def overlay_heatmap(self, heatmap, image, alpha=0.3, colormap=cv2.COLORMAP_JET):
+    def overlay_heatmap(
+        self, heatmap, image, alpha=0.3, colormap=cv2.COLORMAP_JET
+    ):
         if image.max() <= 1.0:
             image = (image * 255).astype(np.uint8)
         else:
@@ -73,19 +85,28 @@ class GradCAM:
         overlay = cv2.addWeighted(image, 1 - alpha, heatmap_color, alpha, 0)
         return overlay
 
-def gradcam_driver(model_path, image_path, param_vector, class_index, backbone_name=None, conv_layer_name=None, heatmap_file=None):
-   
+
+def gradcam_driver(
+    model_path,
+    image_path,
+    param_vector,
+    class_index,
+    backbone_name=None,
+    conv_layer_name=None,
+    heatmap_file=None,
+):
+
     img = cv2.imread(image_path)
     if img is None:
         raise FileNotFoundError(f"Image not found: {image_path}")
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     param_vector = np.array(param_vector, dtype=np.float32)
 
     gradcam = GradCAM(
         model_path=model_path,
         class_index=class_index,
         backbone_name=backbone_name,
-        conv_layer_name=conv_layer_name
+        conv_layer_name=conv_layer_name,
     )
 
     heatmap = gradcam.compute_heatmap(img, param_vector)
@@ -99,14 +120,13 @@ def gradcam_driver(model_path, image_path, param_vector, class_index, backbone_n
     cv2.destroyAllWindows()
 
 
-
 def compute_saliency_map(model, image_path, param_vector, class_index=3):
     image = cv2.imread(image_path)
     image = cv2.resize(image, (224, 224))
     if image.max() > 1.0:
         image = image / 255.0
     image = image.astype(np.float32)
-    input_image = tf.convert_to_tensor(np.expand_dims(image, axis=0))  
+    input_image = tf.convert_to_tensor(np.expand_dims(image, axis=0))
     param_vector = np.expand_dims(param_vector, axis=0).astype(np.float32)
     param_tensor = tf.convert_to_tensor(param_vector)
 
@@ -117,8 +137,7 @@ def compute_saliency_map(model, image_path, param_vector, class_index=3):
         preds = model([input_image, param_tensor])
         loss = preds[:, class_index]
 
-
-    grads = tape.gradient(loss, input_image)[0] 
+    grads = tape.gradient(loss, input_image)[0]
     print(grads)
 
     saliency = tf.reduce_max(tf.abs(grads), axis=-1).numpy()

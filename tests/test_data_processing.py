@@ -37,26 +37,28 @@ image1.png,PM15U25d,2025-06-09 15:37,123.5,0.22,193,60,2552,17.28,0,0,1
     csv_path.write_text(csv_content)
 
     # Test DataCollector initialization
-    collector = DataCollector(csv_path=str(csv_path), img_folder=str(img_folder) + "/")
+    collector = DataCollector(
+        csv_path=str(csv_path), img_folder=str(img_folder) + "/"
+    )
 
     # Verify the dataframe was created correctly
     assert collector.df is not None
-    assert 'CleaveCategory' in collector.df.columns
-    assert isinstance(collector.df['ImagePath'][0], str)
-    assert collector.df['ImagePath'][0] == "image1.png"
-    
+    assert "CleaveCategory" in collector.df.columns
+    assert isinstance(collector.df["ImagePath"][0], str)
+    assert collector.df["ImagePath"][0] == "image1.png"
+
     # Test data extraction
     images, features, labels = collector.extract_data()
     assert len(images) == 1
     assert features.shape == (1, 6)  # 6 features
-    assert labels.shape == (1, 5)    # 5 classes
+    assert labels.shape == (1, 5)  # 5 classes
 
 
 def test_data_collector_invalid_paths():
     """Test DataCollector with invalid paths."""
     with pytest.raises(ValueError, match="Must provide data path"):
         DataCollector(None, None)
-    
+
     with pytest.raises(ValueError, match="Must provide data path"):
         DataCollector("", "")
 
@@ -65,6 +67,6 @@ def test_data_collector_file_not_found(tmp_path):
     """Test DataCollector with non-existent files."""
     non_existent_csv = tmp_path / "nonexistent.csv"
     non_existent_folder = tmp_path / "nonexistent"
-    
+
     with pytest.raises(ValueError, match="does not exist"):
         DataCollector(str(non_existent_csv), str(non_existent_folder))

@@ -9,6 +9,7 @@ class EarlyStoppingMixin(BaseModel):
     monitor: Optional[str] = "val_accuracy"
     method: Optional[str] = "max"
 
+
 class CheckpointMixin(BaseModel):
     checkpoints: Optional[str] = "n"
     checkpoint_filepath: Optional[str] = None
@@ -35,13 +36,24 @@ class BaseConfig(BaseModel):
     @classmethod
     def valid_modes(cls, value):
         valid_modes = [
-            'train_cnn', 'train_mlp', 'cnn_hyperparameter', 'mlp_hyperparameter',
-            'test_cnn', 'test_mlp', 'train_kfold_cnn', 'train_kfold_mlp',
-            'grad_cam', 'train_image_only', 'image_hyperparameter', 'test_image_only', 'custom_model'
+            "train_cnn",
+            "train_mlp",
+            "cnn_hyperparameter",
+            "mlp_hyperparameter",
+            "test_cnn",
+            "test_mlp",
+            "train_kfold_cnn",
+            "train_kfold_mlp",
+            "grad_cam",
+            "train_image_only",
+            "image_hyperparameter",
+            "test_image_only",
+            "custom_model",
         ]
         if value not in valid_modes:
             raise ValueError(f"{value} is not a valid mode!")
         return value
+
 
 class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     feature_scaler_path: Optional[str] = None
@@ -70,7 +82,7 @@ class TrainCNNConfig(ModelConfig):
     reduce_lr: Optional[float] = None
     reduce_lr_patience: Optional[int] = None
     num_classes: Optional[int] = 5
-    classification_type: Optional[str] = "binary",
+    classification_type: Optional[str] = ("binary",)
     backbone: Optional[str] = "mobilenet"
 
     @model_validator(mode="after")
@@ -81,6 +93,7 @@ class TrainCNNConfig(ModelConfig):
             raise ValueError("Image shape not compatible")
         return self
 
+
 class TrainMLPConfig(ModelConfig):
     @model_validator(mode="after")
     def valid_shapes(self):
@@ -89,6 +102,7 @@ class TrainMLPConfig(ModelConfig):
         if self.image_shape != [224, 224, 3]:
             raise ValueError("Image shape not compatible")
         return self
+
 
 class TestCNNConfig(BaseConfig):
     feature_scaler_path: Optional[str] = None
@@ -108,6 +122,7 @@ class TestCNNConfig(BaseConfig):
             raise ValueError("Image shape not compatible")
         return self
 
+
 class TestMLPConfig(BaseConfig):
     feature_scaler_path: Optional[str] = None
     label_scaler_path: Optional[str] = None
@@ -123,6 +138,7 @@ class TestMLPConfig(BaseConfig):
             raise ValueError("Image shape not compatible")
         return self
 
+
 class TestImageOnlyConfig(BaseConfig):
     model_path: Optional[str] = None
     encoder_path: Optional[str] = None
@@ -131,11 +147,14 @@ class TestImageOnlyConfig(BaseConfig):
     classification_type: Optional[str] = "binary"
     classification_path: Optional[str] = None
 
+
 class TrainKFoldCNNConfig(TrainCNNConfig):
     pass
 
+
 class TrainKFoldMLPConfig(TrainMLPConfig):
     pass
+
 
 class GradCamConfig(BaseConfig):
     model_path: Optional[str] = None
@@ -150,6 +169,7 @@ class GradCamConfig(BaseConfig):
         if self.image_shape != [224, 224, 3]:
             raise ValueError("Image shape not compatible")
         return self
+
 
 class TrainImageOnlyConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     backbone: Optional[str] = "mobilenet"
@@ -185,29 +205,32 @@ class TrainImageOnlyConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
             raise ValueError("Image shape not compatible")
         return self
 
+
 class ImageHyperparameterConfig(TrainImageOnlyConfig):
     pass
 
 
 MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
-    'train_cnn': TrainCNNConfig,
-    'train_mlp': TrainMLPConfig,
-    'cnn_hyperparameter': TrainCNNConfig,
-    'mlp_hyperparameter': TrainMLPConfig,
-    'test_cnn': TestCNNConfig,
-    'test_mlp': TestMLPConfig,
-    'train_kfold_cnn': TrainKFoldCNNConfig,
-    'train_kfold_mlp': TrainKFoldMLPConfig,
-    'grad_cam': GradCamConfig,
-    'train_image_only': TrainImageOnlyConfig,
-    'test_image_only': TestImageOnlyConfig,
-    'image_hyperparameter': ImageHyperparameterConfig,
-    'custom_model': TrainImageOnlyConfig
+    "train_cnn": TrainCNNConfig,
+    "train_mlp": TrainMLPConfig,
+    "cnn_hyperparameter": TrainCNNConfig,
+    "mlp_hyperparameter": TrainMLPConfig,
+    "test_cnn": TestCNNConfig,
+    "test_mlp": TestMLPConfig,
+    "train_kfold_cnn": TrainKFoldCNNConfig,
+    "train_kfold_mlp": TrainKFoldMLPConfig,
+    "grad_cam": GradCamConfig,
+    "train_image_only": TrainImageOnlyConfig,
+    "test_image_only": TestImageOnlyConfig,
+    "image_hyperparameter": ImageHyperparameterConfig,
+    "custom_model": TrainImageOnlyConfig,
 }
+
 
 def load_config(filepath: str) -> BaseConfig:
     import json
-    with open(filepath, 'r') as f:
+
+    with open(filepath, "r") as f:
         data = json.load(f)
     mode = data.get("mode")
     config_cls = MODE_TO_CONFIG.get(mode)

@@ -1,4 +1,4 @@
-#import libraries
+# import libraries
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,7 +6,11 @@ import tensorflow as tf
 import joblib
 import os
 from sklearn.metrics import roc_auc_score, roc_curve
-from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    ConfusionMatrixDisplay,
+)
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from .data_processing import DataCollector
 
@@ -16,15 +20,18 @@ class TestPredictions(DataCollector):
     This class is used to test model performance on unseen data using metrics such as
     accuracy, precision, recall, and confusion matrix. Supports both image+feature and image-only CNNs.
     """
-    def __init__(self, model_path: str, 
-                 csv_path: str, 
-                 scalar_path: str, 
-                 img_folder: str,
-                 encoder_path: str = None, 
-                 image_only: bool = False,
-                 backbone: str = "mobilenet",
-                 classification_type: str = "binary"
-                 ):
+
+    def __init__(
+        self,
+        model_path: str,
+        csv_path: str,
+        scalar_path: str,
+        img_folder: str,
+        encoder_path: str = None,
+        image_only: bool = False,
+        backbone: str = "mobilenet",
+        classification_type: str = "binary",
+    ):
         """
         Initialize TestPredictions.
 
@@ -35,7 +42,13 @@ class TestPredictions(DataCollector):
             img_folder (str): Path to image folder.
             image_only (bool): If True, test only with images (no features).
         """
-        super().__init__(csv_path, img_folder=img_folder, backbone=backbone, encoder_path=encoder_path, classification_type=classification_type)
+        super().__init__(
+            csv_path,
+            img_folder=img_folder,
+            backbone=backbone,
+            encoder_path=encoder_path,
+            classification_type=classification_type,
+        )
         if self.classification_type == "multiclass":
             self.class_names = self.encoder.categories_[0].tolist()
         elif self.classification_type == "binary":
@@ -46,7 +59,7 @@ class TestPredictions(DataCollector):
         if not self.image_only and self.scalar_path:
             self.feature_scaler = joblib.load(self.scalar_path)
 
-    def _clean_data(self) -> 'pd.DataFrame | None':
+    def _clean_data(self) -> "pd.DataFrame | None":
         """
         Read CSV file into DataFrame and add column for cleave quality and one-hot encoded labels.
 
@@ -59,18 +72,22 @@ class TestPredictions(DataCollector):
             print("CSV file not found!")
             return None
         # Clean image path
-        df['ImagePath'] = df['ImagePath'].str.replace(self.img_folder, "", regex=False)
+        df["ImagePath"] = df["ImagePath"].str.replace(
+            self.img_folder, "", regex=False
+        )
         # One-hot encode CleaveCategory
         if self.classification_type == "multiclass":
             self.ohe = joblib.load(self.encoder_path)
-            onehot_labels = self.ohe.transform(df[['CleaveCategory']])
+            onehot_labels = self.ohe.transform(df[["CleaveCategory"]])
             class_names = self.ohe.categories_[0]
             for idx, class_name in enumerate(class_names):
                 df[f"Label_{class_name}"] = onehot_labels[:, idx]
             self.class_names = class_names
         return df
 
-    def test_prediction(self, image_path: str, feature_vector: 'np.ndarray | None' = None) -> 'np.ndarray':
+    def test_prediction(
+        self, image_path: str, feature_vector: "np.ndarray | None" = None
+    ) -> "np.ndarray":
         """
         Generate prediction for a single image (and features if not image_only).
 
@@ -91,7 +108,9 @@ class TestPredictions(DataCollector):
             prediction = self.model.predict([image, feature_vector])
         return prediction
 
-    def gather_predictions(self) -> 'tuple[np.ndarray, list, list] | tuple[None, None, None]':
+    def gather_predictions(
+        self,
+    ) -> "tuple[np.ndarray, list, list] | tuple[None, None, None]":
         """
         Gather multiple predictions from test data.
 
@@ -104,9 +123,18 @@ class TestPredictions(DataCollector):
         if self.image_only:
             pred_features = None
         else:
-            pred_features = self.df[['CleaveAngle', 'CleaveTension', 'ScribeDiameter', 'Misting', 'Hackle', 'Tearing']].values
-            #if self.scaler is not None:
-                #pred_features = self.scaler.transform(pred_features)
+            pred_features = self.df[
+                [
+                    "CleaveAngle",
+                    "CleaveTension",
+                    "ScribeDiameter",
+                    "Misting",
+                    "Hackle",
+                    "Tearing",
+                ]
+            ].values
+            # if self.scaler is not None:
+            # pred_features = self.scaler.transform(pred_features)
         predictions = []
         if self.image_only:
             for img_path in pred_image_paths:
@@ -114,25 +142,35 @@ class TestPredictions(DataCollector):
                 predictions.append(prediction)
         else:
             if pred_features is not None:
-                for img_path, feature_vector in zip(pred_image_paths, pred_features):
+                for img_path, feature_vector in zip(
+                    pred_image_paths, pred_features
+                ):
                     prediction = self.test_prediction(img_path, feature_vector)
                     predictions.append(prediction)
             else:
                 print("No features available for prediction.")
                 return None, None, None
-            
+
         # Set prediction labels based on max of ohe
         pred_labels = [np.argmax(pred[0]) for pred in predictions]
         if self.classification_type == "binary":
-            pred_labels = [(pred[0,0] > 0.5).astype(int) for pred in predictions]
-        elif self.classification_type =="multiclass":
+            pred_labels = [
+                (pred[0, 0] > 0.5).astype(int) for pred in predictions
+            ]
+        elif self.classification_type == "multiclass":
             pred_labels = [np.argmax(pred[0]) for pred in predictions]
-        
-        true_labels = self.df["CleaveCategory"].map({label: idx for idx, label in enumerate(self.class_names)}).values
+
+        true_labels = (
+            self.df["CleaveCategory"]
+            .map({label: idx for idx, label in enumerate(self.class_names)})
+            .values
+        )
 
         return true_labels, pred_labels, predictions
 
-    def display_confusion_matrix(self, true_labels: 'np.ndarray', pred_labels: 'list[int]') -> None:
+    def display_confusion_matrix(
+        self, true_labels: "np.ndarray", pred_labels: "list[int]"
+    ) -> None:
         """
         Display confusion matrix comparing true labels to predicted labels.
 
@@ -141,19 +179,22 @@ class TestPredictions(DataCollector):
             pred_labels (list[int]): List of predicted labels.
         """
         if self.classification_type == "binary":
-            labels = np.array([0,1])
+            labels = np.array([0, 1])
         elif self.classification_type == "multiclass":
             labels = list(range(len(self.class_names)))
         cm = confusion_matrix(true_labels, pred_labels, labels=labels)
-        disp = ConfusionMatrixDisplay(confusion_matrix=cm,
-                                  display_labels=self.class_names)
+        disp = ConfusionMatrixDisplay(
+            confusion_matrix=cm, display_labels=self.class_names
+        )
         disp.plot()
         plt.show()
 
-    def display_classification_report(self, 
-                                      true_labels: 'np.ndarray', 
-                                      pred_labels: 'list[int]', 
-                                      classification_path: str = None) -> None:
+    def display_classification_report(
+        self,
+        true_labels: "np.ndarray",
+        pred_labels: "list[int]",
+        classification_path: str = None,
+    ) -> None:
         """
         Display classification report comparing true labels to predicted labels.
 
@@ -163,15 +204,35 @@ class TestPredictions(DataCollector):
             classification_path (str, optional): Optional path to save classification report.
         """
         if classification_path:
-            df = pd.DataFrame(classification_report(true_labels, pred_labels, target_names=self.class_names, output_dict=True)).transpose()
+            df = pd.DataFrame(
+                classification_report(
+                    true_labels,
+                    pred_labels,
+                    target_names=self.class_names,
+                    output_dict=True,
+                )
+            ).transpose()
             df.to_csv(classification_path, index=True)
         if self.classification_type == "binary":
             str_names = [str(c) for c in self.class_names]
-            print(classification_report(true_labels, pred_labels, target_names=str_names))
+            print(
+                classification_report(
+                    true_labels, pred_labels, target_names=str_names
+                )
+            )
         else:
-            print(classification_report(true_labels, pred_labels, target_names=self.class_names))
+            print(
+                classification_report(
+                    true_labels, pred_labels, target_names=self.class_names
+                )
+            )
 
-    def plot_roc(self, title: str, true_labels: 'np.ndarray', pred_probabilites: 'np.ndarray') -> None:
+    def plot_roc(
+        self,
+        title: str,
+        true_labels: "np.ndarray",
+        pred_probabilites: "np.ndarray",
+    ) -> None:
         """
         Plot ROC curve for predictions.
 
@@ -183,8 +244,8 @@ class TestPredictions(DataCollector):
         pred_probabilites = np.array(pred_probabilites).flatten()
         fpr, tpr, thresholds = roc_curve(true_labels, pred_probabilites)
         auc = roc_auc_score(true_labels, pred_probabilites)
-        plt.plot(fpr, tpr, label=f'ROC Curve (AUC={auc:.2f}%)')
-        plt.plot([0, 1], [0, 1], 'k--')
+        plt.plot(fpr, tpr, label=f"ROC Curve (AUC={auc:.2f}%)")
+        plt.plot([0, 1], [0, 1], "k--")
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
         plt.title(title)
@@ -193,15 +254,20 @@ class TestPredictions(DataCollector):
         plt.legend(loc="lower right")
         plt.show()
 
+
 class TensionPredictor:
     """
     Predicts tension values using a trained MLP model and preprocessed image/features.
     """
-    def __init__(self, model: 'tf.keras.Model', 
-                 image_folder: str, 
-                 image_path: str, 
-                 tension_scaler_path: str, 
-                 feature_scaler_path: str):
+
+    def __init__(
+        self,
+        model: "tf.keras.Model",
+        image_folder: str,
+        image_path: str,
+        tension_scaler_path: str,
+        feature_scaler_path: str,
+    ):
         """
         Initialize TensionPredictor.
 
@@ -218,7 +284,9 @@ class TensionPredictor:
         self.tension_scaler = joblib.load(tension_scaler_path)
         self.feature_scaler = joblib.load(feature_scaler_path)
 
-    def load_and_preprocess_image(self, file_path: str, img_folder: str) -> 'tf.Tensor':
+    def load_and_preprocess_image(
+        self, file_path: str, img_folder: str
+    ) -> "tf.Tensor":
         """
         Load and preprocess image from file path.
 
@@ -239,7 +307,7 @@ class TensionPredictor:
         img = img / 255.0
         return img
 
-    def PredictTension(self, features: 'list[float]') -> float:
+    def PredictTension(self, features: "list[float]") -> float:
         """
         Predict tension for given image and features.
 
@@ -249,7 +317,9 @@ class TensionPredictor:
         Returns:
             float: Predicted tension value (inverse transformed to original scale).
         """
-        image = self.load_and_preprocess_image(self.image_path, self.image_folder)
+        image = self.load_and_preprocess_image(
+            self.image_path, self.image_folder
+        )
         image = tf.expand_dims(image, axis=0)
         features = np.array(features).reshape(1, -1)
         features = tf.convert_to_tensor(features, dtype=tf.float32)
@@ -257,17 +327,21 @@ class TensionPredictor:
         features = self.feature_scaler.transform(features)
         predicted_tension = self.model.predict([image, features])
         # Scale tension back to normal units
-        predicted_tension = self.tension_scaler.inverse_transform(predicted_tension)
+        predicted_tension = self.tension_scaler.inverse_transform(
+            predicted_tension
+        )
         return predicted_tension[0][0]
 
-    def plot_metric(self, 
-                    title: str, 
-                    X: 'list[float]', 
-                    y: 'list[float]', 
-                    x_label: str, 
-                    y_label: str, 
-                    x_legend: str, 
-                    y_legend: str) -> None:
+    def plot_metric(
+        self,
+        title: str,
+        X: "list[float]",
+        y: "list[float]",
+        x_label: str,
+        y_label: str,
+        x_legend: str,
+        y_legend: str,
+    ) -> None:
         """
         Plot a metric for model evaluation.
 
@@ -285,5 +359,5 @@ class TensionPredictor:
         plt.plot(y, label=y_legend)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
-        plt.legend(loc='lower right')
+        plt.legend(loc="lower right")
         plt.show()

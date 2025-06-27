@@ -11,17 +11,18 @@ __email__ = "clombardi23245@gmail.com"
 
 import os
 import warnings
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-warnings.filterwarnings('ignore')
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+warnings.filterwarnings("ignore")
 from .data_processing import DataCollector, MLPDataCollector
 from .model_pipeline import CustomModel, BuildMLPModel
 from .hyperparameter_tuning import (
-    HyperParameterTuning, 
-    ImageHyperparameterTuning, 
+    HyperParameterTuning,
+    ImageHyperparameterTuning,
     MLPHyperparameterTuning,
     BuildHyperModel,
     ImageOnlyHyperModel,
-    BuildMLPHyperModel
+    BuildMLPHyperModel,
 )
 from .prediction_testing import TestPredictions, TensionPredictor
 from .grad_cam import GradCAM, gradcam_driver, compute_saliency_map
@@ -29,7 +30,7 @@ from .grad_cam import GradCAM, gradcam_driver, compute_saliency_map
 __all__ = [
     "Config",
     "DataCollector",
-    "MLPDataCollector", 
+    "MLPDataCollector",
     "CustomModel",
     "BuildMLPModel",
     "HyperParameterTuning",
@@ -42,5 +43,5 @@ __all__ = [
     "TensionPredictor",
     "GradCAM",
     "gradcam_driver",
-    "compute_saliency_map"
+    "compute_saliency_map",
 ]
