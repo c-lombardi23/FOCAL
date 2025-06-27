@@ -567,6 +567,7 @@ class CustomModel:
             print("Model not saved")
 
         return history
+    
 
     @staticmethod
     def train_kfold(
@@ -575,12 +576,11 @@ class CustomModel:
         param_shape: Tuple[int, ...],
         learning_rate: float,
         metrics: List[str] = None,
-        checkpoints: Optional[ModelCheckpoint] = None,
         epochs: int = 5,
         initial_epoch: int = 0,
-        early_stopping: Optional[EarlyStopping] = None,
         history_file: Optional[str] = None,
         save_model_file: Optional[str] = None,
+        callbacks: Optional[List] = None
     ) -> Tuple[List[tf.keras.Model], List[tf.keras.callbacks.History]]:
         """
         Train model using k-fold cross validation.
@@ -591,10 +591,8 @@ class CustomModel:
             param_shape: Dimensions of numerical parameters
             learning_rate: Learning rate for optimization
             metrics: List of metrics to monitor
-            checkpoints: Checkpoint callback
             epochs: Number of training epochs
             initial_epoch: Starting epoch number
-            early_stopping: Early stopping callback
             history_file: Base filename for saving training history
             model_file: Base filename for saving models
 
@@ -609,12 +607,7 @@ class CustomModel:
         train_datasets = [i[0] for i in datasets]
         test_datasets = [i[1] for i in datasets]
 
-        callbacks = []
-        if early_stopping:
-            callbacks.append(early_stopping)
-        if checkpoints:
-            callbacks.append(checkpoints)
-
+        
         for fold, (train_ds, test_ds) in enumerate(zip(train_datasets, test_datasets)):
             print(f"\n=== Training fold {fold + 1} ===")
 
@@ -625,6 +618,14 @@ class CustomModel:
                 learning_rate=learning_rate,
                 metrics=metrics,
             )
+            es = EarlyStopping(
+                monitor="val_accuracy",
+                patience=8,
+                restore_best_weights=True,
+                verbose=1
+            )  
+
+            callbacks = []         
 
             if callbacks:
                 history = model.fit(
@@ -679,17 +680,17 @@ class CustomModel:
         recall = []
 
         for history in kfold_histories:
-            accuracy.append(max(history.history["accuracy"]))
-            precision.append(max(history.history["precision"]))
-            recall.append(max(history.history["recall"]))
+            accuracy.append(max(history.history["val_accuracy"]))
+            precision.append(max(history.history["val_precision"]))
+            recall.append(max(history.history["val_recall"]))
 
         avg_accuracy = np.mean(accuracy)
         avg_precision = np.mean(precision)
         avg_recall = np.mean(recall)
 
-        print(f"Average Accuracy: {avg_accuracy:.4f}")
-        print(f"Average Precision: {avg_precision:.4f}")
-        print(f"Average Recall: {avg_recall:.4f}")
+        print(f"Average Accuracy: {avg_accuracy:.4f}, Std Dev: {np.std(accuracy):.4f}")
+        print(f"Average Precision: {avg_precision:.4f}, Std Dev: {np.std(precision):.4f}")
+        print(f"Average Recall: {avg_recall:.4f}, Std Dev: {np.std(recall):.4f}")
 
     def plot_metric(
         self,

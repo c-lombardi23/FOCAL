@@ -547,7 +547,8 @@ class DataCollector:
                 train=True,
                 batch_size=batch_size,
                 buffer_size=buffer_size,
-                masking=False,
+                masking=True,
+                p=0.6
             )
             test_ds = self._dataset_helper(
                 test_imgs,
@@ -556,7 +557,8 @@ class DataCollector:
                 train=False,
                 batch_size=batch_size,
                 buffer_size=buffer_size,
-                masking=False,
+                masking=True,
+                p=0.7
             )
 
             datasets.append((train_ds, test_ds))

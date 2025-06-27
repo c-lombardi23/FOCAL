@@ -163,7 +163,7 @@ class TestPredictions(DataCollector):
         pred_labels = [np.argmax(pred[0]) for pred in predictions]
         if self.classification_type == "binary":
             pred_labels = [
-                (pred[0, 0] > 0.5).astype(int) for pred in predictions
+                (pred[0, 0] > 0.4).astype(int) for pred in predictions
             ]
         elif self.classification_type == "multiclass":
             pred_labels = [np.argmax(pred[0]) for pred in predictions]

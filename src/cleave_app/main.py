@@ -257,12 +257,13 @@ def _train_kfold_cnn(config) -> None:
         datasets = data.create_kfold_datasets(
             images, features, labels, config.buffer_size, config.batch_size
         )
-
-        kfold_histories = CustomModel.train_kfold(
+        
+        _, kfold_histories = CustomModel.train_kfold(
             datasets,
             config.image_shape,
             config.feature_shape,
             config.learning_rate or 0.001,
+            epochs=config.max_epochs,
             history_file=config.save_history_file,
             save_model_file=config.save_model_file,
         )
