@@ -149,6 +149,7 @@ The application uses a JSON configuration file to specify all parameters. **Each
 | `image_hyperparameter` | Run hyperparameter search for image-only model |
 | `test_cnn` | Test CNN model performance |
 | `test_mlp` | Test MLP model performance |
+| `test_image_only` | Test the CNN on only image data |
 | `train_kfold_cnn` | Train CNN with k-fold cross validation |
 | `train_kfold_mlp` | Train MLP with k-fold cross validation |
 | `grad_cam` | Generate GradCAM visualizations |
