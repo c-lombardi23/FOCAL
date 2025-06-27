@@ -20,6 +20,7 @@ release = '0.1.0'
 
 extensions = [
     'sphinx.ext.autodoc',
+    "sphinx.ext.autosummary",
     'sphinx.ext.napoleon',          
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages"
@@ -37,7 +38,7 @@ napoleon_numpy_docstring = True
 
 html_theme = 'furo'
 html_theme_options = {
-    "dark_css_variables": {
+    "light_css_variables": {
         "color-brand-primary": "red",
         "color-brand-content": "#CC3333",
         "color-admonition-background": "orange",

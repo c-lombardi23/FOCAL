@@ -1,8 +1,8 @@
 Fiber Cleave Processing v0.1.0
 ================================
 
-A toolkit for fiber‐cleave quality classification (CNN)  
-and tension prediction (MLP).
+A toolkit for fiber‐cleave quality classification using Convolutional Neural Networks (CNN)  
+and tension prediction using a Multi-Layer Perceptron (MLP)
 
 Quick Start
 -----------
@@ -26,17 +26,8 @@ API Reference
    reference/cleave_app.hyperparameter_tuning
    reference/cleave_app.prediction_testing
    reference/cleave_app.grad_cam
+   reference/cleave_app.main
 
-Getting Started
-===============
-
-This quickstart will have you training your first Fiber Cleave model in just a few steps.
-
-1. **Clone & install**  
-   bash
-   git clone https://github.com/c-lombardi23/ImageProcessing.git
-   cd ImageProcessingClone
-   pip install -e ".[dev]"
 
 Indices and tables
 ==================
