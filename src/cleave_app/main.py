@@ -223,6 +223,7 @@ def _train_mlp(config) -> None:
             "val_loss",
             "epochs",
             "loss",
+            model_path=config.save_model_file
         )
         trainable_model.plot_metric(
             "MAE vs. Val MAE",
@@ -232,6 +233,7 @@ def _train_mlp(config) -> None:
             "val_mae",
             "epochs",
             "mae",
+            model_path=config.save_model_file
         )
 
     except Exception as e:
@@ -582,6 +584,7 @@ def _image_only(config) -> None:
             "val_loss",
             "epochs",
             "loss",
+            model_path=config.save_model_file
         )
         trainable_model.plot_metric(
             "Accuracy vs. Val Accuracy",
@@ -591,6 +594,7 @@ def _image_only(config) -> None:
             "val_accuracy",
             "epochs",
             "accuracy",
+            model_path=config.save_model_file
         )
 
     except Exception as e:
@@ -725,6 +729,7 @@ def _custom_model(config) -> None:
             "val_loss",
             "epochs",
             "loss",
+            model_path=config.save_model_file
         )
         trainable_model.plot_metric(
             "Accuracy vs. Val Accuracy",
@@ -734,6 +739,7 @@ def _custom_model(config) -> None:
             "val_accuracy",
             "epochs",
             "accuracy",
+            model_path=config.save_model_file
         )
     except Exception as e:
         print(f"Error during custom training: {e}")
