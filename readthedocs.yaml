@@ -12,7 +12,5 @@ build:
 
 # Build documentation in the "docs/" directory with Sphinx
 
-docs_dir: docs/source
-
 sphinx:
-   configuration: conf.py
+   configuration: ./docs/source/conf.py
