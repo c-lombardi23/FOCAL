@@ -177,7 +177,8 @@ class TestPredictions(DataCollector):
         return true_labels, pred_labels
 
     def display_confusion_matrix(
-        self, true_labels: "np.ndarray", pred_labels: "list[int]"
+        self, true_labels: "np.ndarray", pred_labels: "list[int]",
+        model_path: str
     ) -> None:
         """
         Display confusion matrix comparing true labels to predicted labels.
@@ -195,6 +196,12 @@ class TestPredictions(DataCollector):
             confusion_matrix=cm, display_labels=self.class_names
         )
         disp.plot()
+
+        model_dir = os.path.dirname(model_path)
+        basename  = os.path.basename(model_path)        
+        stem, _  = os.path.splitext(basename)
+        save_confusion = os.path.join(model_dir, f"{stem}_confusion_report.png")
+        plt.savefig(save_confusion)
         plt.show()
 
     def display_classification_report(

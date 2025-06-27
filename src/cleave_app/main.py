@@ -156,6 +156,7 @@ def _train_cnn(config) -> None:
             "val_loss",
             "epochs",
             "loss",
+            model_path=config.save_model_file
         )
         trainable_model.plot_metric(
             "Accuracy vs. Val Accuracy",
@@ -165,6 +166,7 @@ def _train_cnn(config) -> None:
             "val_accuracy",
             "epochs",
             "accuracy",
+            model_path=config.save_model_file
         )
 
     except Exception as e:
@@ -438,7 +440,8 @@ def _test_cnn(config) -> None:
         true_labels, pred_labels = tester.gather_predictions()
 
         if true_labels is not None:
-            tester.display_confusion_matrix(true_labels, pred_labels)
+            tester.display_confusion_matrix(true_labels, pred_labels, model_path=config.model_path)
+            
             tester.display_classification_report(
                 true_labels, pred_labels, config.classification_path
             )
