@@ -21,7 +21,8 @@ warnings.filterwarnings("ignore")
 # Import application modules
 from .config_schema import load_config
 from .data_processing import DataCollector, MLPDataCollector
-from .model_pipeline import CustomModel, BuildMLPModel
+from .model_pipeline import CustomModel
+from .mlp_model import BuildMLPModel
 from .prediction_testing import TestPredictions, TensionPredictor
 from .hyperparameter_tuning import (
     HyperParameterTuning,
@@ -34,6 +35,7 @@ try:
     import tensorflow as tf
 except ImportError:
     print("Warning: TensorFlow not found. Please install tensorflow>=2.19.0")
+    traceback.print_exc()
     tf = None
 
 
@@ -167,6 +169,7 @@ def _train_cnn(config) -> None:
 
     except Exception as e:
         print(f"Error during CNN training: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -230,6 +233,7 @@ def _train_mlp(config) -> None:
         )
 
     except Exception as e:
+        traceback.print_exc()
         print(f"Error during MLP training: {e}")
         raise
 
@@ -263,6 +267,7 @@ def _train_kfold_cnn(config) -> None:
 
     except Exception as e:
         print(f"Error during k-fold CNN training: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -295,6 +300,7 @@ def _train_kfold_mlp(config) -> None:
 
     except Exception as e:
         print(f"Error during k-fold MLP training: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -330,6 +336,7 @@ def _run_search_helper(
 
     except Exception as e:
         print(f"Error during hyperparameter search: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -370,6 +377,7 @@ def _cnn_hyperparameter(config) -> None:
 
     except Exception as e:
         print(f"Error during CNN hyperparameter tuning: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -406,6 +414,7 @@ def _mlp_hyperparameter(config) -> None:
 
     except Exception as e:
         print(f"Error during MLP hyperparameter tuning: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -466,6 +475,7 @@ def _test_mlp(config) -> None:
 
     except Exception as e:
         print(f"Error during MLP testing: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -492,6 +502,7 @@ def _grad_cam(config) -> None:
 
     except Exception as e:
         print(f"Error during GradCAM generation: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -723,6 +734,7 @@ def _custom_model(config) -> None:
         )
     except Exception as e:
         print(f"Error during custom training: {e}")
+        traceback.print_exc()
         raise
 
 
@@ -791,6 +803,7 @@ Examples:
 
     except Exception as e:
         print(f"Error: {e}")
+        traceback.print_exc()
         return 1
 
     return 0
