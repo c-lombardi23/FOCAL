@@ -10,10 +10,10 @@
   "feature_shape": [6],
   "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
-  "mode": "train_cnn",
+  "mode": "test_cnn",
   "backbone": "efficientnet",
   "backbone_name": "resnet",
-  "model_path": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\image_features2.keras",
+  "model_path": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\image_features1.keras",
   "project_name": "Binary4",
   "num_classes": 1,
   "classification_type": "binary",
@@ -23,7 +23,7 @@
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 60,
+  "max_epochs": 15,
   "objective": "val_accuracy",
 
   "dropout1_rate": 0.0,
@@ -39,7 +39,8 @@
   "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\images_features_checkpoint2.keras",
 
   "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
-  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\image_features2.keras",
+  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\kfold_trial1.keras",
+  "save_history_file": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\kfold_history",
 
   "set_mask": "y"
 }
