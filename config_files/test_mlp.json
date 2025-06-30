@@ -1,0 +1,46 @@
+{
+  "csv_path": "C:\\Thorlabs\\125PM_2_Categories.csv",
+  "img_folder": "C:\\Thorlabs\\125PM\\",
+  "feature_scaler_path": "C:\\Users\\clombardi\\Training_Runs_6_28\\Individual_Trials\\feature_scaler10.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\Training_Runs_6_28\\Individual_Trials\\tension_scaler10.pkl",
+  "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
+  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
+
+  "image_shape": [224, 224, 3],
+  "feature_shape": [5],
+  "test_features": [1.68, 190, 12.96, 0, 0, 1],
+
+  "mode": "test_mlp",
+  "backbone": "efficientnet",
+  "backbone_name": "resnet",
+  "model_path": "C:\\Users\\clombardi\\Training_Runs_6_28\\Individual_Trials\\mlp_model10.keras",
+  "project_name": "MLP1",
+  "num_classes": 1,
+  "classification_type": "binary",
+
+
+  "learning_rate": 0.0004,
+  "batch_size": 16,
+  "buffer_size": 40,
+  "test_size": 0.25,
+  "max_epochs": 20,
+  "objective": "val_accuracy",
+
+  "dense1":96,
+  "dense2": 64,
+  "dense3": 112,
+  "dense_combined": 112,
+
+  "early_stopping": "y",
+  "patience": 5,
+  "monitor": "val_loss",
+  "method": "min",
+  "checkpoints": "n",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\images_features_checkpoint2.keras",
+
+  "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_28\\HyperParameterTuning1",
+  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_6_28\\Individual_Trials\\mlp_model2.keras",
+  "save_history_file": "C:\\Users\\clombardi\\Training_Runs_6_28\\Individual_Trials\\mlp1_history",
+
+  "set_mask": "y"
+}

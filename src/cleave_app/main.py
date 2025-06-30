@@ -199,21 +199,12 @@ def _train_mlp(config) -> None:
             tension_scaler_path=config.label_scaler_path,
         )
 
+        train_ds = data.image_only_dataset(train_ds)
+        test_ds = data.image_only_dataset(test_ds)
+
         trainable_model = BuildMLPModel(config.model_path, train_ds, test_ds)
-        compiled_model = trainable_model.compile_model(config.feature_shape)
-
-        # Setup callbacks
-        callbacks = _setup_callbacks(config, trainable_model)
-        max_epochs = config.max_epochs or 20
-
-        history = trainable_model.train_model(
-            model=compiled_model,
-            epochs=max_epochs,
-            callbacks=callbacks,
-            history_file=config.save_history_file,
-            save_model_file=config.save_model_file,
-        )
-
+        boost = trainable_model.build_xgboost()
+        '''
         # Plot training metrics
         trainable_model.plot_metric(
             "Loss vs. Val Loss",
@@ -235,7 +226,10 @@ def _train_mlp(config) -> None:
             "mae",
             model_path=config.save_model_file
         )
+    '''
+        cnn_model = tf.keras.models.load_model(config.model_path)
 
+        trainable_model.predict_tension_from_image( boost, config.label_scaler_path)
     except Exception as e:
         traceback.print_exc()
         print(f"Error during MLP training: {e}")
@@ -466,19 +460,20 @@ def _test_mlp(config) -> None:
     """
     try:
         predictor = TensionPredictor(
-            config.model_path,
-            config.img_folder,
-            config.img_path,
-            config.label_scaler_path,
-            config.feature_scaler_path,
+            model_path=config.model_path,
+            image_folder=config.img_folder,
+            tension_scaler_path=config.label_scaler_path,
+            feature_scaler_path=config.feature_scaler_path,
+            csv_path = config.csv_path
         )
-
+        '''
         if config.test_features is not None:
             prediction = predictor.PredictTension(config.test_features)
             print(f"Predicted tension: {prediction}")
         else:
             print("No test features provided")
-
+        '''
+        predictor.find_best_tension_for_image([100, 200])
     except Exception as e:
         print(f"Error during MLP testing: {e}")
         traceback.print_exc()

@@ -700,12 +700,12 @@ class MLPDataCollector(DataCollector):
             raise ValueError(
                 "No data available. Check if CSV file was loaded correctly."
             )
-
-        images = self.df["ImagePath"].values
-        features = self.df[
+        filtered_df = self.df.loc[self.df['CleaveCategory'] ==  1]       
+        images = filtered_df["ImagePath"].values
+        features = filtered_df[
             ["CleaveAngle", "ScribeDiameter", "Misting", "Hackle", "Tearing"]
         ].values.astype(np.float32)
-        labels = self.df["CleaveTension"].values.astype(np.float32)
+        labels = filtered_df["CleaveTension"].values.astype(np.float32)
 
         return images, features, labels
 

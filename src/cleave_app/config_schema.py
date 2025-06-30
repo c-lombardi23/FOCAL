@@ -134,6 +134,7 @@ class TrainCNNConfig(ModelConfig):
 
 
 class TrainMLPConfig(ModelConfig):
+    img_path: str
     @model_validator(mode="after")
     def valid_shapes(self):
         if self.feature_shape != [5]:

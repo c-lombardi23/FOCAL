@@ -1,5 +1,8 @@
 
 from .model_pipeline import *
+import xgboost as xgb
+import joblib
+
 
 class BuildMLPModel(CustomModel):
     """
@@ -10,18 +13,133 @@ class BuildMLPModel(CustomModel):
     """
 
     def __init__(self, cnn_model_path: str, train_ds, test_ds):
+        super().__init__(train_ds, test_ds)
+        # load your frozen CNN
+        self.cnn_model = tf.keras.models.load_model(cnn_model_path)
+        # build a small model that maps image → feature vector
+        self.feature_extractor = Model(
+            inputs=self.cnn_model.input[0],
+            outputs=self.cnn_model.get_layer("global_avg").output
+        )
+
+    def extract_features_and_labels(self, ds):
         """
-        Initialize the MLP model.
+        Given a tf.data.Dataset yielding (image, _), run images
+        through the CNN and collect features + true tension labels.
+        """
+        features, tensions = [], []
+        for img_batch, tension_batch in ds:
+            feats = self.feature_extractor(img_batch).numpy()  # → (B, D)
+            features.append(feats)
+            tensions.append(tension_batch.numpy().reshape(-1))
+        return np.vstack(features), np.concatenate(tensions)
+    
+    def build_xgboost(self, save_path: str = None):
+        X_train, y_train = self.extract_features_and_labels(self.train_ds)
+        X_test,  y_test  = self.extract_features_and_labels(self.test_ds)
+
+        # 2) train XGBoost regressor
+        xgb_reg = xgb.XGBRegressor(
+            objective="reg:squarederror",
+            n_estimators=200,
+            learning_rate=0.05,
+            max_depth=4,
+            random_state=42,
+        )
+        xgb_reg.fit(
+            X_train, y_train,
+            eval_set=[(X_train, y_train), (X_test, y_test)],
+            verbose=True,
+        )
+
+        if save_path:
+            joblib.dump(xgb_reg, save_path)
+
+        y_pred = xgb_reg.predict(X_test)
+        from sklearn.metrics import mean_absolute_error
+        print("Val MAE:", mean_absolute_error(y_test, y_pred))
+        
+        return xgb_reg
+    
+    def extract_cnn_features(self, image_path: str) -> np.ndarray:
+        """
+        Extract CNN features from image for use with XGBoost.
 
         Args:
-            cnn_model_path: Path to the pre-trained CNN model
-            train_ds: Training dataset
-            test_ds: Test dataset
+            image_path: Path to grayscale image
+
+        Returns:
+            np.ndarray: 1D feature vector from CNN
         """
-        super().__init__(train_ds, test_ds)
-        self.cnn_model = tf.keras.models.load_model(cnn_model_path)
-        self.image_input = self.cnn_model.input[0]
-        self.feature_output = self.cnn_model.get_layer("dropout").output
+        img_raw = tf.io.read_file(image_path)
+        img = tf.image.decode_png(img_raw, channels=1)
+        img = tf.image.resize(img, [224, 224])
+        img = tf.image.grayscale_to_rgb(img)
+        img = tf.cast(img, tf.float32)
+        img = tf.expand_dims(img, axis=0)  # Add batch dimension
+
+    
+        # Build feature extractor from CNN
+        extractor = tf.keras.Model(
+            inputs=self.cnn_model.input[0],
+            outputs=self.cnn_model.get_layer("global_avg").output,
+        )
+        return extractor(img).numpy().squeeze()
+
+    
+    def predict_tension_from_image(self, xgb_model, label_scaler_path) -> float:
+        """
+        Predict optimal cleave tension from a single image using CNN + XGBoost pipeline.
+
+        Args:
+            image_path (str): Path to the grayscale PNG image (single-channel)
+            cnn_model: Trained CNN model for feature extraction
+            xgb_model: Trained XGBoost regressor
+
+        Returns:
+            float: Predicted cleave tension
+        """
+        df = pd.read_csv("C:\\Thorlabs\\125pm_data_updated.csv")
+        def label(row):
+            good_angle = row["CleaveAngle"] <= 0.45
+            no_defects = not row["Hackle"] and not row["Misting"]
+            good_diameter = row["ScribeDiameter"] < 17
+
+            bad_angle = not good_angle and no_defects and good_diameter
+            bad_diameter = good_angle and no_defects and not good_diameter
+
+            if good_angle and no_defects and good_diameter:
+                return "Good"
+            if good_angle and not no_defects and good_diameter:
+                return "Misting_Hackle"
+            if bad_angle or bad_diameter:
+                return "Bad_Scribe_Mark or Angle"
+            return "Multiple_Errors"
+
+        df["CleaveCategory"] = df.apply(
+                lambda row: (
+                    1
+                    if row["CleaveAngle"] <= 0.45
+                    and row["ScribeDiameter"] < 17
+                    and (not row["Hackle"] and not row["Misting"])
+                    else 0
+                ),
+                axis=1,
+            )
+        label_scaler = joblib.load(label_scaler_path)
+        df = df.loc[df['CleaveCategory'] == 0]
+        print(len(df))
+        image_paths = df['ImagePath']
+        true_tensions = df['CleaveTension']
+        tensions = []
+        for img in image_paths:
+            features = self.extract_cnn_features(img)
+            tension = xgb_model.predict(features.reshape(1, -1))[0]
+            tension = label_scaler.inverse_transform([[tension]])[0][0]
+            tensions.append(tension)
+        for pred, true in zip(tensions, true_tensions):
+            print(f"Predicted Tension: {pred:.2f} -> True: {true:.2f}")
+
 
     def _build_pretrained_model(self, param_shape: Tuple[int, ...]) -> tf.keras.Model:
         """

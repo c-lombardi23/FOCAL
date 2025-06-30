@@ -269,7 +269,7 @@ class TestPredictions(DataCollector):
         plt.legend(loc="lower right")
         plt.show()
 
-
+from typing import Optional
 class TensionPredictor:
     """
     Predicts tension values using a trained MLP model and preprocessed image/features.
@@ -277,11 +277,12 @@ class TensionPredictor:
 
     def __init__(
         self,
-        model: "tf.keras.Model",
+        model_path: str,
         image_folder: str,
-        image_path: str,
-        tension_scaler_path: str,
-        feature_scaler_path: str,
+        csv_path: str,
+        tension_scaler_path: Optional[str] = None,
+        feature_scaler_path: Optional[str] = None,
+        
     ):
         """
         Initialize TensionPredictor.
@@ -293,11 +294,13 @@ class TensionPredictor:
             tension_scaler_path (str): Path to saved tension scaler.
             feature_scaler_path (str): Path to saved feature scaler.
         """
-        self.model = model
-        self.image_path = image_path
+        self.model = tf.keras.models.load_model(model_path)
         self.image_folder = image_folder
-        self.tension_scaler = joblib.load(tension_scaler_path)
-        self.feature_scaler = joblib.load(feature_scaler_path)
+        if tension_scaler_path:
+            self.tension_scaler = joblib.load(tension_scaler_path)
+        if feature_scaler_path:
+            self.feature_scaler = joblib.load(feature_scaler_path)
+        self.csv_path = csv_path
 
     def load_and_preprocess_image(
         self, file_path: str, img_folder: str
@@ -319,7 +322,6 @@ class TensionPredictor:
         img = tf.image.resize(img, [224, 224])
         img = tf.image.grayscale_to_rgb(img)
         # Normalize image
-        img = img / 255.0
         return img
 
     def PredictTension(self, features: "list[float]") -> float:
@@ -346,6 +348,39 @@ class TensionPredictor:
             predicted_tension
         )
         return predicted_tension[0][0]
+    
+    def find_best_tension_for_image(self, tension_range, other_features=None):
+        """
+        Find the tension that gives the best cleave quality prediction
+        """
+        df = pd.read_csv(self.csv_path)
+        image_paths = df['ImagePath']
+        best_tensions = []
+        for img in image_paths:
+            img = self.load_and_preprocess_image(img, self.image_folder)
+            img = tf.expand_dims(img, axis=0)
+            best_tension = None
+            best_prob = -1
+        
+            for tension in tension_range:
+                if other_features is None:
+                    features = np.zeros((6,))
+                    features[1] = tension
+                    features = np.expand_dims(features, axis=0)
+                else:
+                    features = other_features.copy()
+                    features[1] = tension
+            
+                prediction = self.model.predict([img, features])
+                quality_prob = prediction[0][0]  
+            
+                if quality_prob > best_prob:
+                    best_prob = quality_prob
+                    best_tension = tension
+                    best_tensions.append((best_tension, best_prob))
+        
+        for tension, prob in best_tensions:
+            print(f"Best Tension: {tension:.2f}g -> Prob {prob:.2f}")
 
     def plot_metric(
         self,
