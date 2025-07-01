@@ -44,7 +44,9 @@ class GradCAM:
         img_resized = cv2.resize(
             img, (self.model.input[0].shape[1], self.model.input[0].shape[2])
         )
+    
         input_image = np.expand_dims(img_resized, axis=0)
+        
 
         backbone = self.model.get_layer(self.backbone_name)
         last_conv_layer = backbone.get_layer(self.target_layer.name)
@@ -110,7 +112,7 @@ def gradcam_driver(
     )
 
     heatmap = gradcam.compute_heatmap(img, param_vector)
-
+  
     overlay = gradcam.overlay_heatmap(heatmap, img)
 
     overlay_bgr = cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)

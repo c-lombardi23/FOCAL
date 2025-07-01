@@ -48,7 +48,11 @@ class XGBoostModel(BaseModelPipeline):
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             max_depth=max_depth,
-            random_state=random_state
+            random_state=random_state,
+            gamma=0.1,
+            subsample=0.8,
+            reg_lambda =1.0
+
         )
 
         self.xgb_reg.fit(
@@ -118,7 +122,10 @@ class XGBoostPredictor(BaseModelPipeline):
         img = tf.image.decode_png(img_raw, channels=1)
         img = tf.image.resize(img, [224, 224])
         img = tf.image.grayscale_to_rgb(img)
-        img = tf.cast(img, tf.float32) / 255.0
+        img = tf.cast(img, tf.float32)
+        noise = tf.random.normal(shape=tf.shape(img), mean=0.0, stddev=50.0)  # adjust stddev as needed
+        img = img + noise
+        img = tf.clip_by_value(img, 0.0, 255.0)
         img = tf.expand_dims(img, axis=0)
         return self.feature_extractor(img).numpy().squeeze()
 

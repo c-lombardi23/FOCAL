@@ -202,18 +202,17 @@ def _train_mlp(config) -> None:
         )
 
         trainable_model = BuildMLPModel(config.model_path, train_ds, test_ds)
-        compiled_model = trainable_model.compile_model(config.feature_shape)
 
         # Setup callbacks
         callbacks = _setup_callbacks(config, trainable_model)
         max_epochs = config.max_epochs or 20
 
-        history = trainable_model.train_model(
-            model=compiled_model,
-            epochs=max_epochs,
+        history = trainable_model.train(
+            param_shape=config.feature_shape,
+            learning_rate=config.learning_rate,
             callbacks=callbacks,
-            history_file=config.save_history_file,
-            save_model_file=config.save_model_file,
+            class_weight=None,
+            epochs=max_epochs
         )
 
         # Plot training metrics
@@ -502,9 +501,9 @@ def _grad_cam(config) -> None:
                 config.img_path,
                 config.test_features,
                 backbone_name=config.backbone_name,
-                class_index=4,
-                conv_layer_name="conv5_block3_out",
-                heatmap_file="heatmap_6_25.png",
+                class_index=0,
+                conv_layer_name=None,
+                heatmap_file="C:\\Users\\clombardi\\heatmap_7_1.png",
             )
         else:
             print("Missing image path or test features for GradCAM")

@@ -349,6 +349,7 @@ class TensionPredictor:
         )
         return predicted_tension[0][0]
     
+    
     def find_best_tension_for_image(self, tension_range, other_features=None):
         """
         Find the tension that gives the best cleave quality prediction
