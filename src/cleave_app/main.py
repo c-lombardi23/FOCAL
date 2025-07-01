@@ -12,6 +12,7 @@ import argparse
 import traceback
 from typing import Optional, List, Callable
 import pandas as pd
+import joblib
 
 
 # Suppress TensorFlow warnings
@@ -24,6 +25,7 @@ from .data_processing import DataCollector, MLPDataCollector
 from .model_pipeline import CustomModel
 from .mlp_model import BuildMLPModel
 from .prediction_testing import TestPredictions, TensionPredictor
+from .xgboost_pipeline import XGBoostModel, XGBoostPredictor
 from .hyperparameter_tuning import (
     HyperParameterTuning,
     ImageHyperparameterTuning,
@@ -199,12 +201,21 @@ def _train_mlp(config) -> None:
             tension_scaler_path=config.label_scaler_path,
         )
 
-        train_ds = data.image_only_dataset(train_ds)
-        test_ds = data.image_only_dataset(test_ds)
-
         trainable_model = BuildMLPModel(config.model_path, train_ds, test_ds)
-        boost = trainable_model.build_xgboost()
-        '''
+        compiled_model = trainable_model.compile_model(config.feature_shape)
+
+        # Setup callbacks
+        callbacks = _setup_callbacks(config, trainable_model)
+        max_epochs = config.max_epochs or 20
+
+        history = trainable_model.train_model(
+            model=compiled_model,
+            epochs=max_epochs,
+            callbacks=callbacks,
+            history_file=config.save_history_file,
+            save_model_file=config.save_model_file,
+        )
+
         # Plot training metrics
         trainable_model.plot_metric(
             "Loss vs. Val Loss",
@@ -226,10 +237,7 @@ def _train_mlp(config) -> None:
             "mae",
             model_path=config.save_model_file
         )
-    '''
-        cnn_model = tf.keras.models.load_model(config.model_path)
 
-        trainable_model.predict_tension_from_image( boost, config.label_scaler_path)
     except Exception as e:
         traceback.print_exc()
         print(f"Error during MLP training: {e}")
@@ -742,6 +750,62 @@ def _custom_model(config) -> None:
         traceback.print_exc()
         raise
 
+def _train_xgboost(config):
+    
+    data = MLPDataCollector(csv_path=config.csv_path, 
+                            img_folder=config.img_folder,
+                         backbone = None)
+    
+    images, features, labels = data.extract_data()
+    train_ds, test_ds = data.create_datasets(
+        images, features, labels, 
+        test_size=config.test_size,
+        batch_size=config.batch_size,
+        buffer_size = config.buffer_size, 
+        feature_scaler_path=None, 
+        tension_scaler_path=config.label_scaler_path
+        )
+    
+    train_ds = data.image_only_dataset(train_ds)
+    test_ds = data.image_only_dataset(test_ds)
+
+    xgb_model = XGBoostModel(
+        csv_path=config.csv_path, 
+        cnn_model_path=config.model_path, 
+        train_ds=train_ds, 
+        test_ds=test_ds
+        )
+    
+    evals_result = xgb_model.train(
+        n_estimators=config.n_estimators,
+        learning_rate=config.learning_rate,
+        max_depth=config.max_depth,
+        random_state=config.random_state
+
+    )
+    xgb_model.save(config.xgb_path)
+    
+    xgb_model.plot_metrics(
+        title="RSME vs. Val RSME",
+        metric1 = evals_result['validation_0']['rmse'],
+        metric2 = evals_result['validation_1']['rmse'],
+        metric1_label="RSME",
+        metric2_label="Val RSME",
+        x_label="Training Round",
+        y_label="RSME"
+        
+    )
+
+def _test_xgboost(config):
+    xgb_predicter = XGBoostPredictor(
+        xgb_path=config.xgb_path,
+        csv_path=config.csv_path,
+        scaler_path=config.label_scaler_path,
+        cnn_model_path=config.model_path
+    )
+    xgb_predicter.load()
+    xgb_predicter.predict()
+
 
 def choices(mode: str, config) -> None:
     """
@@ -765,6 +829,8 @@ def choices(mode: str, config) -> None:
         "image_hyperparameter": _image_hyperparameter,
         "test_image_only": _test_image_only,
         "custom_model": _custom_model,
+        "train_xgboost": _train_xgboost,
+        "test_xgboost": _test_xgboost
     }
 
     if mode in mode_functions:
@@ -803,7 +869,7 @@ Examples:
     parsed_args = parser.parse_args(args)
 
     try:
-        config = load_config(parsed_args.file_path)  # <-- use new factory
+        config = load_config(parsed_args.file_path)  
         choices(config.mode, config)
 
     except Exception as e:

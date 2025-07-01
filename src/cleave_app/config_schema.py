@@ -88,6 +88,8 @@ class BaseConfig(BaseModel):
             "image_hyperparameter",
             "test_image_only",
             "custom_model",
+            "train_xgboost",
+            "test_xgboost"
         ]
         if value not in valid_modes:
             raise ValueError(f"{value} is not a valid mode!")
@@ -196,6 +198,17 @@ class TrainKFoldMLPConfig(TrainMLPConfig):
     pass
 
 
+class TrainXGBoostConfig(ModelConfig):
+    xgb_path: Optional[str] = None
+    n_estimators: Optional[int] = 200
+    max_depth: Optional[int] = 4
+    random_state: Optional[int] = 42
+
+
+class TestXGBoostConfig(TestMLPConfig):
+    xgb_path: str
+
+
 class GradCamConfig(BaseConfig):
     model_path: Optional[str] = None
     img_path: Optional[str] = None
@@ -264,6 +277,8 @@ MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "test_image_only": TestImageOnlyConfig,
     "image_hyperparameter": ImageHyperparameterConfig,
     "custom_model": TrainImageOnlyConfig,
+    "train_xgboost": TrainXGBoostConfig,
+    "test_xgboost": TestXGBoostConfig
 }
 
 
