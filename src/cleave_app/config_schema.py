@@ -3,14 +3,14 @@ Configuration schema module for the Fiber Cleave Processing application.
 
 This module defines Pydantic models for validating and loading JSON
 configuration files for all CLI modes. Each mode has its own config class,
-inheriting common fields and validators from BaseConfig, EarlyStoppingMixin, 
+inheriting common fields and validators from BaseConfig, EarlyStoppingMixin,
 and CheckpointMixin.
 """
+
 import os
 import json
 from typing import List, Optional, Type, Dict
 from pydantic import BaseModel, field_validator, model_validator
-
 
 
 class EarlyStoppingMixin(BaseModel):
@@ -23,6 +23,7 @@ class EarlyStoppingMixin(BaseModel):
       - monitor (str): Metric to monitor (e.g. 'val_loss', 'val_accuracy').
       - method (str): 'min' or 'max' to indicate direction of improvement.
     """
+
     early_stopping: Optional[str] = "n"
     patience: Optional[int] = 3
     monitor: Optional[str] = "val_accuracy"
@@ -37,8 +38,9 @@ class CheckpointMixin(BaseModel):
       - checkpoints (str): 'y' to enable checkpoints, 'n' to disable.
       - checkpoint_filepath (str): Path where to save the checkpoint file.
       - monitor (str): Metric to monitor for saving best model.
-      - method (str): 'min' or 'max' depending on the monitored metric. 
+      - method (str): 'min' or 'max' depending on the monitored metric.
     """
+
     checkpoints: Optional[str] = "n"
     checkpoint_filepath: Optional[str] = None
     monitor: Optional[str] = "val_accuracy"
@@ -57,6 +59,7 @@ class BaseConfig(BaseModel):
       - image_shape (list): array of image dimensions
       - feature_shape (list): array of feature dimensions
     """
+
     csv_path: str
     img_folder: str
     mode: str
@@ -89,7 +92,8 @@ class BaseConfig(BaseModel):
             "test_image_only",
             "custom_model",
             "train_xgboost",
-            "test_xgboost"
+            "test_xgboost",
+            "train_tensions"
         ]
         if value not in valid_modes:
             raise ValueError(f"{value} is not a valid mode!")
@@ -118,11 +122,16 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
 
 class TrainCNNConfig(ModelConfig):
     feature_shape: List[int]
+    num_classes: int
+    dropout1: float
+    dense1: int
+    dropout2: float
+    dense2: int
+    dropout3: float
     backbone: Optional[str] = "mobilenet"
     unfreeze_from: Optional[int] = None
     reduce_lr: Optional[float] = None
     reduce_lr_patience: Optional[int] = None
-    num_classes: Optional[int] = 5
     classification_type: Optional[str] = ("binary",)
     backbone: Optional[str] = "mobilenet"
 
@@ -137,6 +146,7 @@ class TrainCNNConfig(ModelConfig):
 
 class TrainMLPConfig(ModelConfig):
     img_path: str
+
     @model_validator(mode="after")
     def valid_shapes(self):
         if self.feature_shape != [5]:
@@ -262,6 +272,9 @@ class TrainImageOnlyConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
 class ImageHyperparameterConfig(TrainImageOnlyConfig):
     pass
 
+class TensionsClassifierConfig(TrainCNNConfig):
+    tension_threshold: int
+
 
 MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "train_cnn": TrainCNNConfig,
@@ -278,7 +291,8 @@ MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "image_hyperparameter": ImageHyperparameterConfig,
     "custom_model": TrainImageOnlyConfig,
     "train_xgboost": TrainXGBoostConfig,
-    "test_xgboost": TestXGBoostConfig
+    "test_xgboost": TestXGBoostConfig,
+    "train_tensions": TensionsClassifierConfig
 }
 
 

@@ -28,10 +28,18 @@ try:
         RandomContrast,
         BatchNormalization,
     )
-    from keras_tuner import HyperModel, Hyperband, BayesianOptimization
+    from keras_tuner import (
+        HyperModel,
+        Hyperband,
+        BayesianOptimization,
+    )
     from tensorflow.keras.regularizers import l2
     from tensorflow.keras.callbacks import EarlyStopping
-    from keras.applications import MobileNetV2, ResNet50, EfficientNetB0
+    from keras.applications import (
+        MobileNetV2,
+        ResNet50,
+        EfficientNetB0,
+    )
 except ImportError as e:
     print(f"Warning: Required ML libraries not found: {e}")
     print("Please install tensorflow>=2.19.0 and keras-tuner>=1.4.7")
@@ -164,7 +172,8 @@ class BuildHyperModel(HyperModel):
         model.compile(
             optimizer=tf.keras.optimizers.Adam(
                 learning_rate=hp.Choice(
-                    "learning_rate", values=[5e-4, 1e-3, 5e-3, 1e-2, 5e-2]
+                    "learning_rate",
+                    values=[5e-4, 1e-3, 5e-3, 1e-2, 5e-2],
                 )
             ),
             loss="categorical_crossentropy",
@@ -189,7 +198,7 @@ class HyperParameterTuning:
         project_name: str = "Cleave_Tuner",
         backbone: Optional[str] = "mobilenet",
         class_weights: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize the hyperparameter tuner.
 
@@ -236,7 +245,9 @@ class HyperParameterTuning:
         )
         """
 
-    def run_search(self, train_ds, test_ds):
+    def run_search(
+        self, train_ds: "tf.data.Dataset", test_ds: "tf.data.Dataset"
+    ) -> None:
         """
         Run hyperparameter search.
 
@@ -253,7 +264,7 @@ class HyperParameterTuning:
             callbacks=[es],
         )
 
-    def save_best_model(self, pathname: str):
+    def save_best_model(self, pathname: str) -> None:
         """
         Save the best model from hyperparameter search.
 
@@ -263,7 +274,7 @@ class HyperParameterTuning:
         best_model = self.get_best_model()
         best_model.save(f"{pathname}")
 
-    def get_best_model(self):
+    def get_best_model(self) -> "tf.keras.Model":
         """
         Get best model from hyperparameter search.
 
@@ -272,7 +283,7 @@ class HyperParameterTuning:
         """
         return self.tuner.get_best_models(num_models=1)[0]
 
-    def get_best_hyperparameters(self):
+    def get_best_hyperparameters(self) -> object:
         """
         Get best hyperparameters from hyperparameter search.
 
@@ -503,7 +514,9 @@ class ImageHyperparameterTuning(HyperParameterTuning):
         self.class_weights = class_weights
         self.image_shape = image_shape
         hypermodel = ImageOnlyHyperModel(
-            self.image_shape, num_classes=num_classes, backbone=backbone
+            self.image_shape,
+            num_classes=num_classes,
+            backbone=backbone,
         )
 
         self.tuner = BayesianOptimization(

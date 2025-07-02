@@ -1,10 +1,9 @@
 """
 Prediction model pipeline for testing CNN model or MLP model.
 
-This module provides classes for gathering data and then testing on either 
+This module provides classes for gathering data and then testing on either
 the cnn model or the regression model.
 """
-
 
 # import libraries
 import pandas as pd
@@ -20,6 +19,7 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay,
 )
 from .data_processing import DataCollector
+from typing import List, Optional
 
 
 class TestPredictions(DataCollector):
@@ -94,7 +94,9 @@ class TestPredictions(DataCollector):
         return df
 
     def test_prediction(
-        self, image_path: str, feature_vector: "np.ndarray | None" = None
+        self,
+        image_path: str,
+        feature_vector: "np.ndarray | None" = None,
     ) -> "np.ndarray":
         """
         Generate prediction for a single image (and features if not image_only).
@@ -177,8 +179,10 @@ class TestPredictions(DataCollector):
         return true_labels, pred_labels
 
     def display_confusion_matrix(
-        self, true_labels: "np.ndarray", pred_labels: "list[int]",
-        model_path: str
+        self,
+        true_labels: "np.ndarray",
+        pred_labels: "list[int]",
+        model_path: str,
     ) -> None:
         """
         Display confusion matrix comparing true labels to predicted labels.
@@ -198,9 +202,11 @@ class TestPredictions(DataCollector):
         disp.plot()
 
         model_dir = os.path.dirname(model_path)
-        basename  = os.path.basename(model_path)        
-        stem, _  = os.path.splitext(basename)
-        save_confusion = os.path.join(model_dir, f"{stem}_confusion_report.png")
+        basename = os.path.basename(model_path)
+        stem, _ = os.path.splitext(basename)
+        save_confusion = os.path.join(
+            model_dir, f"{stem}_confusion_report.png"
+        )
         plt.savefig(save_confusion)
         plt.show()
 
@@ -238,7 +244,9 @@ class TestPredictions(DataCollector):
         else:
             print(
                 classification_report(
-                    true_labels, pred_labels, target_names=self.class_names
+                    true_labels,
+                    pred_labels,
+                    target_names=self.class_names,
                 )
             )
 
@@ -269,7 +277,10 @@ class TestPredictions(DataCollector):
         plt.legend(loc="lower right")
         plt.show()
 
+
 from typing import Optional
+
+
 class TensionPredictor:
     """
     Predicts tension values using a trained MLP model and preprocessed image/features.
@@ -282,7 +293,6 @@ class TensionPredictor:
         csv_path: str,
         tension_scaler_path: Optional[str] = None,
         feature_scaler_path: Optional[str] = None,
-        
     ):
         """
         Initialize TensionPredictor.
@@ -348,21 +358,24 @@ class TensionPredictor:
             predicted_tension
         )
         return predicted_tension[0][0]
-    
-    
-    def find_best_tension_for_image(self, tension_range, other_features=None):
+
+    def find_best_tension_for_image(
+        self,
+        tension_range: List[float],
+        other_features: Optional[np.ndarray] = None,
+    ) -> None:
         """
         Find the tension that gives the best cleave quality prediction
         """
         df = pd.read_csv(self.csv_path)
-        image_paths = df['ImagePath']
+        image_paths = df["ImagePath"]
         best_tensions = []
         for img in image_paths:
             img = self.load_and_preprocess_image(img, self.image_folder)
             img = tf.expand_dims(img, axis=0)
             best_tension = None
             best_prob = -1
-        
+
             for tension in tension_range:
                 if other_features is None:
                     features = np.zeros((6,))
@@ -371,15 +384,15 @@ class TensionPredictor:
                 else:
                     features = other_features.copy()
                     features[1] = tension
-            
+
                 prediction = self.model.predict([img, features])
-                quality_prob = prediction[0][0]  
-            
+                quality_prob = prediction[0][0]
+
                 if quality_prob > best_prob:
                     best_prob = quality_prob
                     best_tension = tension
                     best_tensions.append((best_tension, best_prob))
-        
+
         for tension, prob in best_tensions:
             print(f"Best Tension: {tension:.2f}g -> Prob {prob:.2f}")
 

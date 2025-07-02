@@ -36,7 +36,11 @@ try:
     )
     from tensorflow.keras.models import Sequential, Model
     from tensorflow.keras.regularizers import l2
-    from tensorflow.keras.applications import MobileNetV2, ResNet50, EfficientNetB0
+    from tensorflow.keras.applications import (
+        MobileNetV2,
+        ResNet50,
+        EfficientNetB0,
+    )
     from tensorflow.keras.callbacks import (
         ModelCheckpoint,
         EarlyStopping,
@@ -48,6 +52,7 @@ except ImportError as e:
     print("Please install tensorflow>=2.19.0")
     tf = None
 
+
 class CustomModel:
     """
     Class for defining custom models using pre-trained MobileNetV2.
@@ -57,14 +62,20 @@ class CustomModel:
     """
 
     def __init__(
-        self, train_ds, test_ds, classification_type: Optional[str] = "binary"
-    ):
+        self,
+        train_ds: "tf.data.Dataset",
+        test_ds: "tf.data.Dataset",
+        num_classes: int,
+        classification_type: Optional[str] = "binary",
+    ) -> None:
         """
         Initialize the custom model.
 
         Args:
             train_ds: Training dataset
             test_ds: Test dataset
+            num_classes: Number of output classes
+            classification_type: Type of classification
         """
         if tf is None:
             raise ImportError("TensorFlow is required for CustomModel")
@@ -72,6 +83,7 @@ class CustomModel:
         self.train_ds = train_ds
         self.test_ds = test_ds
         self.classification_type = classification_type
+        self.num_classes = num_classes
 
     def _get_backbone_model(
         self, backbone: str, image_shape: Tuple[int, int, int]
@@ -117,7 +129,9 @@ class CustomModel:
 
         return pre_trained_model
 
-    def _build_custom_model(self, image_shape, num_classes=5):
+    def _build_custom_model(
+        self, image_shape: Tuple[int, int, int], num_classes: int = 5
+    ) -> "tf.keras.Model":
         data_augmentation = Sequential(
             [
                 RandomRotation(factor=0.02),
@@ -151,9 +165,14 @@ class CustomModel:
         self,
         image_shape: Tuple[int, int, int],
         param_shape: Tuple[int, ...],
+        dropout1: float,
+        dense1: int,
+        dropout2: float,
+        dense2: int,
+        dropout3: float,
         backbone: Optional[str] = "mobilenet",
         unfreeze_from: Optional[int] = None,
-    ) -> tf.keras.Model:
+    ) -> "tf.keras.Model":
         """
         Build a model using pre-trained MobileNetV2 to supplement small dataset.
 
@@ -161,6 +180,11 @@ class CustomModel:
             image_shape: Dimensions of input images (height, width, channels)
             param_shape: Dimensions of numerical parameters
             unfreeze_from: Layer index from which to unfreeze weights (None = all frozen)
+            dropout1: Perentage of inputs to zero out
+            dense1: Number of neurons in first fully connected layer
+            dropout2: Percentage of inputs to zero out
+            dense2: Number of neurons in second fully connected layer
+            dropout3: Percentage of final inputs to zero out
 
         Returns:
             tf.keras.Model: Compiled model ready for training
@@ -190,19 +214,29 @@ class CustomModel:
         x = data_augmentation(image_input)
         x = pre_trained_model(x)
         x = GlobalAveragePooling2D(name="global_avg")(x)
-        x = Dropout(0.1, name="dropout")(x)
+        x = Dropout(dropout1, name="dropout")(x)
 
         # Numerical features section
         params_input = Input(shape=param_shape)
-        y = Dense(16, name="dense_param1", activation="relu")(params_input)
-        y = Dropout(0.6, name="dropout_2")(y)  # Added to remove reliance on features
+        y = Dense(dense1, name="dense_param1", activation="relu")(params_input)
+        y = Dropout(dropout2, name="dropout_2")(
+            y
+        )  # Added to remove reliance on features
         y = BatchNormalization()(y)
 
         combined = Concatenate()([x, y])
-        z = Dense(48, name="dense_combined", activation="relu")(combined)
+        z = Dense(dense2, name="dense_combined", activation="relu")(combined)
         z = BatchNormalization(name="batch_norm")(z)
-        z = Dropout(0.2, name="dropout_combined")(z)
-        z = Dense(1, name="output_layer", activation="sigmoid")(z)
+        z = Dropout(dropout3, name="dropout_combined")(z)
+        if self.classification_type == "binary":
+            activation = "sigmoid"
+        elif self.classification_type == "multiclass":
+            activation = "softmax"
+        z = Dense(
+            self.num_classes,
+            name="output_layer",
+            activation=activation,
+        )(z)
 
         model = Model(inputs=[image_input, params_input], outputs=z)
         model.summary()
@@ -212,13 +246,13 @@ class CustomModel:
         self,
         image_shape: Tuple[int, int, int],
         backbone: Optional[str] = "mobilenet",
-        num_classes=5,
+        num_classes: int = 5,
         dropout1_rate: Optional[float] = 0.1,
         dense_units: Optional[int] = 32,
         dropout2_rate: Optional[float] = 0.2,
         l2_factor: Optional[float] = None,
         unfreeze_from: Optional[int] = None,
-    ) -> tf.keras.Model:
+    ) -> "tf.keras.Model":
         """
         Build a model that uses only the image input (no parameter features).
 
@@ -271,8 +305,9 @@ class CustomModel:
             activation = "sigmoid"
         elif self.classification_type == "multiclass":
             activation = "softmax"
-        print(activation)
-        output = Dense(num_classes, name="output_layer", activation=activation)(x)
+        output = Dense(
+            num_classes, name="output_layer", activation=activation
+        )(x)
 
         model = Model(inputs=image_input, outputs=output)
         model.summary()
@@ -282,15 +317,15 @@ class CustomModel:
         self,
         image_shape: Tuple[int, int, int],
         learning_rate: float = 0.001,
-        metrics: List[str] = None,
+        metrics: Optional[List[str]] = None,
         backbone: Optional[str] = "mobilenet",
-        num_classes=5,
+        num_classes: int = 5,
         dropout1_rate: Optional[float] = 0.1,
         dense_units: Optional[int] = 32,
         dropout2_rate: Optional[float] = 0.2,
         l2_factor: Optional[float] = None,
         unfreeze_from: Optional[int] = None,
-    ) -> tf.keras.Model:
+    ) -> "tf.keras.Model":
         """
         Compile an image-only model.
 
@@ -331,9 +366,9 @@ class CustomModel:
         self,
         image_shape: Tuple[int, int, int],
         learning_rate: float = 0.001,
-        metrics: List[str] = None,
+        metrics: Optional[List[str]] = None,
         num_classes: Optional[int] = 5,
-    ) -> tf.keras.Model:
+    ) -> "tf.keras.Model":
         """
         Compile custom model after calling build_custom_model function.
 
@@ -363,11 +398,16 @@ class CustomModel:
         self,
         image_shape: Tuple[int, int, int],
         param_shape: Tuple[int, ...],
+        dropout1: float,
+        dense1: int,
+        dropout2: float,
+        dense2: int,
+        dropout3: float,
         learning_rate: float = 0.001,
-        metrics: List[str] = None,
+        metrics: Optional[List[str]] = None,
         unfreeze_from: Optional[int] = None,
         backbone: Optional[str] = "mobilenet",
-    ) -> tf.keras.Model:
+    ) -> "tf.keras.Model":
         """
         Compile model after calling build_model function.
 
@@ -389,7 +429,15 @@ class CustomModel:
             ]
 
         model = self._build_pretrained_model(
-            image_shape, param_shape, unfreeze_from=unfreeze_from, backbone=backbone
+            image_shape,
+            param_shape,
+            unfreeze_from=unfreeze_from,
+            backbone=backbone,
+            dense1=dense1,
+            dense2=dense2,
+            dropout1=dropout1,
+            dropout2=dropout2,
+            dropout3=dropout3,
         )
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         if self.classification_type == "binary":
@@ -450,12 +498,19 @@ class CustomModel:
             tf.keras.callbacks.ReduceLROnPlateau: Reduce learning rate callback
         """
         reduce_lr = ReduceLROnPlateau(
-            monitor=monitor, patience=patience, mode=mode, factor=factor, min_lr=1e-7
+            monitor=monitor,
+            patience=patience,
+            mode=mode,
+            factor=factor,
+            min_lr=1e-7,
         )
         return reduce_lr
 
     def create_early_stopping(
-        self, patience: int = 3, mode: str = "max", monitor: str = "val_accuracy"
+        self,
+        patience: int = 3,
+        mode: str = "max",
+        monitor: str = "val_accuracy",
     ) -> EarlyStopping:
         """
         Create early stopping callback to monitor training success and prevent overfitting.
@@ -567,7 +622,6 @@ class CustomModel:
             print("Model not saved")
 
         return history
-    
 
     @staticmethod
     def train_kfold(
@@ -580,7 +634,7 @@ class CustomModel:
         initial_epoch: int = 0,
         history_file: Optional[str] = None,
         save_model_file: Optional[str] = None,
-        callbacks: Optional[List] = None
+        callbacks: Optional[List] = None,
     ) -> Tuple[List[tf.keras.Model], List[tf.keras.callbacks.History]]:
         """
         Train model using k-fold cross validation.
@@ -607,8 +661,9 @@ class CustomModel:
         train_datasets = [i[0] for i in datasets]
         test_datasets = [i[1] for i in datasets]
 
-        
-        for fold, (train_ds, test_ds) in enumerate(zip(train_datasets, test_datasets)):
+        for fold, (train_ds, test_ds) in enumerate(
+            zip(train_datasets, test_datasets)
+        ):
             print(f"\n=== Training fold {fold + 1} ===")
 
             custom_model = CustomModel(train_ds, test_ds)
@@ -622,10 +677,10 @@ class CustomModel:
                 monitor="val_accuracy",
                 patience=8,
                 restore_best_weights=True,
-                verbose=1
-            )  
+                verbose=1,
+            )
 
-            callbacks = []         
+            callbacks = []
 
             if callbacks:
                 history = model.fit(
@@ -688,9 +743,15 @@ class CustomModel:
         avg_precision = np.mean(precision)
         avg_recall = np.mean(recall)
 
-        print(f"Average Accuracy: {avg_accuracy:.4f}, Std Dev: {np.std(accuracy):.4f}")
-        print(f"Average Precision: {avg_precision:.4f}, Std Dev: {np.std(precision):.4f}")
-        print(f"Average Recall: {avg_recall:.4f}, Std Dev: {np.std(recall):.4f}")
+        print(
+            f"Average Accuracy: {avg_accuracy:.4f}, Std Dev: {np.std(accuracy):.4f}"
+        )
+        print(
+            f"Average Precision: {avg_precision:.4f}, Std Dev: {np.std(precision):.4f}"
+        )
+        print(
+            f"Average Recall: {avg_recall:.4f}, Std Dev: {np.std(recall):.4f}"
+        )
 
     def plot_metric(
         self,
@@ -701,7 +762,7 @@ class CustomModel:
         metric_2_label: str,
         x_label: str,
         y_label: str,
-        model_path: str
+        model_path: str,
     ) -> None:
         """
         Plot training metrics for visualization.
@@ -726,9 +787,8 @@ class CustomModel:
         plt.tight_layout()
 
         model_dir = os.path.dirname(model_path)
-        basename  = os.path.basename(model_path)     
-        stem, _   = os.path.splitext(basename)
+        basename = os.path.basename(model_path)
+        stem, _ = os.path.splitext(basename)
         save_plot = os.path.join(model_dir, f"{stem}_{title}.png")
         plt.savefig(save_plot)
         plt.show()
-

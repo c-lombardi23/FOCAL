@@ -1,4 +1,3 @@
-
 from .model_pipeline import *
 import xgboost as xgb
 import joblib
@@ -16,9 +15,10 @@ class BuildMLPModel(CustomModel):
         super().__init__(train_ds, test_ds)
         # load your frozen CNN
         self.cnn_model = tf.keras.models.load_model(cnn_model_path)
-        
 
-    def _build_pretrained_model(self, param_shape: Tuple[int, ...]) -> tf.keras.Model:
+    def _build_pretrained_model(
+        self, param_shape: Tuple[int, ...]
+    ) -> tf.keras.Model:
         """
         Build MLP model for tension prediction.
 
@@ -28,10 +28,14 @@ class BuildMLPModel(CustomModel):
         Returns:
             tf.keras.Model: Regression model for tension prediction
         """
-        x = Dense(64, name="first_dense_layer", activation="relu")(self.feature_output)
+        x = Dense(64, name="first_dense_layer", activation="relu")(
+            self.feature_output
+        )
         x = Dense(32, name="second_dense_layer", activation="relu")(x)
         feature_input = Input(shape=param_shape, name="feature_input")
-        y = Dense(16, name="third_dense_layer", activation="relu")(feature_input)
+        y = Dense(16, name="third_dense_layer", activation="relu")(
+            feature_input
+        )
 
         combined = Concatenate()([x, y])
         z = Dense(64, activation="relu")(combined)
@@ -46,8 +50,8 @@ class BuildMLPModel(CustomModel):
         self,
         param_shape: Tuple[int, ...],
         learning_rate: float = 0.001,
-        metrics: List[str] = None,
-    ) -> tf.keras.Model:
+        metrics: Optional[List[str]] = None,
+    ) -> "tf.keras.Model":
         """
         Compile MLP model for regression.
 
@@ -68,8 +72,11 @@ class BuildMLPModel(CustomModel):
         return model
 
     def create_early_stopping(
-        self, patience: int = 3, mode: str = "min", monitor: str = "val_mae"
-    ) -> EarlyStopping:
+        self,
+        patience: int = 3,
+        mode: str = "min",
+        monitor: str = "val_mae",
+    ) -> "EarlyStopping":
         """
         Create early stopping callback for regression model.
 
@@ -163,7 +170,9 @@ class BuildMLPModel(CustomModel):
         if checkpoints:
             callbacks.append(checkpoints)
 
-        for fold, (train_ds, test_ds) in enumerate(zip(train_datasets, test_datasets)):
+        for fold, (train_ds, test_ds) in enumerate(
+            zip(train_datasets, test_datasets)
+        ):
             print(f"\n=== Training MLP fold {fold + 1} ===")
 
             custom_model = BuildMLPModel(cnn_model_path, train_ds, test_ds)

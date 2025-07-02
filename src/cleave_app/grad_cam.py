@@ -37,16 +37,30 @@ class GradCAM:
             self.target_layer = self.model.get_layer(conv_layer_name)
 
     def compute_heatmap(self, image, param_vector, eps=1e-8):
+        """
+        Computes the heatmap for a given image and parameter vector.
+
+        Args:
+            image (numpy.ndarray): The input image.
+            param_vector (numpy.ndarray): The parameter vector.
+            eps (float): A small constant to prevent division by zero.
+
+        Returns:
+            numpy.ndarray: The computed heatmap.
+        """
 
         img = np.array(image, dtype=np.float32)
         if img.max() > 1.0:
             img = img / 255.0
         img_resized = cv2.resize(
-            img, (self.model.input[0].shape[1], self.model.input[0].shape[2])
+            img,
+            (
+                self.model.input[0].shape[1],
+                self.model.input[0].shape[2],
+            ),
         )
-    
+
         input_image = np.expand_dims(img_resized, axis=0)
-        
 
         backbone = self.model.get_layer(self.backbone_name)
         last_conv_layer = backbone.get_layer(self.target_layer.name)
@@ -79,6 +93,18 @@ class GradCAM:
     def overlay_heatmap(
         self, heatmap, image, alpha=0.3, colormap=cv2.COLORMAP_JET
     ):
+        """
+        Overlays the heatmap on the image.
+
+        Args:
+            heatmap (numpy.ndarray): The heatmap to overlay.
+            image (numpy.ndarray): The input image.
+            alpha (float): The transparency of the heatmap.
+            colormap (int): The colormap to use for the heatmap.
+
+        Returns:
+            numpy.ndarray: The overlaid image.
+        """
         if image.max() <= 1.0:
             image = (image * 255).astype(np.uint8)
         else:
@@ -97,6 +123,21 @@ def gradcam_driver(
     conv_layer_name=None,
     heatmap_file=None,
 ):
+    """
+    Driver function to compute and display the GradCAM overlay.
+
+    Args:
+        model_path (str): The path to the model.
+        image_path (str): The path to the image.
+        param_vector (numpy.ndarray): The parameter vector.
+        class_index (int): The index of the class to compute the heatmap for.
+        backbone_name (str): The name of the backbone layer.
+        conv_layer_name (str): The name of the convolutional layer.
+        heatmap_file (str): The path to save the heatmap.
+
+    Raises:
+        FileNotFoundError: If the image is not found.
+    """
 
     img = cv2.imread(image_path)
     if img is None:
@@ -112,7 +153,7 @@ def gradcam_driver(
     )
 
     heatmap = gradcam.compute_heatmap(img, param_vector)
-  
+
     overlay = gradcam.overlay_heatmap(heatmap, img)
 
     overlay_bgr = cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)
@@ -123,6 +164,18 @@ def gradcam_driver(
 
 
 def compute_saliency_map(model, image_path, param_vector, class_index=3):
+    """
+    Computes the saliency map for a given image and parameter vector.
+
+    Args:
+        model (tensorflow.keras.Model): The model to compute the saliency map for.
+        image_path (str): The path to the image.
+        param_vector (numpy.ndarray): The parameter vector.
+        class_index (int): The index of the class to compute the saliency map for.
+
+    Returns:
+        numpy.ndarray: The computed saliency map.
+    """
     image = cv2.imread(image_path)
     image = cv2.resize(image, (224, 224))
     if image.max() > 1.0:

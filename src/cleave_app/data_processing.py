@@ -22,9 +22,15 @@ try:
         StratifiedKFold,
         KFold,
     )
-    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as _mobilenet_preprocess
-    from tensorflow.keras.applications.resnet50      import preprocess_input as _resnet_preprocess
-    from tensorflow.keras.applications.efficientnet   import preprocess_input as _efficientnet_preprocess
+    from tensorflow.keras.applications.mobilenet_v2 import (
+        preprocess_input as _mobilenet_preprocess,
+    )
+    from tensorflow.keras.applications.resnet50 import (
+        preprocess_input as _resnet_preprocess,
+    )
+    from tensorflow.keras.applications.efficientnet import (
+        preprocess_input as _efficientnet_preprocess,
+    )
 
     from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
     from sklearn.utils.class_weight import compute_class_weight
@@ -50,7 +56,7 @@ class DataCollector:
         backbone: Optional[str] = "mobilenet",
         set_mask: Optional[str] = "n",
         encoder_path: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize the data collector.
 
@@ -81,7 +87,7 @@ class DataCollector:
         self.set_mask = set_mask
 
     @property
-    def df(self):
+    def df(self) -> Optional[pd.DataFrame]:
         """Lazy loading for memory efficiency"""
         if self._df is None:
             try:
@@ -161,7 +167,7 @@ class DataCollector:
         else:
             raise ValueError(f"Unsupported Mode {self.classification_type}")
 
-    def save_scaler_encoder(self, obj, filepath: str) -> None:
+    def save_scaler_encoder(self, obj: object, filepath: str) -> None:
         """
         Save a scaler or encoder to disk for future use
 
@@ -250,9 +256,9 @@ class DataCollector:
             ValueError: If `backbone` is not one of the supported options.
         """
         mapping = {
-            "mobilenet":   _mobilenet_preprocess,
-            "resnet":      _resnet_preprocess,
-            "efficientnet":_efficientnet_preprocess,
+            "mobilenet": _mobilenet_preprocess,
+            "resnet": _resnet_preprocess,
+            "efficientnet": _efficientnet_preprocess,
         }
         try:
             return mapping[backbone]
@@ -261,7 +267,7 @@ class DataCollector:
                 f"Invalid backbone: {backbone}.  Supported: {', '.join(mapping)}"
             )
 
-    def load_process_images(self, filename) -> tf.Tensor:
+    def load_process_images(self, filename: str) -> "tf.Tensor":
         """
         Load and preprocess image from file path.
 
@@ -319,7 +325,7 @@ class DataCollector:
         test_size: float = 0.2,
         buffer_size: int = 32,
         batch_size: int = 16,
-    ) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
+    ) -> Tuple["tf.data.Dataset", "tf.data.Dataset"]:
         """
         Create datasets using only grayscale images and labels with a custom image shape.
 
@@ -398,7 +404,9 @@ class DataCollector:
 
         return train_ds, test_ds
 
-    def extract_data(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def extract_data(
+        self,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Extract data from DataFrame into separate arrays for model training.
 
@@ -533,12 +541,18 @@ class DataCollector:
             single_labels = labels
 
         for train_index, test_index in kf.split(X=features, y=single_labels):
-            train_imgs, test_imgs = images[train_index], images[test_index]
+            train_imgs, test_imgs = (
+                images[train_index],
+                images[test_index],
+            )
             train_features, test_features = (
                 features[train_index],
                 features[test_index],
             )
-            train_labels, test_labels = labels[train_index], labels[test_index]
+            train_labels, test_labels = (
+                labels[train_index],
+                labels[test_index],
+            )
 
             train_ds = self._dataset_helper(
                 train_imgs,
@@ -548,7 +562,7 @@ class DataCollector:
                 batch_size=batch_size,
                 buffer_size=buffer_size,
                 masking=True,
-                p=0.6
+                p=0.6,
             )
             test_ds = self._dataset_helper(
                 test_imgs,
@@ -558,7 +572,7 @@ class DataCollector:
                 batch_size=batch_size,
                 buffer_size=buffer_size,
                 masking=True,
-                p=0.7
+                p=0.7,
             )
 
             datasets.append((train_ds, test_ds))
@@ -597,7 +611,9 @@ class DataCollector:
         # Stratified split for classification
         if self.classification_type == "binary":
             class_weights_array = compute_class_weight(
-                class_weight="balanced", classes=np.array([0, 1]), y=labels
+                class_weight="balanced",
+                classes=np.array([0, 1]),
+                y=labels,
             )
             class_weights = dict(enumerate(class_weights_array))
             stratify = labels
@@ -679,7 +695,12 @@ class MLPDataCollector(DataCollector):
     including proper scaling of both features and labels.
     """
 
-    def __init__(self, csv_path: str, img_folder: str, backbone: Optional[str] = None):
+    def __init__(
+        self,
+        csv_path: str,
+        img_folder: str,
+        backbone: Optional[str] = None,
+    ):
         """
         Initialize the MLP data collector.
 
@@ -689,7 +710,9 @@ class MLPDataCollector(DataCollector):
         """
         super().__init__(csv_path, img_folder, backbone=backbone)
 
-    def extract_data(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def extract_data(
+        self,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Extract data for MLP regression (tension prediction).
 
@@ -700,10 +723,16 @@ class MLPDataCollector(DataCollector):
             raise ValueError(
                 "No data available. Check if CSV file was loaded correctly."
             )
-        filtered_df = self.df.loc[self.df['CleaveCategory'] ==  1]       
+        filtered_df = self.df.loc[self.df["CleaveCategory"] == 1]
         images = filtered_df["ImagePath"].values
         features = filtered_df[
-            ["CleaveAngle", "ScribeDiameter", "Misting", "Hackle", "Tearing"]
+            [
+                "CleaveAngle",
+                "ScribeDiameter",
+                "Misting",
+                "Hackle",
+                "Tearing",
+            ]
         ].values.astype(np.float32)
         labels = filtered_df["CleaveTension"].values.astype(np.float32)
 
@@ -748,7 +777,11 @@ class MLPDataCollector(DataCollector):
             train_labels,
             test_labels,
         ) = train_test_split(
-            images, features, labels, test_size=test_size, random_state=42
+            images,
+            features,
+            labels,
+            test_size=test_size,
+            random_state=42,
         )
 
         # Scale features
@@ -833,7 +866,10 @@ class MLPDataCollector(DataCollector):
         scaled_labels = label_scaler.fit_transform(labels.reshape(-1, 1))
 
         for train_index, test_index in kf.split(images):
-            train_imgs, test_imgs = images[train_index], images[test_index]
+            train_imgs, test_imgs = (
+                images[train_index],
+                images[test_index],
+            )
             train_features, test_features = (
                 scaled_features[train_index],
                 scaled_features[test_index],
@@ -865,3 +901,26 @@ class MLPDataCollector(DataCollector):
             datasets.append((train_ds, test_ds))
 
         return datasets, label_scaler
+    
+
+class BadCleaveTensionClassifier(DataCollector):
+    def __init__(self, 
+                 csv_path: str,
+                 img_folder:str, 
+                 tension_threshold: int,
+                 backbone: Optional[str] = "efficientnet"):
+        
+        self.tension_threshold = tension_threshold
+        super().__init__(
+            csv_path=csv_path,
+            img_folder=img_folder,
+            classification_type="binary",
+            backbone="efficientnet"
+        )
+
+    def _clean_data(self):
+        df = pd.read_csv(self.csv_path)
+        df = df.loc[df['CleaveCategory'] == 0]
+        df['BadTensionsLabel'] = df['CleaveTension'] > self.tension_threshold
+        print(df['BadTensionsLabel'].value_counts())
+        return df

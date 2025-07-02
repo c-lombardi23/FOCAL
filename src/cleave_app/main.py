@@ -41,7 +41,9 @@ except ImportError:
     tf = None
 
 
-def _setup_callbacks(config, trainable_model) -> List[Callable]:
+def _setup_callbacks(
+    config: object, trainable_model: object
+) -> List[Callable]:
     """
     Setup training callbacks based on configuration.
 
@@ -82,7 +84,8 @@ def _setup_callbacks(config, trainable_model) -> List[Callable]:
     if config.reduce_lr is not None:
         if config.reduce_lr_patience is not None:
             reduce_lr = trainable_model.reduce_on_plateau(
-                patience=config.reduce_lr_patience, factor=config.reduce_lr
+                patience=config.reduce_lr_patience,
+                factor=config.reduce_lr,
             )
         else:
             reduce_lr = trainable_model.reduce_on_plateau(
@@ -93,7 +96,7 @@ def _setup_callbacks(config, trainable_model) -> List[Callable]:
     return callbacks
 
 
-def _train_cnn(config) -> None:
+def _train_cnn(config: object) -> None:
     """
     Train a CNN model for fiber cleave classification.
 
@@ -122,7 +125,10 @@ def _train_cnn(config) -> None:
         )
 
         trainable_model = CustomModel(
-            train_ds, test_ds, classification_type=config.classification_type
+            train_ds,
+            test_ds,
+            classification_type=config.classification_type,
+            num_classes=config.num_classes,
         )
 
         if config.continue_train == "y":
@@ -158,7 +164,7 @@ def _train_cnn(config) -> None:
             "val_loss",
             "epochs",
             "loss",
-            model_path=config.save_model_file
+            model_path=config.save_model_file,
         )
         trainable_model.plot_metric(
             "Accuracy vs. Val Accuracy",
@@ -168,7 +174,7 @@ def _train_cnn(config) -> None:
             "val_accuracy",
             "epochs",
             "accuracy",
-            model_path=config.save_model_file
+            model_path=config.save_model_file,
         )
 
     except Exception as e:
@@ -177,7 +183,7 @@ def _train_cnn(config) -> None:
         raise
 
 
-def _train_mlp(config) -> None:
+def _train_mlp(config: object) -> None:
     """
     Train an MLP model for tension prediction.
 
@@ -212,7 +218,7 @@ def _train_mlp(config) -> None:
             learning_rate=config.learning_rate,
             callbacks=callbacks,
             class_weight=None,
-            epochs=max_epochs
+            epochs=max_epochs,
         )
 
         # Plot training metrics
@@ -224,7 +230,7 @@ def _train_mlp(config) -> None:
             "val_loss",
             "epochs",
             "loss",
-            model_path=config.save_model_file
+            model_path=config.save_model_file,
         )
         trainable_model.plot_metric(
             "MAE vs. Val MAE",
@@ -234,7 +240,7 @@ def _train_mlp(config) -> None:
             "val_mae",
             "epochs",
             "mae",
-            model_path=config.save_model_file
+            model_path=config.save_model_file,
         )
 
     except Exception as e:
@@ -252,13 +258,19 @@ def _train_kfold_cnn(config) -> None:
     """
     try:
         data = DataCollector(
-            config.csv_path, config.img_folder, backbone=config.backbone
+            config.csv_path,
+            config.img_folder,
+            backbone=config.backbone,
         )
         images, features, labels = data.extract_data()
         datasets = data.create_kfold_datasets(
-            images, features, labels, config.buffer_size, config.batch_size
+            images,
+            features,
+            labels,
+            config.buffer_size,
+            config.batch_size,
         )
-        
+
         _, kfold_histories = CustomModel.train_kfold(
             datasets,
             config.image_shape,
@@ -290,7 +302,11 @@ def _train_kfold_mlp(config) -> None:
         )
         images, features, labels = data.extract_data()
         datasets, scaler = data.create_kfold_datasets(
-            images, features, labels, config.buffer_size, config.batch_size
+            images,
+            features,
+            labels,
+            config.buffer_size,
+            config.batch_size,
         )
 
         kfold_histories = BuildMLPModel.train_kfold_mlp(
@@ -355,7 +371,9 @@ def _cnn_hyperparameter(config) -> None:
     """
     try:
         data = DataCollector(
-            config.csv_path, config.img_folder, backbone=config.backbone
+            config.csv_path,
+            config.img_folder,
+            backbone=config.backbone,
         )
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
@@ -425,7 +443,6 @@ def _mlp_hyperparameter(config) -> None:
 
 
 def _test_cnn(config) -> None:
-
     """
     Test CNN model performance.
 
@@ -444,8 +461,10 @@ def _test_cnn(config) -> None:
         true_labels, pred_labels = tester.gather_predictions()
 
         if true_labels is not None:
-            tester.display_confusion_matrix(true_labels, pred_labels, model_path=config.model_path)
-            
+            tester.display_confusion_matrix(
+                true_labels, pred_labels, model_path=config.model_path
+            )
+
             tester.display_classification_report(
                 true_labels, pred_labels, config.classification_path
             )
@@ -471,15 +490,15 @@ def _test_mlp(config) -> None:
             image_folder=config.img_folder,
             tension_scaler_path=config.label_scaler_path,
             feature_scaler_path=config.feature_scaler_path,
-            csv_path = config.csv_path
+            csv_path=config.csv_path,
         )
-        '''
+        """
         if config.test_features is not None:
             prediction = predictor.PredictTension(config.test_features)
             print(f"Predicted tension: {prediction}")
         else:
             print("No test features provided")
-        '''
+        """
         predictor.find_best_tension_for_image([100, 200])
     except Exception as e:
         print(f"Error during MLP testing: {e}")
@@ -514,7 +533,7 @@ def _grad_cam(config) -> None:
         raise
 
 
-def _image_only(config) -> None:
+def _image_only(config: object) -> None:
     """
     Train image-only model (no parameter features).
 
@@ -549,7 +568,9 @@ def _image_only(config) -> None:
         test_ds = data.image_only_dataset(test_ds)
 
         trainable_model = CustomModel(
-            train_ds, test_ds, classification_type=data.classification_type
+            train_ds,
+            test_ds,
+            classification_type=data.classification_type,
         )
         if config.continue_train == "y":
             compiled_model = tf.keras.models.load_model(config.model_path)
@@ -587,7 +608,7 @@ def _image_only(config) -> None:
             "val_loss",
             "epochs",
             "loss",
-            model_path=config.save_model_file
+            model_path=config.save_model_file,
         )
         trainable_model.plot_metric(
             "Accuracy vs. Val Accuracy",
@@ -597,7 +618,7 @@ def _image_only(config) -> None:
             "val_accuracy",
             "epochs",
             "accuracy",
-            model_path=config.save_model_file
+            model_path=config.save_model_file,
         )
 
     except Exception as e:
@@ -625,7 +646,7 @@ def _test_image_only(config) -> None:
             encoder_path=config.encoder_path,
             classification_type=config.classification_type,
         )
-        true_labels, pred_labels  = tester.gather_predictions()
+        true_labels, pred_labels = tester.gather_predictions()
 
         if true_labels is not None:
             tester.display_confusion_matrix(true_labels, pred_labels)
@@ -696,7 +717,7 @@ def _image_hyperparameter(config) -> None:
         raise
 
 
-def _custom_model(config) -> None:
+def _custom_model(config: object) -> None:
     try:
         data = DataCollector(config.csv_path, config.img_folder)
         train_ds, test_ds = data.create_custom_dataset(
@@ -732,7 +753,7 @@ def _custom_model(config) -> None:
             "val_loss",
             "epochs",
             "loss",
-            model_path=config.save_model_file
+            model_path=config.save_model_file,
         )
         trainable_model.plot_metric(
             "Accuracy vs. Val Accuracy",
@@ -742,71 +763,75 @@ def _custom_model(config) -> None:
             "val_accuracy",
             "epochs",
             "accuracy",
-            model_path=config.save_model_file
+            model_path=config.save_model_file,
         )
     except Exception as e:
         print(f"Error during custom training: {e}")
         traceback.print_exc()
         raise
 
+
 def _train_xgboost(config):
-    
-    data = MLPDataCollector(csv_path=config.csv_path, 
-                            img_folder=config.img_folder,
-                         backbone = None)
-    
+
+    data = MLPDataCollector(
+        csv_path=config.csv_path,
+        img_folder=config.img_folder,
+        backbone=None,
+    )
+
     images, features, labels = data.extract_data()
     train_ds, test_ds = data.create_datasets(
-        images, features, labels, 
+        images,
+        features,
+        labels,
         test_size=config.test_size,
         batch_size=config.batch_size,
-        buffer_size = config.buffer_size, 
-        feature_scaler_path=None, 
-        tension_scaler_path=config.label_scaler_path
-        )
-    
+        buffer_size=config.buffer_size,
+        feature_scaler_path=None,
+        tension_scaler_path=config.label_scaler_path,
+    )
+
     train_ds = data.image_only_dataset(train_ds)
     test_ds = data.image_only_dataset(test_ds)
 
     xgb_model = XGBoostModel(
-        csv_path=config.csv_path, 
-        cnn_model_path=config.model_path, 
-        train_ds=train_ds, 
-        test_ds=test_ds
-        )
-    
+        csv_path=config.csv_path,
+        cnn_model_path=config.model_path,
+        train_ds=train_ds,
+        test_ds=test_ds,
+    )
+
     evals_result = xgb_model.train(
         n_estimators=config.n_estimators,
         learning_rate=config.learning_rate,
         max_depth=config.max_depth,
-        random_state=config.random_state
-
+        random_state=config.random_state,
     )
     xgb_model.save(config.xgb_path)
-    
+
     xgb_model.plot_metrics(
         title="RSME vs. Val RSME",
-        metric1 = evals_result['validation_0']['rmse'],
-        metric2 = evals_result['validation_1']['rmse'],
+        metric1=evals_result["validation_0"]["rmse"],
+        metric2=evals_result["validation_1"]["rmse"],
         metric1_label="RSME",
         metric2_label="Val RSME",
         x_label="Training Round",
-        y_label="RSME"
-        
+        y_label="RSME",
     )
+
 
 def _test_xgboost(config):
     xgb_predicter = XGBoostPredictor(
         xgb_path=config.xgb_path,
         csv_path=config.csv_path,
         scaler_path=config.label_scaler_path,
-        cnn_model_path=config.model_path
+        cnn_model_path=config.model_path,
     )
     xgb_predicter.load()
     xgb_predicter.predict()
 
 
-def choices(mode: str, config) -> None:
+def choices(mode: str, config: object) -> None:
     """
     Route to appropriate function based on mode.
 
@@ -829,7 +854,7 @@ def choices(mode: str, config) -> None:
         "test_image_only": _test_image_only,
         "custom_model": _custom_model,
         "train_xgboost": _train_xgboost,
-        "test_xgboost": _test_xgboost
+        "test_xgboost": _test_xgboost,
     }
 
     if mode in mode_functions:
@@ -868,7 +893,7 @@ Examples:
     parsed_args = parser.parse_args(args)
 
     try:
-        config = load_config(parsed_args.file_path)  
+        config = load_config(parsed_args.file_path)
         choices(config.mode, config)
 
     except Exception as e:

@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from .base_model_pipeline import BaseModelPipeline
 
+
 class XGBoostModel(BaseModelPipeline):
 
     def __init__(self, csv_path: str, cnn_model_path: str, train_ds, test_ds):
@@ -20,7 +21,7 @@ class XGBoostModel(BaseModelPipeline):
             self.cnn_model = tf.keras.models.load_model(cnn_model_path)
             self.feature_extractor = Model(
                 inputs=self.cnn_model.input[0],
-                outputs=self.cnn_model.get_layer("global_avg").output
+                outputs=self.cnn_model.get_layer("global_avg").output,
             )
         except ValueError as e:
             print(f"Error loading model or extracting layer: {e}")
@@ -34,12 +35,14 @@ class XGBoostModel(BaseModelPipeline):
             tensions.append(tension_batch.numpy().reshape(-1))
         return np.vstack(features), np.concatenate(tensions)
 
-    def train(self,
-              n_estimators: Optional[int] = 200,
-              learning_rate: Optional[float] = 0.05,
-              max_depth: Optional[int] = 4,
-              random_state: Optional[int] = 42):
-        
+    def train(
+        self,
+        n_estimators: Optional[int] = 200,
+        learning_rate: Optional[float] = 0.05,
+        max_depth: Optional[int] = 4,
+        random_state: Optional[int] = 42,
+    ):
+
         X_train, y_train = self.extract_features_and_labels(self.train_ds)
         X_test, y_test = self.extract_features_and_labels(self.test_ds)
 
@@ -51,17 +54,18 @@ class XGBoostModel(BaseModelPipeline):
             random_state=random_state,
             gamma=0.1,
             subsample=0.8,
-            reg_lambda =1.0
-
+            reg_lambda=1.0,
         )
 
         self.xgb_reg.fit(
-            X_train, y_train,
+            X_train,
+            y_train,
             eval_set=[(X_train, y_train), (X_test, y_test)],
-            verbose=True
+            verbose=True,
         )
 
         from sklearn.metrics import mean_absolute_error
+
         y_pred = self.xgb_reg.predict(X_test)
         print("Val MAE:", mean_absolute_error(y_test, y_pred))
 
@@ -80,9 +84,16 @@ class XGBoostModel(BaseModelPipeline):
         features = self.extract_features_and_labels(data)[0]
         return self.xgb_reg.predict(features)
 
-    def plot_metrics(self, title: str, metric1, metric2, 
-                     metric1_label: str, metric2_label: str,
-                     x_label: str, y_label: str) -> None:
+    def plot_metrics(
+        self,
+        title: str,
+        metric1,
+        metric2,
+        metric1_label: str,
+        metric2_label: str,
+        x_label: str,
+        y_label: str,
+    ) -> None:
         plt.title(title)
         plt.plot(metric1, label=metric1_label)
         plt.plot(metric2, label=metric2_label)
@@ -90,6 +101,7 @@ class XGBoostModel(BaseModelPipeline):
         plt.ylabel(y_label)
         plt.legend(loc="upper right")
         plt.show()
+
 
 class XGBoostPredictor(BaseModelPipeline):
     def __init__(
@@ -123,9 +135,6 @@ class XGBoostPredictor(BaseModelPipeline):
         img = tf.image.resize(img, [224, 224])
         img = tf.image.grayscale_to_rgb(img)
         img = tf.cast(img, tf.float32)
-        noise = tf.random.normal(shape=tf.shape(img), mean=0.0, stddev=50.0)  # adjust stddev as needed
-        img = img + noise
-        img = tf.clip_by_value(img, 0.0, 255.0)
         img = tf.expand_dims(img, axis=0)
         return self.feature_extractor(img).numpy().squeeze()
 
@@ -137,12 +146,14 @@ class XGBoostPredictor(BaseModelPipeline):
             raise RuntimeError(f"Failed to load CSV: {e}")
 
         df["CleaveCategory"] = df.apply(
-            lambda row: 1
-            if row["CleaveAngle"] <= 0.45
-            and row["ScribeDiameter"] < 17
-            and not row["Hackle"]
-            and not row["Misting"]
-            else 0,
+            lambda row: (
+                1
+                if row["CleaveAngle"] <= 0.45
+                and row["ScribeDiameter"] < 17
+                and not row["Hackle"]
+                and not row["Misting"]
+                else 0
+            ),
             axis=1,
         )
         return df[df["CleaveCategory"] == 0]
@@ -161,7 +172,9 @@ class XGBoostPredictor(BaseModelPipeline):
     def predict(self):
         """Run tension predictions on filtered cleave data."""
         if not self.model or not self.scaler:
-            raise RuntimeError("Model and scaler must be loaded before prediction.")
+            raise RuntimeError(
+                "Model and scaler must be loaded before prediction."
+            )
 
         df = self.extract_data()
         image_paths = df["ImagePath"]
@@ -180,7 +193,9 @@ class XGBoostPredictor(BaseModelPipeline):
         return predictions
 
     def train(self):
-        raise NotImplementedError("Prediction-only class. Use `XGBoostModel` to train.")
+        raise NotImplementedError(
+            "Prediction-only class. Use `XGBoostModel` to train."
+        )
 
     def save(self, save_path: str):
         raise NotImplementedError("Model should be trained before saving.")
