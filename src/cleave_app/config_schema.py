@@ -93,7 +93,6 @@ class BaseConfig(BaseModel):
             "custom_model",
             "train_xgboost",
             "test_xgboost",
-            "train_tensions"
         ]
         if value not in valid_modes:
             raise ValueError(f"{value} is not a valid mode!")
@@ -121,6 +120,7 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
 
 
 class TrainCNNConfig(ModelConfig):
+    cnn_mode: str
     feature_shape: List[int]
     num_classes: int
     dropout1: float
@@ -128,7 +128,8 @@ class TrainCNNConfig(ModelConfig):
     dropout2: float
     dense2: int
     dropout3: float
-    backbone: Optional[str] = "mobilenet"
+    tension_threshold: Optional[int] = 190
+    backbone: Optional[str] = "efficientnet"
     unfreeze_from: Optional[int] = None
     reduce_lr: Optional[float] = None
     reduce_lr_patience: Optional[int] = None
@@ -157,6 +158,9 @@ class TrainMLPConfig(ModelConfig):
 
 
 class TestCNNConfig(BaseConfig):
+    cnn_mode: str
+    tension_threshold: Optional[int] = 190
+    tension_model_path: Optional[str] = None
     feature_scaler_path: Optional[str] = None
     model_path: Optional[str] = None
     test_features: Optional[List[float]] = None
@@ -272,9 +276,6 @@ class TrainImageOnlyConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
 class ImageHyperparameterConfig(TrainImageOnlyConfig):
     pass
 
-class TensionsClassifierConfig(TrainCNNConfig):
-    tension_threshold: int
-
 
 MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "train_cnn": TrainCNNConfig,
@@ -291,8 +292,7 @@ MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "image_hyperparameter": ImageHyperparameterConfig,
     "custom_model": TrainImageOnlyConfig,
     "train_xgboost": TrainXGBoostConfig,
-    "test_xgboost": TestXGBoostConfig,
-    "train_tensions": TensionsClassifierConfig
+    "test_xgboost": TestXGBoostConfig
 }
 
 

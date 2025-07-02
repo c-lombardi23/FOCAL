@@ -18,8 +18,9 @@ from sklearn.metrics import (
     classification_report,
     ConfusionMatrixDisplay,
 )
-from .data_processing import DataCollector
+from .data_processing import DataCollector, BadCleaveTensionClassifier
 from typing import List, Optional
+
 
 
 class TestPredictions(DataCollector):
@@ -49,7 +50,8 @@ class TestPredictions(DataCollector):
             img_folder (str): Path to image folder.
             image_only (bool): If True, test only with images (no features).
         """
-        super().__init__(
+        DataCollector.__init__(
+            self,
             csv_path,
             img_folder=img_folder,
             backbone=backbone,
@@ -165,7 +167,7 @@ class TestPredictions(DataCollector):
         pred_labels = [np.argmax(pred[0]) for pred in predictions]
         if self.classification_type == "binary":
             pred_labels = [
-                (pred[0, 0] > 0.4).astype(int) for pred in predictions
+                (pred[0, 0] > 0.95).astype(int) for pred in predictions
             ]
         elif self.classification_type == "multiclass":
             pred_labels = [np.argmax(pred[0]) for pred in predictions]
@@ -276,6 +278,108 @@ class TestPredictions(DataCollector):
         plt.ylabel("True Positive Rate")
         plt.legend(loc="lower right")
         plt.show()
+
+
+
+class TestTensionPredictions(BadCleaveTensionClassifier):
+    def __init__(self, 
+                 cnn_model_path: str, 
+                 tension_model_path: str,
+                 csv_path: str,
+                 scaler_path: str,
+                 img_folder: str,
+                 tension_threshold: int,
+                 image_only: bool) -> None:
+        """
+        Initialize the TestTensionPredictions pipeline.
+
+        Args:
+            cnn_model_path: Trained CNN classifier to identify good/bad cleave
+            tension_model_path: Trained model to predict tension direction (raise/lower)
+        """
+        
+
+        super().__init__(
+            csv_path=csv_path,
+            img_folder=img_folder,
+            tension_threshold=tension_threshold,
+            classification_type="binary",
+            backbone="efficientnet",
+            encoder_path=None
+
+        )
+        self.tension_model = tf.keras.models.load_model(tension_model_path)
+        self.image_only = image_only
+        self.tester = TestPredictions(
+            model_path=cnn_model_path, csv_path=csv_path,
+            scalar_path=scaler_path, encoder_path=None,
+            image_only=False,
+            backbone="efficientnet",
+            classification_type="binary",
+            img_folder=img_folder
+        )
+
+        if self.classification_type == "multiclass":
+            self.class_names = self.encoder.categories_[0].tolist()
+        elif self.classification_type == "binary":
+            self.class_names = [0, 1]
+        self.scalar_path = scaler_path
+        self.ohe = None
+        if not self.image_only and self.scalar_path:
+            self.feature_scaler = joblib.load(self.scalar_path)
+
+    def predict_tension(self,
+                        image_path:str,
+                        params=None):
+        image = self.load_process_images(image_path)
+        image = np.expand_dims(image, axis=0)
+        tension_pred = self.tension_model.predict([image, np.expand_dims(params, axis=0)])
+        direction = np.argmax(tension_pred)
+        return "Bad - raise tension" if direction == 1 else "Bad - lower tension"
+
+
+    def gather_predictions(self, pred_features=None):
+        """
+        Gather predictions for image-only or image+feature based classification/regression.
+
+        Args:
+            pred_image_paths (list): Paths to the images for prediction.
+            pred_features (np.ndarray, optional): Feature vectors for each image.
+
+        Returns:
+            Tuple of (true_labels, pred_labels)
+        """
+        pred_image_paths = self.df['ImagePath']
+
+        pred_labels = []
+
+        if self.image_only == False:
+            for img_path in pred_image_paths:
+                feature_vector = np.zeros((6,), dtype=np.float32)
+                classification = self.tester.test_prediction(img_path, feature_vector)
+
+                if classification < 0.5:
+                    tension_pred = self.predict_tension(img_path, feature_vector)
+                    pred_labels.append(tension_pred) 
+        elif self.image_only:
+            if pred_features is not None:
+                for img_path, feature_vector in zip(pred_image_paths, pred_features):
+                    prediction = self.predict_tension(img_path, feature_vector)
+                    pred_labels.append(prediction)
+            else:
+                for img_path in pred_image_paths:
+                    feature_vector = np.zeros((6,), dtype=np.float32)
+                    prediction = self.predict_tension(img_path, feature_vector)
+                    pred_labels.append(prediction)
+                
+        if hasattr(self, "df") and "BadTensionsLabel" in self.df.columns:
+            true_labels = self.df["BadTensionsLabel"].values
+        else:
+            print("True labels not available in dataframe.")
+            return None, pred_labels
+        print(len(pred_labels))
+        return true_labels, pred_labels
+
 
 
 from typing import Optional

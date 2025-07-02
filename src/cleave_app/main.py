@@ -21,10 +21,10 @@ warnings.filterwarnings("ignore")
 
 # Import application modules
 from .config_schema import load_config
-from .data_processing import DataCollector, MLPDataCollector
+from .data_processing import DataCollector, MLPDataCollector, BadCleaveTensionClassifier
 from .model_pipeline import CustomModel
 from .mlp_model import BuildMLPModel
-from .prediction_testing import TestPredictions, TensionPredictor
+from .prediction_testing import TestPredictions, TensionPredictor, TestTensionPredictions
 from .xgboost_pipeline import XGBoostModel, XGBoostPredictor
 from .hyperparameter_tuning import (
     HyperParameterTuning,
@@ -36,14 +36,14 @@ from .grad_cam import gradcam_driver
 try:
     import tensorflow as tf
 except ImportError:
-    print("Warning: TensorFlow not found. Please install tensorflow>=2.19.0")
+    print(
+        "Warning: TensorFlow not found. Please install tensorflow>=2.19.0"
+    )
     traceback.print_exc()
     tf = None
 
 
-def _setup_callbacks(
-    config: object, trainable_model: object
-) -> List[Callable]:
+def _setup_callbacks(config, trainable_model) -> List[Callable]:
     """
     Setup training callbacks based on configuration.
 
@@ -96,7 +96,7 @@ def _setup_callbacks(
     return callbacks
 
 
-def _train_cnn(config: object) -> None:
+def _train_cnn(config) -> None:
     """
     Train a CNN model for fiber cleave classification.
 
@@ -107,12 +107,23 @@ def _train_cnn(config: object) -> None:
         raise ImportError("TensorFlow is required for CNN training")
 
     try:
-        data = DataCollector(
-            config.csv_path,
-            config.img_folder,
-            classification_type=config.classification_type,
-            backbone=config.backbone,
-        )
+        if config.cnn_mode == "bad_good":
+            data = DataCollector(
+                config.csv_path,
+                config.img_folder,
+                classification_type=config.classification_type,
+                backbone=config.backbone,
+            )
+        elif config.cnn_mode == "tension":
+            data = BadCleaveTensionClassifier(
+                csv_path=config.csv_path,
+                img_folder=config.img_folder,
+                backbone=config.backbone,
+                tension_threshold=config.tension_threshold
+            )
+        else:
+            raise ValueError(f'Unsupported cnn mode: {config.cnn_mode}')
+        
         images, features, labels = data.extract_data()
         train_ds, test_ds, class_weights = data.create_datasets(
             images,
@@ -128,18 +139,25 @@ def _train_cnn(config: object) -> None:
             train_ds,
             test_ds,
             classification_type=config.classification_type,
-            num_classes=config.num_classes,
+            num_classes=config.num_classes
         )
 
         if config.continue_train == "y":
-            compiled_model = tf.keras.models.load_model(config.model_path)
+            compiled_model = tf.keras.models.load_model(
+                config.model_path
+            )
         else:
             compiled_model = trainable_model.compile_model(
-                config.image_shape,
-                config.feature_shape,
-                config.learning_rate or 0.001,
+                image_shape=config.image_shape,
+                param_shape=config.feature_shape,
+                learning_rate=config.learning_rate or 0.001,
                 unfreeze_from=config.unfreeze_from,
                 backbone=config.backbone,
+                dense1=config.dense1,
+                dense2=config.dense2,
+                dropout1=config.dropout1,
+                dropout2=config.dropout2,
+                dropout3=config.dropout3
             )
 
         # Setup callbacks
@@ -183,7 +201,7 @@ def _train_cnn(config: object) -> None:
         raise
 
 
-def _train_mlp(config: object) -> None:
+def _train_mlp(config) -> None:
     """
     Train an MLP model for tension prediction.
 
@@ -207,7 +225,9 @@ def _train_mlp(config: object) -> None:
             tension_scaler_path=config.label_scaler_path,
         )
 
-        trainable_model = BuildMLPModel(config.model_path, train_ds, test_ds)
+        trainable_model = BuildMLPModel(
+            config.model_path, train_ds, test_ds
+        )
 
         # Setup callbacks
         callbacks = _setup_callbacks(config, trainable_model)
@@ -450,16 +470,28 @@ def _test_cnn(config) -> None:
         config: Configuration object containing test parameters
     """
     try:
-        tester = TestPredictions(
-            config.model_path,
-            config.csv_path,
-            config.feature_scaler_path,
-            config.img_folder,
-            image_only=False,
-            backbone=config.backbone,
-        )
-        true_labels, pred_labels = tester.gather_predictions()
+        if config.cnn_mode == "good_bad":
+            tester = TestPredictions(
+                config.model_path,
+                config.csv_path,
+                config.feature_scaler_path,
+                config.img_folder,
+                image_only=False,
+                backbone=config.backbone,
+            )
+        elif config.cnn_mode == "tension":
+            tester = TestTensionPredictions(
+                cnn_model_path=config.model_path,
+                tension_model_path=config.tension_model_path,
+                csv_path=config.csv_path,
+                scaler_path=config.feature_scaler_path,
+                img_folder=config.img_folder,
+                tension_threshold=config.tension_threshold,
+                image_only=False
+            )
 
+        true_labels, pred_labels = tester.gather_predictions()
+        
         if true_labels is not None:
             tester.display_confusion_matrix(
                 true_labels, pred_labels, model_path=config.model_path
@@ -468,9 +500,10 @@ def _test_cnn(config) -> None:
             tester.display_classification_report(
                 true_labels, pred_labels, config.classification_path
             )
+        
         else:
             print("No predictions generated - check data paths")
-
+        
     except Exception as e:
         print(f"Error during CNN testing: {e}")
         traceback.print_exc()
@@ -533,7 +566,7 @@ def _grad_cam(config) -> None:
         raise
 
 
-def _image_only(config: object) -> None:
+def _image_only(config) -> None:
     """
     Train image-only model (no parameter features).
 
@@ -542,7 +575,9 @@ def _image_only(config: object) -> None:
     """
 
     if tf is None:
-        raise ImportError("TensorFlow is required for image-only training")
+        raise ImportError(
+            "TensorFlow is required for image-only training"
+        )
 
     try:
         data = DataCollector(
@@ -571,9 +606,12 @@ def _image_only(config: object) -> None:
             train_ds,
             test_ds,
             classification_type=data.classification_type,
+            num_classes=config.num_classes
         )
         if config.continue_train == "y":
-            compiled_model = tf.keras.models.load_model(config.model_path)
+            compiled_model = tf.keras.models.load_model(
+                config.model_path
+            )
         else:
             compiled_model = trainable_model.compile_image_only_model(
                 config.image_shape,
@@ -649,7 +687,8 @@ def _test_image_only(config) -> None:
         true_labels, pred_labels = tester.gather_predictions()
 
         if true_labels is not None:
-            tester.display_confusion_matrix(true_labels, pred_labels)
+            tester.display_confusion_matrix(true_labels, pred_labels,
+                                            model_path=config.model_path)
             tester.display_classification_report(
                 true_labels, pred_labels, config.classification_path
             )
@@ -664,7 +703,7 @@ def _test_image_only(config) -> None:
 
 def _image_hyperparameter(config) -> None:
     """
-    Perform hyperparameter search for image-only model
+    Perform hyperparameter search for image-only model.
 
     Args:
         config: Configuration object containing training parameters
@@ -717,7 +756,7 @@ def _image_hyperparameter(config) -> None:
         raise
 
 
-def _custom_model(config: object) -> None:
+def _custom_model(config) -> None:
     try:
         data = DataCollector(config.csv_path, config.img_folder)
         train_ds, test_ds = data.create_custom_dataset(
@@ -831,7 +870,8 @@ def _test_xgboost(config):
     xgb_predicter.predict()
 
 
-def choices(mode: str, config: object) -> None:
+
+def choices(mode: str, config) -> None:
     """
     Route to appropriate function based on mode.
 

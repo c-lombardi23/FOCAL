@@ -657,7 +657,7 @@ class DataCollector:
             batch_size=batch_size,
             buffer_size=buffer_size,
             masking=True,
-            p=0.6,
+            p=0.9
         )
         test_ds = self._dataset_helper(
             test_imgs,
@@ -667,7 +667,7 @@ class DataCollector:
             batch_size=batch_size,
             buffer_size=buffer_size,
             masking=False,
-            p=0.7,
+            p=1.0,
         )
 
         return train_ds, test_ds, class_weights
@@ -908,19 +908,28 @@ class BadCleaveTensionClassifier(DataCollector):
                  csv_path: str,
                  img_folder:str, 
                  tension_threshold: int,
-                 backbone: Optional[str] = "efficientnet"):
+                 backbone: Optional[str] = "efficientnet",
+                 encoder_path: Optional[str] = None,
+                 classification_type: Optional[str] = "binary"):
         
         self.tension_threshold = tension_threshold
         super().__init__(
             csv_path=csv_path,
             img_folder=img_folder,
             classification_type="binary",
-            backbone="efficientnet"
+            backbone="efficientnet",
+            encoder_path=encoder_path
         )
 
     def _clean_data(self):
-        df = pd.read_csv(self.csv_path)
+        df = super()._clean_data()
         df = df.loc[df['CleaveCategory'] == 0]
-        df['BadTensionsLabel'] = df['CleaveTension'] > self.tension_threshold
+        df['BadTensionsLabel'] = (df['CleaveTension'] > self.tension_threshold).astype(np.int32)
         print(df['BadTensionsLabel'].value_counts())
         return df
+    
+    def extract_data(self):
+        images, features, labels = super().extract_data()
+        labels = self.df['BadTensionsLabel']
+
+        return images, features, labels

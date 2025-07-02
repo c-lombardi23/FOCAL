@@ -1,8 +1,8 @@
 {
   "csv_path": "C:\\Thorlabs\\125PM_2_Categories.csv",
   "img_folder": "C:\\Thorlabs\\125PM\\",
-  "feature_scaler_path": "",
-  "label_scaler_path": "",
+  "feature_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\images_features1.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\label_scaler1.pkl",
   "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
   "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
 
@@ -10,7 +10,8 @@
   "feature_shape": [6],
   "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
-  "mode": "test_cnn",
+  "mode": "train_cnn",
+  "cnn_mode": "bad_good",
   "backbone": "efficientnet",
   "backbone_name": "resnet",
   "model_path": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\image_features1.keras",
@@ -23,8 +24,9 @@
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 15,
+  "max_epochs": 60,
   "objective": "val_accuracy",
+  "tension_threshold": 190,
 
   "dropout1": 0.1,
   "dropout2": 0.6,
@@ -38,11 +40,11 @@
   "monitor": "val_loss",
   "method": "min",
   "checkpoints": "y",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\images_features_checkpoint2.keras",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\images_features1_checkpoint.keras",
 
   "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
-  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\kfold_trial1.keras",
-  "save_history_file": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\kfold_history",
+  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\images_features1.keras",
+  "save_history_file": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\images_features1_history",
 
   "set_mask": "y"
 }

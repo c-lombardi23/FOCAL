@@ -1,0 +1,45 @@
+{
+  "csv_path": "C:\\Thorlabs\\125PM_data_updated.csv",
+  "img_folder": "C:\\Thorlabs\\125PM\\",
+  "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
+  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
+
+  "image_shape": [224, 224, 3],
+  "feature_shape": [5],
+  "test_features": [1.68, 190, 12.96, 0, 0, 1],
+
+  "mode": "train_image_only",
+  "backbone": "efficientnet",
+  "backbone_name": "resnet",
+  "model_path": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\image_only1.keras",
+  "project_name": "MLP1",
+  "num_classes": 1,
+  "classification_type": "binary",
+
+
+  "learning_rate": 0.01,
+  "batch_size": 16,
+  "buffer_size": 40,
+  "test_size": 0.25,
+  "max_epochs": 20,
+  "objective": "val_accuracy",
+
+  "dropout1_rate": 0.1,
+  "dense_units": 64,
+  "dropout2_rate": 0.0,
+  "l2_fact": 0.001,
+
+
+  "early_stopping": "y",
+  "patience": 5,
+  "monitor": "val_loss",
+  "method": "min",
+  "checkpoints": "n",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\images_features_checkpoint2.keras",
+
+  "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_28\\HyperParameterTuning1",
+  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\image_only1.keras",
+  "save_history_file": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\image_only1_history",
+
+  "set_mask": "y"
+}
