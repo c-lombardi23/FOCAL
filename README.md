@@ -26,7 +26,7 @@ A machine learning package for fiber cleave quality classification and tension p
 
 This project implements a comprehensive machine learning pipeline for analyzing fiber cleave quality using images from the THORLABS Fiber Cleave Analyzer (FCA). The system consists of three main components:
 
-1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features alone or inclusion of numerical features
+1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features alone or inclusiong of numerical features
 2. **MLP Regression Model**: Predicts optimal tension parameters for producing good cleaves
 3. **XGBoost Regression Model**: Predicts the change in tension needed to produce a good cleave 
 
@@ -202,7 +202,7 @@ If your image-only model is not achieving the desired accuracy, consider the fol
 - **Image Preprocessing:** Ensure images are normalized to the range expected by the backbone (done in code already).
 - **Train Longer with Early Stopping:** Allow more epochs and use early stopping to avoid underfitting.
 
-### Example: Improved CNN Model Architecture
+### Example: Improved Image-Only Model Architecture
 
 ```python
 pre_trained_model = EfficientNetB0(
@@ -211,14 +211,11 @@ pre_trained_model = EfficientNetB0(
     weights="imagenet", 
     name="mobilenet"
 )
-pre_trained_model.trainable = unfreeze_from is not None
+pre_trained_model.trainable = True
+for layer in pre_trained_model.layers[:-20]:
+    layer.trainable = False
 
-        if unfreeze_from is not None:
-            for layer in pre_trained_model.layers[:unfreeze_from]:
-                layer.trainable = False
-
-        # Data augmentation pipeline
-        data_augmentation = self.get_data_augmentation(
+ data_augmentation = self.get_data_augmentation(
             rotation=rotation,
             brightness=brightness,
             height=height,
@@ -256,8 +253,7 @@ pre_trained_model.trainable = unfreeze_from is not None
         )(z)
 
         model = Model(inputs=[image_input, params_input], outputs=z)
-        model.summary()
-        return model
+```
 
 For more details, see the [Configuration](#configuration) and [Usage Examples](#usage-examples) sections above.
 
