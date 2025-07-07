@@ -1,3 +1,7 @@
+"""
+Main module for all logic related to XGBoost. Includes classes for training and predicting.
+"""
+
 from typing import Optional
 import tensorflow as tf
 import numpy as np
@@ -6,10 +10,9 @@ import xgboost as xgb
 import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
-from .base_model_pipeline import BaseModelPipeline
 
 
-class XGBoostModel(BaseModelPipeline):
+class XGBoostModel:
 
     def __init__(self, csv_path: str, cnn_model_path: str, train_ds, test_ds):
         self.csv_path = csv_path
@@ -27,8 +30,17 @@ class XGBoostModel(BaseModelPipeline):
             print(f"Error loading model or extracting layer: {e}")
             self.feature_extractor = None
 
-
     def extract_features_and_labels(self, ds):
+        """
+        Extract image features and delta tension values from the dataset
+        using feature extractor.
+
+        Args:
+            ds: Dataset to be extracted.
+
+        Returns:
+            Tuple of features and delta tension values
+        """
         features, delta_tensions = [], []
         for img_batch, tension_batch in ds:
             feats = self.feature_extractor(img_batch).numpy()
@@ -43,6 +55,18 @@ class XGBoostModel(BaseModelPipeline):
         max_depth: Optional[int] = 4,
         random_state: Optional[int] = 42,
     ):
+        """
+        Training logic for the xgboost regression model.
+
+        Args:
+            n_estimators: Maximum number of trees to use during training
+            learning_rate: Learning rate to update weights during training
+            max_depth: Maximum tree depth during training
+            random_state: Controls random state of model to ensure consitency across models
+
+        Returns:
+            Trained xgboost model
+        """
 
         X_train, y_train = self.extract_features_and_labels(self.train_ds)
         X_test, y_test = self.extract_features_and_labels(self.test_ds)
@@ -73,17 +97,25 @@ class XGBoostModel(BaseModelPipeline):
         return self.xgb_reg.evals_result()
 
     def save(self, save_path: str):
+        """
+        Saves xgboost model.
+
+        Args:
+            save_path: Path to save model.
+
+        Raises:
+            ValueError: If trained model is None.
+        """
         if self.xgb_reg is not None:
             joblib.dump(self.xgb_reg, save_path)
         else:
             raise ValueError("Model not trained yet.")
 
     def load(self, model_path: str):
+        """
+        Load model from path.
+        """
         self.xgb_reg = joblib.load(model_path)
-
-    def predict(self, data):
-        features = self.extract_features_and_labels(data)[0]
-        return self.xgb_reg.predict(features)
 
     def plot_metrics(
         self,
@@ -95,6 +127,18 @@ class XGBoostModel(BaseModelPipeline):
         x_label: str,
         y_label: str,
     ) -> None:
+        """
+        Basic plotting function for viewing metrics.
+
+        Args:
+            title: Title of metric plot
+            metric1: First metric to plot
+            metric2: Second metric to plot
+            metric1_label: Metric 1 identifying label
+            metric2_labe: Metric 2 identifying label
+            x_label: X-axis label
+            y-Label: Y_axis label
+        """
         plt.title(title)
         plt.plot(metric1, label=metric1_label)
         plt.plot(metric2, label=metric2_label)
@@ -104,7 +148,7 @@ class XGBoostModel(BaseModelPipeline):
         plt.show()
 
 
-class XGBoostPredictor(BaseModelPipeline):
+class XGBoostPredictor:
     def __init__(
         self,
         csv_path: str,
@@ -130,13 +174,23 @@ class XGBoostPredictor(BaseModelPipeline):
             self.feature_extractor = None
 
     def extract_cnn_features(self, image_path: str) -> np.ndarray:
-        """Extract CNN features from a grayscale image."""
+        """
+        Extract CNN features from a grayscale image.
+
+        Args:
+            image_path: Path to image to extract features
+
+        Returns:
+            Extracted features from image.
+        
+        """
         img_raw = tf.io.read_file(image_path)
         img = tf.image.decode_png(img_raw, channels=1)
         img = tf.image.resize(img, [224, 224])
         img = tf.image.grayscale_to_rgb(img)
         img = tf.cast(img, tf.float32)
         img = tf.expand_dims(img, axis=0)
+        # remove single dimensional entries
         return self.feature_extractor(img).numpy().squeeze()
 
     def extract_data(self):
@@ -157,7 +211,7 @@ class XGBoostPredictor(BaseModelPipeline):
             ),
             axis=1,
         )
-         # Compute mean tension from good cleaves
+        # Compute mean tension from good cleaves
         good_mean = df[df["CleaveCategory"] == 1]["CleaveTension"].mean()
 
         # Keep only bad cleaves
@@ -182,13 +236,11 @@ class XGBoostPredictor(BaseModelPipeline):
     def predict(self):
         """Run tension predictions on filtered cleave data."""
         if not self.model or not self.scaler:
-            raise RuntimeError(
-                "Model and scaler must be loaded before prediction."
-            )
+            raise RuntimeError("Model and scaler must be loaded before prediction.")
 
         df, mean = self.extract_data()
         image_paths = df["ImagePath"]
-        tensions = df['CleaveTension']
+        tensions = df["CleaveTension"]
         true_delta = df["TrueDelta"]
 
         predictions = []
@@ -201,24 +253,22 @@ class XGBoostPredictor(BaseModelPipeline):
             predicted_deltas.append(delta)
             predictions.append(delta + tensions.iloc[len(predictions)])
 
-        for true_t, delta_pred, current_t in zip(true_delta, predicted_deltas, tensions):
+        for true_t, delta_pred, current_t in zip(
+            true_delta, predicted_deltas, tensions
+        ):
             pred_t = current_t + delta_pred
-            print(f"Current: {current_t:.2f} | True delta: {true_t:.2f} | Pred delta: {delta_pred:.2f} | Pred T: {pred_t:.2f} | Target T: {mean:.2f}")
+            print(
+                f"Current: {current_t:.2f} | True delta: {true_t:.2f} | Pred delta: {delta_pred:.2f} | Pred T: {pred_t:.2f} | Target T: {mean:.2f}"
+            )
 
-        df = pd.DataFrame({
-            'Current Tension': np.array(tensions).round(2),
-            'True Delta': np.array(true_delta).round(2),
-            'Predicted Tension': np.array(predictions).round(2),
-            'Predicted Delta': np.array(predicted_deltas).round(2)
-        })
-        df.to_csv(f'{self.xgb_path}_performance.csv', index=False)
+        df = pd.DataFrame(
+            {
+                "Current Tension": np.array(tensions).round(2),
+                "True Delta": np.array(true_delta).round(2),
+                "Predicted Tension": np.array(predictions).round(2),
+                "Predicted Delta": np.array(predicted_deltas).round(2),
+            }
+        )
+        df.to_csv(f"{self.xgb_path}_performance.csv", index=False)
 
         return predictions
-
-    def train(self):
-        raise NotImplementedError(
-            "Prediction-only class. Use `XGBoostModel` to train."
-        )
-
-    def save(self, save_path: str):
-        raise NotImplementedError("Model should be trained before saving.")
