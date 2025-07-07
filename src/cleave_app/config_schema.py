@@ -130,6 +130,8 @@ class TrainCNNConfig(ModelConfig):
     dropout2: float
     dense2: int
     dropout3: float
+    angle_threshold: float
+    diameter_threshold: float
     tension_threshold: Optional[int] = 190
     backbone: Optional[str] = "efficientnet"
     unfreeze_from: Optional[int] = None
@@ -241,6 +243,8 @@ class GradCamConfig(BaseConfig):
 
 
 class TrainImageOnlyConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
+    angle_threshold: float
+    diameter_threshold: float
     backbone: Optional[str] = "mobilenet"
     learning_rate: Optional[float] = 0.001
     buffer_size: Optional[int] = 32

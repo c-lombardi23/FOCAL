@@ -52,6 +52,8 @@ class DataCollector:
         self,
         csv_path: str,
         img_folder: str,
+        angle_threshold: float,
+        diameter_threshold: float,
         classification_type: Optional[str] = "binary",
         backbone: Optional[str] = "mobilenet",
         set_mask: Optional[str] = "n",
@@ -84,6 +86,8 @@ class DataCollector:
         self._df = None
         self.backbone = backbone
         self.set_mask = set_mask
+        self.angle_threshold = angle_threshold
+        self.diameter_threshold = diameter_threshold
 
     @property
     def df(self) -> Optional[pd.DataFrame]:
@@ -115,7 +119,9 @@ class DataCollector:
             self._df = self._clean_data()
         return self._df
 
-    def _set_label(self) -> Optional[pd.DataFrame]:
+    def _set_label(self,
+                   angle_threshold: float,
+                   diameter_threshold: float) -> Optional[pd.DataFrame]:
         """Read CSV file and add cleave quality labels based on certain
         criteria.
 
@@ -132,9 +138,9 @@ class DataCollector:
             return None
 
         def label(row):
-            good_angle = row["CleaveAngle"] <= 0.45
+            good_angle = row["CleaveAngle"] <= angle_threshold
             no_defects = not row["Hackle"] and not row["Misting"]
-            good_diameter = row["ScribeDiameter"] < 17
+            good_diameter = row["ScribeDiameter"] < diameter_threshold
 
             bad_angle = not good_angle and no_defects and good_diameter
             bad_diameter = good_angle and no_defects and not good_diameter
@@ -154,8 +160,8 @@ class DataCollector:
             df["CleaveCategory"] = df.apply(
                 lambda row: (
                     1
-                    if row["CleaveAngle"] <= 0.45
-                    and row["ScribeDiameter"] < 17
+                    if row["CleaveAngle"] <= angle_threshold
+                    and row["ScribeDiameter"] < diameter_threshold
                     and (not row["Hackle"] and not row["Misting"])
                     else 0
                 ),
@@ -188,7 +194,8 @@ class DataCollector:
         Returns:
             pd.DataFrame: Processed DataFrame with labels and one-hot encoding
         """
-        df = self._set_label()
+        df = self._set_label(angle_threshold=self.angle_threshold,
+                             diameter_threshold=self.angle_threshold)
         if df is None:
             return None
         if self.classification_type == "multiclass":

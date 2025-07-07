@@ -117,13 +117,15 @@ def _train_cnn(config) -> None:
                 config.img_folder,
                 classification_type=config.classification_type,
                 backbone=config.backbone,
+                angle_threshold=config.angle_threshold,
+                diameter_threshold=config.diameter_threshold
             )
         elif config.cnn_mode == "tension":
             data = BadCleaveTensionClassifier(
                 csv_path=config.csv_path,
                 img_folder=config.img_folder,
                 backbone=config.backbone,
-                tension_threshold=config.tension_threshold,
+                tension_threshold=config.tension_threshold
             )
         else:
             raise ValueError(f"Unsupported cnn mode: {config.cnn_mode}")
@@ -284,6 +286,8 @@ def _train_kfold_cnn(config) -> None:
             config.csv_path,
             config.img_folder,
             backbone=config.backbone,
+            angle_threshold=config.angle_threshold,
+            diameter_threshold=config.diameter_threshold
         )
         images, features, labels = data.extract_data()
         datasets = data.create_kfold_datasets(
@@ -394,6 +398,8 @@ def _cnn_hyperparameter(config) -> None:
             config.csv_path,
             config.img_folder,
             backbone=config.backbone,
+            angle_threshold=config.angle_threshold,
+            diameter_threshold=config.diameter_threshold
         )
         images, features, labels = data.extract_data()
         train_ds, test_ds, class_weights = data.create_datasets(
@@ -586,6 +592,8 @@ def _image_only(config) -> None:
             backbone=config.backbone,
             set_mask=config.set_mask,
             encoder_path=config.encoder_path,
+            angle_threshold=config.angle_threshold,
+            diameter_threshold=config.diameter_threshold
         )
         images, features, labels = data.extract_data()
         train_ds, test_ds, class_weights = data.create_datasets(
@@ -712,6 +720,8 @@ def _image_hyperparameter(config) -> None:
             backbone=config.backbone,
             set_mask=config.set_mask,
             classification_type=config.classification_type,
+            angle_threshold=config.angle_threshold,
+            diameter_threshold=config.diameter_threshold
         )
         images, features, labels = data.extract_data()
         train_ds, test_ds, class_weights = data.create_datasets(
@@ -754,7 +764,9 @@ def _image_hyperparameter(config) -> None:
 
 def _custom_model(config) -> None:
     try:
-        data = DataCollector(config.csv_path, config.img_folder)
+        data = DataCollector(config.csv_path, config.img_folder,
+                             angle_threshold=config.angle_threshold,
+                             diameter_threshold=config.diameter_threshold)
         train_ds, test_ds = data.create_custom_dataset(
             config.image_shape,
             config.test_size,

@@ -10,6 +10,9 @@
   "feature_shape": [6],
   "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
+  "angle_threshold": 0.45,
+  "diameter_threshold": 17.0,
+
   "mode": "train_cnn",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
