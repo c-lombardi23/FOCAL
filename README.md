@@ -24,10 +24,11 @@ A machine learning package for fiber cleave quality classification and tension p
 
 ## 🎯 Project Description
 
-This project implements a comprehensive machine learning pipeline for analyzing fiber cleave quality using images from the THORLABS Fiber Cleave Analyzer (FCA). The system consists of two main components:
+This project implements a comprehensive machine learning pipeline for analyzing fiber cleave quality using images from the THORLABS Fiber Cleave Analyzer (FCA). The system consists of three main components:
 
 1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features alone or inclusiong of numerical features
 2. **MLP Regression Model**: Predicts optimal tension parameters for producing good cleaves
+3. **XGBoost Regression Model**: Predicts the change in tension needed to produce a good cleave 
 
 The models use transfer learning with either MobileNetV2, ResNet, or EfficientNetB0 as the backbone and are optimized using Keras Tuner for hyperparameter optimization.
 
@@ -99,38 +100,60 @@ The application uses a JSON configuration file to specify all parameters. **Each
 
 ```json
 {
-  "mode": "train_cnn",
-  "csv_path": "data/cleave_metadata.csv",
-  "img_folder": "data/images/",
-  "feature_scaler_path": "models/feature_scaler.pkl",
-  "label_scaler_path": "models/label_scaler.pkl",
+  "csv_path": "C:\\Thorlabs\\125PM_2_Categories.csv",
+  "img_folder": "C:\\Thorlabs\\125PM\\",
+  "feature_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\label_scaler1.pkl",
+  "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
+  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
+
   "image_shape": [224, 224, 3],
   "feature_shape": [6],
-  "test_size": 0.2,
-  "buffer_size": 32,
-  "batch_size": 8,
-  "learning_rate": 0.001,
-  "model_path": "models/cleave_classifier.keras",
+  "test_features": [1.68, 190, 12.96, 0, 0, 1],
+
+  "mode": "train_cnn",
+  "cnn_mode": "bad_good",
+  "backbone": "efficientnet",
+  "backbone_name": "resnet",
+  "model_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\image_features1.keras",
+  "project_name": "Binary4",
+  "num_classes": 1,
+  "classification_type": "binary",
+
+
+  "learning_rate": 0.01,
+  "batch_size": 16,
+  "buffer_size": 40,
+  "test_size": 0.25,
   "max_epochs": 50,
-  "early_stopping": "y",
-  "patience": 5
-}
-```
+  "objective": "val_accuracy",
+  "tension_threshold": 190,
 
-### Example: `test_mlp` Configuration
+  "brightness": 0.1,
+  "height": 0.0,
+  "width": 0.0,
+  "contrast": 0.0,
+  "rotation": 0.05,
 
-```json
-{
-  "mode": "test_mlp",
-  "csv_path": "data/cleave_metadata.csv",
-  "img_folder": "data/images/",
-  "feature_scaler_path": "models/feature_scaler.pkl",
-  "label_scaler_path": "models/label_scaler.pkl",
-  "image_shape": [224, 224, 3],
-  "feature_shape": [5],
-  "model_path": "models/mlp_model.keras",
-  "img_path": "data/images/sample.png",
-  "test_features": [0.1, 0.2, 0.3, 0.4, 0.5]
+  "dropout1": 0.0,
+  "dropout2": 0.4,
+  "dropout3": 0.4,
+  "dense1": 64,
+  "dense2": 32,
+  
+
+  "early_stopping": "n",
+  "patience": 5,
+  "monitor": "val_loss",
+  "method": "min",
+  "checkpoints": "y",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_checkpoint.keras",
+
+  "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
+  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1.keras",
+  "save_history_file": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_history",
+
+  "set_mask": "y"
 }
 ```
 
@@ -147,12 +170,14 @@ The application uses a JSON configuration file to specify all parameters. **Each
 | `train_cnn` | Train CNN classification model |
 | `train_mlp` | Train MLP regression model |
 | `train_image_only` | Train image-only classification model |
+| `train_xgboost` | Train XGBoost regressor |
 | `cnn_hyperparameter` | Run hyperparameter search for CNN |
 | `mlp_hyperparameter` | Run hyperparameter search for MLP |
 | `image_hyperparameter` | Run hyperparameter search for image-only model |
 | `test_cnn` | Test CNN model performance |
 | `test_mlp` | Test MLP model performance |
 | `test_image_only` | Test the CNN on only image data |
+| `test_xgboost`  | Test the XGBoost regressor  |
 | `train_kfold_cnn` | Train CNN with k-fold cross validation |
 | `train_kfold_mlp` | Train MLP with k-fold cross validation |
 | `grad_cam` | Generate GradCAM visualizations |
@@ -212,7 +237,7 @@ If your image-only model is not achieving the desired accuracy, consider the fol
 ### Example: Improved Image-Only Model Architecture
 
 ```python
-pre_trained_model = MobileNetV2(
+pre_trained_model = EfficientNetB0(
     input_shape=image_shape, 
     include_top=False, 
     weights="imagenet", 
@@ -274,7 +299,7 @@ ImageProcessingClone/
 │       ├── model_pipeline.py       # Model building and training
 │       ├── hyperparameter_tuning.py # Hyperparameter optimization
 │       ├── prediction_testing.py   # Model evaluation
-│       └── grad_cam.py            # Model interpretability
+│       └── grad_cam.py           # Model interpretability
 ├── tests/                         # Unit tests
 ├── notebooks/                     # Jupyter notebooks
 ├── config_files/                  # Example configurations
