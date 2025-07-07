@@ -68,6 +68,7 @@ This quickstart will have you training your first model in only a few steps.
 
 
 3. **Data Preparation**
+
  Your data should be organized as follows:
 
    .. code-block:: text
@@ -159,3 +160,4 @@ All results (training progress, plots, reports) will print to the console and be
 * Check the logs for detailed error messages
 * Verify your config file syntax with a JSON validator
 * Make sure your CSV and image paths are correct
+
