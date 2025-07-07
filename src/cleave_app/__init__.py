@@ -45,4 +45,6 @@ __all__ = [
     "GradCAM",
     "gradcam_driver",
     "compute_saliency_map",
+    "XGBoostModel",
+    "XGBoostPredictor"
 ]

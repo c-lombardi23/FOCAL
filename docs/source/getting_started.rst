@@ -95,23 +95,19 @@ This quickstart will have you training your first model in only a few steps.
    .. code-block:: json
 
       {
-      "csv_path": "C:\\Thorlabs\\125PM_2_Categories.csv",
-      "img_folder": "C:\\Thorlabs\\125PM\\",
-      "feature_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1.pkl",
-      "label_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\label_scaler1.pkl",
-      "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
-      "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
+      "csv_path": "your_path_to_csv.csv",
+      "img_folder": "image_folder_path",
+      "feature_scaler_path": "/path_to/feature_scaler/pkl",
+      "classification_path": "/path_to/classification_report.csv",
 
       "image_shape": [224, 224, 3],
       "feature_shape": [6],
-      "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
       "mode": "train_cnn",
       "cnn_mode": "bad_good",
       "backbone": "efficientnet",
       "backbone_name": "resnet",
-      "model_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\image_features1.keras",
-      "project_name": "Binary4",
+      "model_path": "/path_to/save_model.keras",
       "num_classes": 1,
       "classification_type": "binary",
 
@@ -141,13 +137,7 @@ This quickstart will have you training your first model in only a few steps.
       "patience": 5,
       "monitor": "val_loss",
       "method": "min",
-      "checkpoints": "y",
-      "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_checkpoint.keras",
-
-      "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
-      "save_model_file": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1.keras",
-      "save_history_file": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_history",
-
+   
       "set_mask": "y"
       }
 
@@ -162,7 +152,6 @@ All results (training progress, plots, reports) will print to the console and be
 6. **Common Issues:**
 
 * **ModuleNotFoundError:** Make sure you installed in editable mode with ``pip install -e ".[dev]"``
-* **CUDA errors:** GPU training is optional - set ``device: "cpu"`` in your config
 * **Memory errors:** Reduce ``batch_size`` in your config file
 * **File not found:** Check that all paths in your config use forward slashes or double backslashes
 

@@ -137,8 +137,7 @@ class TrainCNNConfig(ModelConfig):
     unfreeze_from: Optional[int] = None
     reduce_lr: Optional[float] = None
     reduce_lr_patience: Optional[int] = None
-    classification_type: Optional[str] = ("binary",)
-    backbone: Optional[str] = "mobilenet"
+    classification_type: Optional[str] = "binary"
 
     @model_validator(mode="after")
     def valid_shapes(self):
