@@ -26,7 +26,7 @@ A machine learning package for fiber cleave quality classification and tension p
 
 This project implements a comprehensive machine learning pipeline for analyzing fiber cleave quality using images from the THORLABS Fiber Cleave Analyzer (FCA). The system consists of three main components:
 
-1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features alone or inclusiong of numerical features
+1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features alone or inclusion of numerical features
 2. **MLP Regression Model**: Predicts optimal tension parameters for producing good cleaves
 3. **XGBoost Regression Model**: Predicts the change in tension needed to produce a good cleave 
 
@@ -100,60 +100,28 @@ The application uses a JSON configuration file to specify all parameters. **Each
 
 ```json
 {
-  "csv_path": "C:\\Thorlabs\\125PM_2_Categories.csv",
-  "img_folder": "C:\\Thorlabs\\125PM\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\label_scaler1.pkl",
-  "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
-  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
-
-  "image_shape": [224, 224, 3],
-  "feature_shape": [6],
-  "test_features": [1.68, 190, 12.96, 0, 0, 1],
-
   "mode": "train_cnn",
   "cnn_mode": "bad_good",
-  "backbone": "efficientnet",
-  "backbone_name": "resnet",
-  "model_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\image_features1.keras",
-  "project_name": "Binary4",
-  "num_classes": 1,
   "classification_type": "binary",
+  "backbone": "efficientnet",
 
+  "csv_path": "data/cleaves_dataset.csv",
+  "img_folder": "data/cleave_images/",
+  "image_shape": [224, 224, 3],
+  "feature_shape": [6],
 
-  "learning_rate": 0.01,
+  "learning_rate": 0.001,
   "batch_size": 16,
-  "buffer_size": 40,
-  "test_size": 0.25,
   "max_epochs": 50,
-  "objective": "val_accuracy",
-  "tension_threshold": 190,
+  "test_size": 0.2,
 
-  "brightness": 0.1,
-  "height": 0.0,
-  "width": 0.0,
-  "contrast": 0.0,
-  "rotation": 0.05,
+  "save_model_file": "models/cnn_classifier_v1.keras",
+  "save_history_file": "reports/cnn_classifier_v1_history.csv",
 
-  "dropout1": 0.0,
-  "dropout2": 0.4,
-  "dropout3": 0.4,
-  "dense1": 64,
-  "dense2": 32,
-  
-
-  "early_stopping": "n",
-  "patience": 5,
-  "monitor": "val_loss",
-  "method": "min",
   "checkpoints": "y",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_checkpoint.keras",
-
-  "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
-  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1.keras",
-  "save_history_file": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_history",
-
-  "set_mask": "y"
+  "checkpoint_filepath": "models/checkpoints/cnn_v1_checkpoint.keras",
+  "monitor": "val_accuracy",
+  "method": "max"
 }
 ```
 
@@ -234,7 +202,7 @@ If your image-only model is not achieving the desired accuracy, consider the fol
 - **Image Preprocessing:** Ensure images are normalized to the range expected by the backbone (done in code already).
 - **Train Longer with Early Stopping:** Allow more epochs and use early stopping to avoid underfitting.
 
-### Example: Improved Image-Only Model Architecture
+### Example: Improved CNN Model Architecture
 
 ```python
 pre_trained_model = EfficientNetB0(
@@ -243,34 +211,53 @@ pre_trained_model = EfficientNetB0(
     weights="imagenet", 
     name="mobilenet"
 )
-pre_trained_model.trainable = True
-for layer in pre_trained_model.layers[:-20]:
-    layer.trainable = False
+pre_trained_model.trainable = unfreeze_from is not None
 
-data_augmentation = Sequential([
-    RandomRotation(factor=0.15),
-    RandomBrightness(factor=0.2),
-    RandomZoom(height_factor=0.15, width_factor=0.15),
-    RandomContrast(0.2),
-    RandomFlip("horizontal_and_vertical"),
-    GaussianNoise(stddev=0.02)
-])
+        if unfreeze_from is not None:
+            for layer in pre_trained_model.layers[:unfreeze_from]:
+                layer.trainable = False
 
-image_input = Input(shape=image_shape)
-x = data_augmentation(image_input)
-x = pre_trained_model(x)
-x = GlobalAveragePooling2D()(x)
-x = Dropout(0.2)(x)
-x = Dense(128, activation='relu', kernel_regularizer=l2(1e-4))(x)
-x = BatchNormalization()(x)
-x = Dropout(0.3)(x)
-x = Dense(48, activation='relu', kernel_regularizer=l2(1e-4))(x)
-x = BatchNormalization()(x)
-x = Dropout(0.2)(x)
-z = Dense(5, activation='softmax')(x)
+        # Data augmentation pipeline
+        data_augmentation = self.get_data_augmentation(
+            rotation=rotation,
+            brightness=brightness,
+            height=height,
+            width=width,
+            contrast=contrast,
+        )
 
-model = Model(inputs=image_input, outputs=z)
-```
+        # CNN for images
+        image_input = Input(shape=image_shape)
+        x = data_augmentation(image_input)
+        x = pre_trained_model(x)
+        x = GlobalAveragePooling2D(name="global_avg")(x)
+        x = Dropout(dropout1, name="dropout_1")(x)
+
+        # Numerical features section
+        params_input = Input(shape=param_shape)
+        y = Dense(dense1, name="dense_param1", activation="relu")(params_input)
+        y = Dropout(dropout2, name="dropout_2")(
+            y
+        )  # Added to remove reliance on features
+        y = BatchNormalization()(y)
+
+        combined = Concatenate()([x, y])
+        z = Dense(dense2, name="dense_2", activation="relu")(combined)
+        z = BatchNormalization(name="batch_norm")(z)
+        z = Dropout(dropout3, name="dropout_3")(z)
+        if self.classification_type == "binary":
+            activation = "sigmoid"
+        elif self.classification_type == "multiclass":
+            activation = "softmax"
+        z = Dense(
+            self.num_classes,
+            name="output_layer",
+            activation=activation,
+        )(z)
+
+        model = Model(inputs=[image_input, params_input], outputs=z)
+        model.summary()
+        return model
 
 For more details, see the [Configuration](#configuration) and [Usage Examples](#usage-examples) sections above.
 
