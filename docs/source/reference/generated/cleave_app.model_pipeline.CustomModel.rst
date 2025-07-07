@@ -21,6 +21,7 @@
       ~CustomModel.create_early_stopping
       ~CustomModel.create_tensorboard_callback
       ~CustomModel.get_averages_from_kfold
+      ~CustomModel.get_data_augmentation
       ~CustomModel.plot_metric
       ~CustomModel.reduce_on_plateau
       ~CustomModel.train_kfold

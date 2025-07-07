@@ -44,5 +44,7 @@ html_theme_options = {
         "color-brand-content": "#CC3333",
         "color-admonition-background": "orange",
     },
+    "sidebar_hide_name": False,
+    "navigation_with_keys": True,
 }
 html_static_path = ["_static"]
