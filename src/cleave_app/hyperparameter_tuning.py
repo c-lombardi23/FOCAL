@@ -111,14 +111,8 @@ class BuildHyperModel(HyperModel):
                 name="efficientnetb0",
             )
 
-        unfreeze_from = hp.Int(
-            "unfreeze_from", min_value=0, max_value=20, step=5
-        )
-        if unfreeze_from > 0:
-            for layer in pre_trained_model.layers[-unfreeze_from:]:
-                layer.trainable = True
-        else:
-            pre_trained_model.trainable = False
+       
+        pre_trained_model.trainable = False
 
         # Data augmentation pipeline
         data_augmentation = Sequential(
@@ -142,30 +136,27 @@ class BuildHyperModel(HyperModel):
         x = data_augmentation(image_input)
         x = pre_trained_model(x)
         x = GlobalAveragePooling2D()(x)
-        x = Dropout(hp.Float("dropout", 0.0, 0.3, step=0.1))(x)
+        x = Dropout(hp.Float("dropout_1", 0.0, 0.3, step=0.1))(x)
 
         # Param input and processing
         param_input = Input(shape=self.param_shape)
         y = Dense(
-            hp.Int("dense_param1", min_value=32, max_value=64, step=16),
+            hp.Int("dense_1", min_value=32, max_value=64, step=16),
             activation="relu",
         )(param_input)
-        y = Dense(
-            hp.Int("dense_param2", min_value=8, max_value=32, step=8),
-            activation="relu",
-        )(y)
+        y = Dropout(hp.Float("dropout_2", 0.0, 0.8, step=0.1))(y)
         y = BatchNormalization()(y)
 
         # Combine image and parameter features
         combined = Concatenate()([x, y])
 
         z = Dense(
-            hp.Int("dense_combined", min_value=32, max_value=64, step=16),
+            hp.Int("dense_2", min_value=32, max_value=64, step=16),
             activation="relu",
         )(combined)
         z = BatchNormalization()(z)
-        z = Dropout(hp.Float("dropout_combined", 0.0, 0.3, step=0.1))(z)
-        z = Dense(5, activation="softmax")(z)
+        z = Dropout(hp.Float("dropout_3", 0.0, 0.3, step=0.1))(z)
+        z = Dense(1, activation="sigmoid")(z)
 
         model = Model(inputs=[image_input, param_input], outputs=z)
 
@@ -176,8 +167,8 @@ class BuildHyperModel(HyperModel):
                     values=[5e-4, 1e-3, 5e-3, 1e-2, 5e-2],
                 )
             ),
-            loss="categorical_crossentropy",
-            metrics=["accuracy"],
+            loss="binary_crossentropy",
+            metrics=["accuracy", "precision", "recall"],
         )
 
         return model

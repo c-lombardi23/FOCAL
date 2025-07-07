@@ -1,6 +1,4 @@
 from .model_pipeline import *
-import xgboost as xgb
-import joblib
 
 
 class BuildMLPModel(CustomModel):
@@ -222,7 +220,7 @@ class BuildMLPModel(CustomModel):
 
     @staticmethod
     def get_averages_from_kfold(
-        kfold_histories: List[tf.keras.callbacks.History], scaler: Any
+        kfold_histories: List[tf.keras.callbacks.History], scaler: any
     ) -> None:
         """
         Calculate and display average metrics from k-fold cross validation for MLP.

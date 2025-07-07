@@ -157,7 +157,12 @@ def _train_cnn(config) -> None:
                 dense2=config.dense2,
                 dropout1=config.dropout1,
                 dropout2=config.dropout2,
-                dropout3=config.dropout3
+                dropout3=config.dropout3,
+                brightness=config.brightness,
+                contrast=config.contrast,
+                height=config.height,
+                width=config.width,
+                rotation=config.rotation
             )
 
         # Setup callbacks
@@ -396,7 +401,7 @@ def _cnn_hyperparameter(config) -> None:
             backbone=config.backbone,
         )
         images, features, labels = data.extract_data()
-        train_ds, test_ds = data.create_datasets(
+        train_ds, test_ds, class_weights = data.create_datasets(
             images,
             features,
             labels,
@@ -415,6 +420,7 @@ def _cnn_hyperparameter(config) -> None:
             project_name=config.project_name,
             directory=config.tuner_directory,
             backbone=config.backbone,
+            class_weights=class_weights
         )
 
         _run_search_helper(config, tuner, train_ds, test_ds)
@@ -490,7 +496,7 @@ def _test_cnn(config) -> None:
                 image_only=False
             )
 
-        true_labels, pred_labels = tester.gather_predictions()
+        true_labels, pred_labels, predictions = tester.gather_predictions()
         
         if true_labels is not None:
             tester.display_confusion_matrix(
@@ -500,6 +506,9 @@ def _test_cnn(config) -> None:
             tester.display_classification_report(
                 true_labels, pred_labels, config.classification_path
             )
+            tester.plot_roc("ROC Curve",
+                            true_labels=true_labels,
+                            pred_probabilites=predictions)
         
         else:
             print("No predictions generated - check data paths")

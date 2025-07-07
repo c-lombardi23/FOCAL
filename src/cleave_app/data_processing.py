@@ -724,8 +724,15 @@ class MLPDataCollector(DataCollector):
                 "No data available. Check if CSV file was loaded correctly."
             )
         filtered_df = self.df.loc[self.df["CleaveCategory"] == 1]
-        images = filtered_df["ImagePath"].values
-        features = filtered_df[
+        mean_tension = np.mean(filtered_df['CleaveTension'])
+        delta = np.where(
+            self.df['CleaveCategory'] == 1,
+            0.0,
+            mean_tension - self.df['CleaveTension']
+        ).astype(np.float32)
+
+        images = self.df["ImagePath"].values
+        features = self.df[
             [
                 "CleaveAngle",
                 "ScribeDiameter",
@@ -734,7 +741,7 @@ class MLPDataCollector(DataCollector):
                 "Tearing",
             ]
         ].values.astype(np.float32)
-        labels = filtered_df["CleaveTension"].values.astype(np.float32)
+        labels = delta
 
         return images, features, labels
 

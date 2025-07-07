@@ -27,13 +27,14 @@ class XGBoostModel(BaseModelPipeline):
             print(f"Error loading model or extracting layer: {e}")
             self.feature_extractor = None
 
+
     def extract_features_and_labels(self, ds):
-        features, tensions = [], []
+        features, delta_tensions = [], []
         for img_batch, tension_batch in ds:
             feats = self.feature_extractor(img_batch).numpy()
             features.append(feats)
-            tensions.append(tension_batch.numpy().reshape(-1))
-        return np.vstack(features), np.concatenate(tensions)
+            delta_tensions.append(tension_batch.numpy().reshape(-1))
+        return np.vstack(features), np.concatenate(delta_tensions)
 
     def train(
         self,
@@ -156,7 +157,16 @@ class XGBoostPredictor(BaseModelPipeline):
             ),
             axis=1,
         )
-        return df[df["CleaveCategory"] == 0]
+         # Compute mean tension from good cleaves
+        good_mean = df[df["CleaveCategory"] == 1]["CleaveTension"].mean()
+
+        # Keep only bad cleaves
+        bad_df = df[df["CleaveCategory"] == 0].copy()
+
+        # Compute true delta (label) = good_mean - current
+        bad_df["TrueDelta"] = good_mean - bad_df["CleaveTension"]
+
+        return bad_df, good_mean
 
     def load(self):
         """Load trained model and scaler."""
@@ -176,19 +186,32 @@ class XGBoostPredictor(BaseModelPipeline):
                 "Model and scaler must be loaded before prediction."
             )
 
-        df = self.extract_data()
+        df, mean = self.extract_data()
         image_paths = df["ImagePath"]
-        true_tensions = df["CleaveTension"]
+        tensions = df['CleaveTension']
+        true_delta = df["TrueDelta"]
 
         predictions = []
+        predicted_deltas = []
+
         for img_path in image_paths:
             features = self.extract_cnn_features(img_path)
             pred_scaled = self.model.predict(features.reshape(1, -1))[0]
-            pred = self.scaler.inverse_transform([[pred_scaled]])[0][0]
-            predictions.append(pred)
+            delta = self.scaler.inverse_transform([[pred_scaled]])[0][0]
+            predicted_deltas.append(delta)
+            predictions.append(delta + tensions.iloc[len(predictions)])
 
-        for pred, true in zip(predictions, true_tensions):
-            print(f"Predicted Tension: {pred:.2f} -> True: {true:.2f}")
+        for true_t, delta_pred, current_t in zip(true_delta, predicted_deltas, tensions):
+            pred_t = current_t + delta_pred
+            print(f"Current: {current_t:.2f} | True delta: {true_t:.2f} | Pred delta: {delta_pred:.2f} | Pred T: {pred_t:.2f} | Target T: {mean:.2f}")
+
+        df = pd.DataFrame({
+            'Current Tension': np.array(tensions).round(2),
+            'True Delta': np.array(true_delta).round(2),
+            'Predicted Tension': np.array(predictions).round(2),
+            'Predicted Delta': np.array(predicted_deltas).round(2)
+        })
+        df.to_csv(f'{self.xgb_path}_performance.csv', index=False)
 
         return predictions
 

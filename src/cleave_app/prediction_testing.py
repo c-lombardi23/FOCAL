@@ -163,11 +163,11 @@ class TestPredictions(DataCollector):
                 print("No features available for prediction.")
                 return None, None, None
 
-        # Set prediction labels based on max of ohe
+        # Set prediction labels based on max
         pred_labels = [np.argmax(pred[0]) for pred in predictions]
         if self.classification_type == "binary":
             pred_labels = [
-                (pred[0, 0] > 0.95).astype(int) for pred in predictions
+                (pred[0, 0] > 0.52).astype(int) for pred in predictions
             ]
         elif self.classification_type == "multiclass":
             pred_labels = [np.argmax(pred[0]) for pred in predictions]
@@ -178,7 +178,7 @@ class TestPredictions(DataCollector):
             .values
         )
 
-        return true_labels, pred_labels
+        return true_labels, pred_labels, predictions
 
     def display_confusion_matrix(
         self,
@@ -267,7 +267,7 @@ class TestPredictions(DataCollector):
             pred_probabilites (np.ndarray): Array of predicted probabilities.
         """
         pred_probabilites = np.array(pred_probabilites).flatten()
-        fpr, tpr = roc_curve(true_labels, pred_probabilites)
+        fpr, tpr, thresholds = roc_curve(true_labels, pred_probabilites)
         auc = roc_auc_score(true_labels, pred_probabilites)
         plt.plot(fpr, tpr, label=f"ROC Curve (AUC={auc:.2f}%)")
         plt.plot([0, 1], [0, 1], "k--")
@@ -278,6 +278,9 @@ class TestPredictions(DataCollector):
         plt.ylabel("True Positive Rate")
         plt.legend(loc="lower right")
         plt.show()
+        optimal_idx = np.argmax(tpr - fpr)
+        optimal_threshold = thresholds[optimal_idx]
+        print(f"Optimal Threshold: {optimal_threshold:.2f}")
 
 
 

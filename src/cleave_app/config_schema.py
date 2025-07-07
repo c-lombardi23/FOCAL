@@ -100,6 +100,11 @@ class BaseConfig(BaseModel):
 
 
 class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
+    brightness: Optional[float] = 0.0
+    rotation: Optional[float] = 0.0
+    height: Optional[float] = 0.0
+    width: Optional[float] = 0.0
+    contrast: Optional[float] = 0.0
     feature_scaler_path: Optional[str] = None
     label_scaler_path: Optional[str] = None
     model_path: Optional[str] = None

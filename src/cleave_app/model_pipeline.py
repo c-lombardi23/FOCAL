@@ -7,10 +7,10 @@ for fiber cleave quality classification and tension prediction.
 
 import os
 import warnings
-from typing import Optional, Tuple, List, Any
-import pandas as pd
+from typing import Optional, Tuple, List
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # Suppress TensorFlow warnings
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -128,6 +128,24 @@ class CustomModel:
             )
 
         return pre_trained_model
+    
+    def get_data_augmentation(self, 
+                              rotation: float,
+                              brightness: float,
+                              height: float,
+                              width: float,
+                              contrast: float):
+        
+        data_augmentation = Sequential(
+            [
+                RandomRotation(factor=rotation),
+                RandomBrightness(factor=brightness),
+                RandomZoom(height_factor=height, width_factor=width),
+                RandomContrast(contrast),
+            ]
+        )
+        return data_augmentation
+        
 
     def _build_custom_model(
         self, image_shape: Tuple[int, int, int], num_classes: int = 5
@@ -170,8 +188,14 @@ class CustomModel:
         dropout2: float,
         dense2: int,
         dropout3: float,
+        brightness: float,
+        contrast: float,
+        height: float,
+        width: float,
+        rotation: float,
         backbone: Optional[str] = "mobilenet",
         unfreeze_from: Optional[int] = None,
+
     ) -> "tf.keras.Model":
         """
         Build a model using pre-trained MobileNetV2 to supplement small dataset.
@@ -199,14 +223,9 @@ class CustomModel:
                 layer.trainable = False
 
         # Data augmentation pipeline
-        data_augmentation = Sequential(
-            [
-                RandomRotation(factor=0.0),
-                RandomBrightness(factor=0.0),
-                RandomZoom(height_factor=0.0, width_factor=0.0),
-                GaussianNoise(stddev=0.00),
-                RandomContrast(0.0),
-            ]
+        data_augmentation = self.get_data_augmentation(
+            rotation=rotation, brightness=brightness,
+            height=height, width=width, contrast=contrast
         )
 
         # CNN for images
@@ -214,7 +233,7 @@ class CustomModel:
         x = data_augmentation(image_input)
         x = pre_trained_model(x)
         x = GlobalAveragePooling2D(name="global_avg")(x)
-        x = Dropout(dropout1, name="dropout")(x)
+        x = Dropout(dropout1, name="dropout_1")(x)
 
         # Numerical features section
         params_input = Input(shape=param_shape)
@@ -225,9 +244,9 @@ class CustomModel:
         y = BatchNormalization()(y)
 
         combined = Concatenate()([x, y])
-        z = Dense(dense2, name="dense_combined", activation="relu")(combined)
+        z = Dense(dense2, name="dense_2", activation="relu")(combined)
         z = BatchNormalization(name="batch_norm")(z)
-        z = Dropout(dropout3, name="dropout_combined")(z)
+        z = Dropout(dropout3, name="dropout_3")(z)
         if self.classification_type == "binary":
             activation = "sigmoid"
         elif self.classification_type == "multiclass":
@@ -403,6 +422,11 @@ class CustomModel:
         dropout2: float,
         dense2: int,
         dropout3: float,
+        brightness: float,
+        height: float,
+        width: float,
+        contrast: float,
+        rotation: float,
         learning_rate: float = 0.001,
         metrics: Optional[List[str]] = None,
         unfreeze_from: Optional[int] = None,
@@ -438,6 +462,11 @@ class CustomModel:
             dropout1=dropout1,
             dropout2=dropout2,
             dropout3=dropout3,
+            brightness=brightness,
+            height=height,
+            width=width,
+            rotation=rotation,
+            contrast=contrast
         )
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         if self.classification_type == "binary":
