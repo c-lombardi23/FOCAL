@@ -15,27 +15,57 @@ This quickstart will have you training your first model in only a few steps.
 2. **Select a mode**  
    You drive the CLI by setting the `mode` field in your config:
 
-   .. list-table::
-      :header-rows: 0
+   2. **Select a mode**  
+   You drive the CLI by setting the `mode` field in your config:
 
-      * - ``train_cnn``         - Train the CNN model using both images and numerical features
-         * - ``cnn_mode``       - Submode to train CNN
-            * - ``bad_good``    - Train on binary classification
-            * - ``multiclass``  - Train on mulitple classes
-      * - ``train_mlp``         - Train the MLP regression model (uses a pre-trained CNN)
-      * - ``train_image_only``  - Train a CNN on images only
-      * - ``train_kfold_cnn``   - CNN training with k-fold cross-validation
-      * - ``train_kfold_mlp``   - MLP training with k-fold cross-validation
-      * - ``test_cnn``          - Evaluate a trained CNN model
-      * - ``test_mlp``          - Predict tension with a trained MLP
-      * - ``test_image_only``   - Evaluate an image-only CNN
-      * - ``image_hyperparameter``   - Tune hyperparameters for image-only CNN
-      * - ``cnn_hyperparameter``     - Tune hyperparameters for combined CNN+features
-      * - ``mlp_hyperparameter``     - Tune hyperparameters for MLP
-      * - ``grad_cam``                - Generate Grad-CAM heatmaps
-      * - ``custom_model``            - Train a small custom CNN from scratch
-      * - ``train_xgboost``        - Train the XGBoost regression model
-      * - ``test_xgboost``         - Test the XGBoost regression model
+   ``train_cnn``
+       Train the CNN model using both images and numerical features
+       
+       - ``bad_good``: Train on binary classification
+       - ``multiclass``: Train on multiple classes
+
+   ``train_mlp``
+       Train the MLP regression model (uses a pre-trained CNN)
+
+   ``train_image_only``
+       Train a CNN on images only
+
+   ``train_kfold_cnn``
+       CNN training with k-fold cross-validation
+
+   ``train_kfold_mlp``
+       MLP training with k-fold cross-validation
+
+   ``test_cnn``
+       Evaluate a trained CNN model
+
+   ``test_mlp``
+       Predict tension with a trained MLP
+
+   ``test_image_only``
+       Evaluate an image-only CNN
+
+   ``image_hyperparameter``
+       Tune hyperparameters for image-only CNN
+
+   ``cnn_hyperparameter``
+       Tune hyperparameters for combined CNN+features
+
+   ``mlp_hyperparameter``
+       Tune hyperparameters for MLP
+
+   ``grad_cam``
+       Generate Grad-CAM heatmaps
+
+   ``custom_model``
+       Train a small custom CNN from scratch
+
+   ``train_xgboost``
+       Train the XGBoost regression model
+
+   ``test_xgboost``
+       Test the XGBoost regression model
+
 
 3. **Data Preparation**
  Your data should be organized as follows:
