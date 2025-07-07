@@ -1,6 +1,6 @@
-import tensorflow as tf
-import numpy as np
 import cv2
+import numpy as np
+import tensorflow as tf
 
 
 class GradCAM:
@@ -37,8 +37,7 @@ class GradCAM:
             self.target_layer = self.model.get_layer(conv_layer_name)
 
     def compute_heatmap(self, image, param_vector, eps=1e-8):
-        """
-        Computes the heatmap for a given image and parameter vector.
+        """Computes the heatmap for a given image and parameter vector.
 
         Args:
             image (numpy.ndarray): The input image.
@@ -93,8 +92,7 @@ class GradCAM:
     def overlay_heatmap(
         self, heatmap, image, alpha=0.3, colormap=cv2.COLORMAP_JET
     ):
-        """
-        Overlays the heatmap on the image.
+        """Overlays the heatmap on the image.
 
         Args:
             heatmap (numpy.ndarray): The heatmap to overlay.
@@ -123,8 +121,7 @@ def gradcam_driver(
     conv_layer_name=None,
     heatmap_file=None,
 ):
-    """
-    Driver function to compute and display the GradCAM overlay.
+    """Driver function to compute and display the GradCAM overlay.
 
     Args:
         model_path (str): The path to the model.
@@ -164,8 +161,7 @@ def gradcam_driver(
 
 
 def compute_saliency_map(model, image_path, param_vector, class_index=3):
-    """
-    Computes the saliency map for a given image and parameter vector.
+    """Computes the saliency map for a given image and parameter vector.
 
     Args:
         model (tensorflow.keras.Model): The model to compute the saliency map for.

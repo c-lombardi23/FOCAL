@@ -1,32 +1,33 @@
-"""
-Prediction model pipeline for testing CNN model or MLP model.
+"""Prediction model pipeline for testing CNN model or MLP model.
 
-This module provides classes for gathering data and then testing on either
-the cnn model or the regression model.
+This module provides classes for gathering data and then testing on
+either the cnn model or the regression model.
 """
 
-# import libraries
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import tensorflow as tf
-import joblib
 import os
-from sklearn.metrics import roc_auc_score, roc_curve
-from sklearn.metrics import (
-    confusion_matrix,
-    classification_report,
-    ConfusionMatrixDisplay,
-)
-from .data_processing import DataCollector, BadCleaveTensionClassifier
 from typing import List, Optional
 
+import joblib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    classification_report,
+    confusion_matrix,
+    roc_auc_score,
+    roc_curve,
+)
+
+from .data_processing import BadCleaveTensionClassifier, DataCollector
 
 
 class TestPredictions(DataCollector):
-    """
-    This class is used to test model performance on unseen data using metrics such as
-    accuracy, precision, recall, and confusion matrix. Supports both image+feature and image-only CNNs.
+    """This class is used to test model performance on unseen data using
+    metrics such as accuracy, precision, recall, and confusion matrix.
+
+    Supports both image+feature and image-only CNNs.
     """
 
     def __init__(
@@ -40,8 +41,7 @@ class TestPredictions(DataCollector):
         backbone: str = "mobilenet",
         classification_type: str = "binary",
     ):
-        """
-        Initialize TestPredictions.
+        """Initialize TestPredictions.
 
         Args:
             model_path (str): Path to trained model.
@@ -70,8 +70,8 @@ class TestPredictions(DataCollector):
             self.feature_scaler = joblib.load(self.scalar_path)
 
     def _clean_data(self) -> "pd.DataFrame | None":
-        """
-        Read CSV file into DataFrame and add column for cleave quality and one-hot encoded labels.
+        """Read CSV file into DataFrame and add column for cleave quality and
+        one-hot encoded labels.
 
         Returns:
             pd.DataFrame | None: DataFrame with cleave quality and one-hot labels, or None if file not found.
@@ -100,8 +100,8 @@ class TestPredictions(DataCollector):
         image_path: str,
         feature_vector: "np.ndarray | None" = None,
     ) -> "np.ndarray":
-        """
-        Generate prediction for a single image (and features if not image_only).
+        """Generate prediction for a single image (and features if not
+        image_only).
 
         Args:
             image_path (str): Path to image to predict.
@@ -123,8 +123,7 @@ class TestPredictions(DataCollector):
     def gather_predictions(
         self,
     ) -> "tuple[np.ndarray, list, list] | tuple[None, None, None]":
-        """
-        Gather multiple predictions from test data.
+        """Gather multiple predictions from test data.
 
         Returns:
             tuple: (true_labels, pred_labels, predictions) or (None, None, None) if no data.
@@ -186,8 +185,7 @@ class TestPredictions(DataCollector):
         pred_labels: "list[int]",
         model_path: str,
     ) -> None:
-        """
-        Display confusion matrix comparing true labels to predicted labels.
+        """Display confusion matrix comparing true labels to predicted labels.
 
         Args:
             true_labels (np.ndarray): Array of true labels.
@@ -218,8 +216,8 @@ class TestPredictions(DataCollector):
         pred_labels: "list[int]",
         classification_path: str = None,
     ) -> None:
-        """
-        Display classification report comparing true labels to predicted labels.
+        """Display classification report comparing true labels to predicted
+        labels.
 
         Args:
             true_labels (np.ndarray): Array of true labels.
@@ -258,8 +256,7 @@ class TestPredictions(DataCollector):
         true_labels: "np.ndarray",
         pred_probabilites: "np.ndarray",
     ) -> None:
-        """
-        Plot ROC curve for predictions.
+        """Plot ROC curve for predictions.
 
         Args:
             title (str): Title for the plot.
@@ -283,24 +280,23 @@ class TestPredictions(DataCollector):
         print(f"Optimal Threshold: {optimal_threshold:.2f}")
 
 
-
 class TestTensionPredictions(BadCleaveTensionClassifier):
-    def __init__(self, 
-                 cnn_model_path: str, 
-                 tension_model_path: str,
-                 csv_path: str,
-                 scaler_path: str,
-                 img_folder: str,
-                 tension_threshold: int,
-                 image_only: bool) -> None:
-        """
-        Initialize the TestTensionPredictions pipeline.
+    def __init__(
+        self,
+        cnn_model_path: str,
+        tension_model_path: str,
+        csv_path: str,
+        scaler_path: str,
+        img_folder: str,
+        tension_threshold: int,
+        image_only: bool,
+    ) -> None:
+        """Initialize the TestTensionPredictions pipeline.
 
         Args:
             cnn_model_path: Trained CNN classifier to identify good/bad cleave
             tension_model_path: Trained model to predict tension direction (raise/lower)
         """
-        
 
         super().__init__(
             csv_path=csv_path,
@@ -308,18 +304,19 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
             tension_threshold=tension_threshold,
             classification_type="binary",
             backbone="efficientnet",
-            encoder_path=None
-
+            encoder_path=None,
         )
         self.tension_model = tf.keras.models.load_model(tension_model_path)
         self.image_only = image_only
         self.tester = TestPredictions(
-            model_path=cnn_model_path, csv_path=csv_path,
-            scalar_path=scaler_path, encoder_path=None,
+            model_path=cnn_model_path,
+            csv_path=csv_path,
+            scalar_path=scaler_path,
+            encoder_path=None,
             image_only=False,
             backbone="efficientnet",
             classification_type="binary",
-            img_folder=img_folder
+            img_folder=img_folder,
         )
 
         if self.classification_type == "multiclass":
@@ -331,19 +328,20 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
         if not self.image_only and self.scalar_path:
             self.feature_scaler = joblib.load(self.scalar_path)
 
-    def predict_tension(self,
-                        image_path:str,
-                        params=None):
+    def predict_tension(self, image_path: str, params=None):
         image = self.load_process_images(image_path)
         image = np.expand_dims(image, axis=0)
-        tension_pred = self.tension_model.predict([image, np.expand_dims(params, axis=0)])
+        tension_pred = self.tension_model.predict(
+            [image, np.expand_dims(params, axis=0)]
+        )
         direction = np.argmax(tension_pred)
-        return "Bad - raise tension" if direction == 1 else "Bad - lower tension"
-
+        return (
+            "Bad - raise tension" if direction == 1 else "Bad - lower tension"
+        )
 
     def gather_predictions(self, pred_features=None):
-        """
-        Gather predictions for image-only or image+feature based classification/regression.
+        """Gather predictions for image-only or image+feature based
+        classification/regression.
 
         Args:
             pred_image_paths (list): Paths to the images for prediction.
@@ -352,21 +350,27 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
         Returns:
             Tuple of (true_labels, pred_labels)
         """
-        pred_image_paths = self.df['ImagePath']
+        pred_image_paths = self.df["ImagePath"]
 
         pred_labels = []
 
         if self.image_only == False:
             for img_path in pred_image_paths:
                 feature_vector = np.zeros((6,), dtype=np.float32)
-                classification = self.tester.test_prediction(img_path, feature_vector)
+                classification = self.tester.test_prediction(
+                    img_path, feature_vector
+                )
 
                 if classification < 0.5:
-                    tension_pred = self.predict_tension(img_path, feature_vector)
-                    pred_labels.append(tension_pred) 
+                    tension_pred = self.predict_tension(
+                        img_path, feature_vector
+                    )
+                    pred_labels.append(tension_pred)
         elif self.image_only:
             if pred_features is not None:
-                for img_path, feature_vector in zip(pred_image_paths, pred_features):
+                for img_path, feature_vector in zip(
+                    pred_image_paths, pred_features
+                ):
                     prediction = self.predict_tension(img_path, feature_vector)
                     pred_labels.append(prediction)
             else:
@@ -374,7 +378,7 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
                     feature_vector = np.zeros((6,), dtype=np.float32)
                     prediction = self.predict_tension(img_path, feature_vector)
                     pred_labels.append(prediction)
-                
+
         if hasattr(self, "df") and "BadTensionsLabel" in self.df.columns:
             true_labels = self.df["BadTensionsLabel"].values
         else:
@@ -384,14 +388,12 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
         return true_labels, pred_labels
 
 
-
 from typing import Optional
 
 
 class TensionPredictor:
-    """
-    Predicts tension values using a trained MLP model and preprocessed image/features.
-    """
+    """Predicts tension values using a trained MLP model and preprocessed
+    image/features."""
 
     def __init__(
         self,
@@ -401,8 +403,7 @@ class TensionPredictor:
         tension_scaler_path: Optional[str] = None,
         feature_scaler_path: Optional[str] = None,
     ):
-        """
-        Initialize TensionPredictor.
+        """Initialize TensionPredictor.
 
         Args:
             model (tf.keras.Model): Trained MLP model for tension prediction.
@@ -422,8 +423,7 @@ class TensionPredictor:
     def load_and_preprocess_image(
         self, file_path: str, img_folder: str
     ) -> "tf.Tensor":
-        """
-        Load and preprocess image from file path.
+        """Load and preprocess image from file path.
 
         Args:
             file_path (str): Path to image file.
@@ -442,8 +442,7 @@ class TensionPredictor:
         return img
 
     def PredictTension(self, features: "list[float]") -> float:
-        """
-        Predict tension for given image and features.
+        """Predict tension for given image and features.
 
         Args:
             features (list[float]): Feature vector for prediction.
@@ -471,9 +470,7 @@ class TensionPredictor:
         tension_range: List[float],
         other_features: Optional[np.ndarray] = None,
     ) -> None:
-        """
-        Find the tension that gives the best cleave quality prediction
-        """
+        """Find the tension that gives the best cleave quality prediction."""
         df = pd.read_csv(self.csv_path)
         image_paths = df["ImagePath"]
         best_tensions = []
@@ -513,8 +510,7 @@ class TensionPredictor:
         x_legend: str,
         y_legend: str,
     ) -> None:
-        """
-        Plot a metric for model evaluation.
+        """Plot a metric for model evaluation.
 
         Args:
             title (str): Title of plot.

@@ -1,8 +1,7 @@
-"""
-Hyperparameter tuning module for the Fiber Cleave Processing application.
+"""Hyperparameter tuning module for the Fiber Cleave Processing application.
 
-This module provides classes for hyperparameter optimization using Keras Tuner
-for both CNN and MLP models.
+This module provides classes for hyperparameter optimization using Keras
+Tuner for both CNN and MLP models.
 """
 
 import os
@@ -15,31 +14,23 @@ warnings.filterwarnings("ignore")
 
 try:
     import tensorflow as tf
-    from tensorflow.keras.models import Model, Sequential
-    from tensorflow.keras.layers import (
-        Dense,
-        Concatenate,
-        GlobalAveragePooling2D,
-        Dropout,
-        Input,
-        RandomRotation,
-        RandomBrightness,
-        RandomZoom,
-        RandomContrast,
-        BatchNormalization,
-    )
-    from keras_tuner import (
-        HyperModel,
-        Hyperband,
-        BayesianOptimization,
-    )
-    from tensorflow.keras.regularizers import l2
+    from keras.applications import EfficientNetB0, MobileNetV2, ResNet50
+    from keras_tuner import BayesianOptimization, Hyperband, HyperModel
     from tensorflow.keras.callbacks import EarlyStopping
-    from keras.applications import (
-        MobileNetV2,
-        ResNet50,
-        EfficientNetB0,
+    from tensorflow.keras.layers import (
+        BatchNormalization,
+        Concatenate,
+        Dense,
+        Dropout,
+        GlobalAveragePooling2D,
+        Input,
+        RandomBrightness,
+        RandomContrast,
+        RandomRotation,
+        RandomZoom,
     )
+    from tensorflow.keras.models import Model, Sequential
+    from tensorflow.keras.regularizers import l2
 except ImportError as e:
     print(f"Warning: Required ML libraries not found: {e}")
     print("Please install tensorflow>=2.19.0 and keras-tuner>=1.4.7")
@@ -50,11 +41,12 @@ except ImportError as e:
 
 
 class BuildHyperModel(HyperModel):
-    """
-    HyperModel for determining optimal hyperparameters for the combined CNN+MLP model.
+    """HyperModel for determining optimal hyperparameters for the combined
+    CNN+MLP model.
 
-    This class builds a model architecture that combines image features from MobileNetV2
-    with numerical parameters for fiber cleave classification.
+    This class builds a model architecture that combines image features
+    from MobileNetV2 with numerical parameters for fiber cleave
+    classification.
     """
 
     def __init__(
@@ -63,8 +55,7 @@ class BuildHyperModel(HyperModel):
         param_shape: Tuple[int, ...],
         backbone: Optional[str] = "mobilenet",
     ):
-        """
-        Initialize the hypermodel builder.
+        """Initialize the hypermodel builder.
 
         Args:
             image_shape: Dimensions of input images (height, width, channels)
@@ -78,8 +69,7 @@ class BuildHyperModel(HyperModel):
         self.backbone = backbone
 
     def build(self, hp):
-        """
-        Build hypermodel to perform hyperparameter search.
+        """Build hypermodel to perform hyperparameter search.
 
         Args:
             hp: keras_tuner.engine.hyperparameters.HyperParameters
@@ -111,7 +101,6 @@ class BuildHyperModel(HyperModel):
                 name="efficientnetb0",
             )
 
-       
         pre_trained_model.trainable = False
 
         # Data augmentation pipeline
@@ -175,9 +164,7 @@ class BuildHyperModel(HyperModel):
 
 
 class HyperParameterTuning:
-    """
-    Class for tuning hyperparameters for the combined CNN+MLP model.
-    """
+    """Class for tuning hyperparameters for the combined CNN+MLP model."""
 
     def __init__(
         self,
@@ -190,8 +177,7 @@ class HyperParameterTuning:
         backbone: Optional[str] = "mobilenet",
         class_weights: Optional[str] = None,
     ) -> None:
-        """
-        Initialize the hyperparameter tuner.
+        """Initialize the hyperparameter tuner.
 
         Args:
             image_shape: Dimensions of input images
@@ -226,21 +212,16 @@ class HyperParameterTuning:
             directory=directory,
             project_name=project_name,
         )
-        """
-        self.tuner = Hyperband(
-            hypermodel,
-            objective=objective,
-            max_epochs=max_epochs,
-            directory=directory,
-            project_name=project_name
-        )
+        """self.tuner = Hyperband( hypermodel, objective=objective,
+        max_epochs=max_epochs, directory=directory,
+
+        project_name=project_name )
         """
 
     def run_search(
         self, train_ds: "tf.data.Dataset", test_ds: "tf.data.Dataset"
     ) -> None:
-        """
-        Run hyperparameter search.
+        """Run hyperparameter search.
 
         Args:
             train_ds: tf.data.Dataset - Training dataset
@@ -256,8 +237,7 @@ class HyperParameterTuning:
         )
 
     def save_best_model(self, pathname: str) -> None:
-        """
-        Save the best model from hyperparameter search.
+        """Save the best model from hyperparameter search.
 
         Args:
             pathname: Path where to save the model
@@ -266,8 +246,7 @@ class HyperParameterTuning:
         best_model.save(f"{pathname}")
 
     def get_best_model(self) -> "tf.keras.Model":
-        """
-        Get best model from hyperparameter search.
+        """Get best model from hyperparameter search.
 
         Returns:
             tf.keras.Model: Best model from hyperparameter search
@@ -275,8 +254,7 @@ class HyperParameterTuning:
         return self.tuner.get_best_models(num_models=1)[0]
 
     def get_best_hyperparameters(self) -> object:
-        """
-        Get best hyperparameters from hyperparameter search.
+        """Get best hyperparameters from hyperparameter search.
 
         Returns:
             keras_tuner.engine.hyperparameters.HyperParameters:
@@ -286,9 +264,7 @@ class HyperParameterTuning:
 
 
 class ImageOnlyHyperModel(HyperModel):
-    """
-    HyperModel for image-only classification (no numerical parameters).
-    """
+    """HyperModel for image-only classification (no numerical parameters)."""
 
     def __init__(
         self,
@@ -297,8 +273,7 @@ class ImageOnlyHyperModel(HyperModel):
         backbone: Optional[str] = "mobilenet",
         classification_type: Optional[str] = "binary",
     ):
-        """
-        Initialize the image-only hypermodel.
+        """Initialize the image-only hypermodel.
 
         Args:
             image_shape: Dimensions of input images
@@ -313,8 +288,7 @@ class ImageOnlyHyperModel(HyperModel):
         self.classification_type = classification_type
 
     def build(self, hp):
-        """
-        Build the image-only model with hyperparameters.
+        """Build the image-only model with hyperparameters.
 
         Args:
             hp: Hyperparameters to tune
@@ -405,16 +379,14 @@ class ImageOnlyHyperModel(HyperModel):
 
 
 class BuildMLPHyperModel(HyperModel):
-    """
-    HyperModel for MLP-based tension prediction.
+    """HyperModel for MLP-based tension prediction.
 
-    This class builds a model that uses features extracted from a pre-trained CNN
-    to predict optimal tension values.
+    This class builds a model that uses features extracted from a pre-
+    trained CNN to predict optimal tension values.
     """
 
     def __init__(self, model_path: str):
-        """
-        Initialize the MLP hypermodel.
+        """Initialize the MLP hypermodel.
 
         Args:
             model_path: Path to the pre-trained CNN model
@@ -427,8 +399,7 @@ class BuildMLPHyperModel(HyperModel):
         self.feature_output = self.cnn_model.get_layer("dropout").output
 
     def build(self, hp):
-        """
-        Build model with hyperparameters.
+        """Build model with hyperparameters.
 
         Args:
             hp: keras_tuner.HyperParameters - Hyperparameters to be used for tuning
@@ -477,9 +448,7 @@ class BuildMLPHyperModel(HyperModel):
 
 
 class ImageHyperparameterTuning(HyperParameterTuning):
-    """
-    Hyperparameter tuning specifically for image-only models.
-    """
+    """Hyperparameter tuning specifically for image-only models."""
 
     def __init__(
         self,
@@ -492,8 +461,7 @@ class ImageHyperparameterTuning(HyperParameterTuning):
         num_classes: Optional[int] = 5,
         class_weights: Optional[str] = None,
     ):
-        """
-        Initialize image-only hyperparameter tuning.
+        """Initialize image-only hyperparameter tuning.
 
         Args:
             image_shape: Dimensions of input images
@@ -518,21 +486,15 @@ class ImageHyperparameterTuning(HyperParameterTuning):
             directory=directory,
             project_name=project_name,
         )
-        """
-        self.tuner = Hyperband(
-            hypermodel,
-            objective=objective,
-            max_epochs=max_epochs,
-            directory=directory,
-            project_name=project_name
-        )
+        """self.tuner = Hyperband( hypermodel, objective=objective,
+        max_epochs=max_epochs, directory=directory,
+
+        project_name=project_name )
         """
 
 
 class MLPHyperparameterTuning(HyperParameterTuning):
-    """
-    Hyperparameter tuning specifically for MLP models.
-    """
+    """Hyperparameter tuning specifically for MLP models."""
 
     def __init__(
         self,
@@ -542,8 +504,7 @@ class MLPHyperparameterTuning(HyperParameterTuning):
         directory: str = "./tuner_logs",
         project_name: str = "MLPTuner",
     ):
-        """
-        Initialize MLP hyperparameter tuning.
+        """Initialize MLP hyperparameter tuning.
 
         Args:
             cnn_path: Path to the pre-trained CNN model

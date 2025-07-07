@@ -1,21 +1,20 @@
-"""
-Configuration schema module for the Fiber Cleave Processing application.
+"""Configuration schema module for the Fiber Cleave Processing application.
 
 This module defines Pydantic models for validating and loading JSON
-configuration files for all CLI modes. Each mode has its own config class,
-inheriting common fields and validators from BaseConfig, EarlyStoppingMixin,
-and CheckpointMixin.
+configuration files for all CLI modes. Each mode has its own config
+class, inheriting common fields and validators from BaseConfig,
+EarlyStoppingMixin, and CheckpointMixin.
 """
 
-import os
 import json
-from typing import List, Optional, Type, Dict
+import os
+from typing import Dict, List, Optional, Type
+
 from pydantic import BaseModel, field_validator, model_validator
 
 
 class EarlyStoppingMixin(BaseModel):
-    """
-    Adds early-stopping configuration parameters.
+    """Adds early-stopping configuration parameters.
 
     Fields:
       - early_stopping (str): 'y' to enable early stopping, 'n' to disable.
@@ -31,8 +30,7 @@ class EarlyStoppingMixin(BaseModel):
 
 
 class CheckpointMixin(BaseModel):
-    """
-    Adds model-checkpointing configuration parameters.
+    """Adds model-checkpointing configuration parameters.
 
     Fields:
       - checkpoints (str): 'y' to enable checkpoints, 'n' to disable.
@@ -48,8 +46,7 @@ class CheckpointMixin(BaseModel):
 
 
 class BaseConfig(BaseModel):
-    """
-    Basic config for all classes.
+    """Basic config for all classes.
 
     Fields:
       - csv_path: (str) : path to csv data for images
@@ -297,7 +294,7 @@ MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "image_hyperparameter": ImageHyperparameterConfig,
     "custom_model": TrainImageOnlyConfig,
     "train_xgboost": TrainXGBoostConfig,
-    "test_xgboost": TestXGBoostConfig
+    "test_xgboost": TestXGBoostConfig,
 }
 
 

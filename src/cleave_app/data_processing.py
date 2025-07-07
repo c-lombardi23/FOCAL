@@ -1,16 +1,16 @@
-"""
-Data processing module for the Fiber Cleave Processing application.
+"""Data processing module for the Fiber Cleave Processing application.
 
-This module provides classes for loading, preprocessing, and organizing data
-for training CNN and MLP models for fiber cleave analysis.
+This module provides classes for loading, preprocessing, and organizing
+data for training CNN and MLP models for fiber cleave analysis.
 """
 
 import os
 import warnings
-from typing import Optional, Tuple, List
-import pandas as pd
-import numpy as np
+from typing import List, Optional, Tuple
+
 import joblib
+import numpy as np
+import pandas as pd
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -18,9 +18,14 @@ warnings.filterwarnings("ignore")
 try:
     import tensorflow as tf
     from sklearn.model_selection import (
-        train_test_split,
-        StratifiedKFold,
         KFold,
+        StratifiedKFold,
+        train_test_split,
+    )
+    from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+    from sklearn.utils.class_weight import compute_class_weight
+    from tensorflow.keras.applications.efficientnet import (
+        preprocess_input as _efficientnet_preprocess,
     )
     from tensorflow.keras.applications.mobilenet_v2 import (
         preprocess_input as _mobilenet_preprocess,
@@ -28,12 +33,6 @@ try:
     from tensorflow.keras.applications.resnet50 import (
         preprocess_input as _resnet_preprocess,
     )
-    from tensorflow.keras.applications.efficientnet import (
-        preprocess_input as _efficientnet_preprocess,
-    )
-
-    from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
-    from sklearn.utils.class_weight import compute_class_weight
 except ImportError as e:
     print(f"Warning: Required ML libraries not found: {e}")
     print("Please install tensorflow>=2.19.0 and scikit-learn>=1.7.0")
@@ -41,11 +40,12 @@ except ImportError as e:
 
 
 class DataCollector:
-    """
-    Class for collecting and preprocessing data from CSV files and image folders.
+    """Class for collecting and preprocessing data from CSV files and image
+    folders.
 
-    This class handles loading cleave metadata from CSV files, processing images,
-    and creating TensorFlow datasets for training machine learning models.
+    This class handles loading cleave metadata from CSV files,
+    processing images, and creating TensorFlow datasets for training
+    machine learning models.
     """
 
     def __init__(
@@ -57,8 +57,7 @@ class DataCollector:
         set_mask: Optional[str] = "n",
         encoder_path: Optional[str] = None,
     ) -> None:
-        """
-        Initialize the data collector.
+        """Initialize the data collector.
 
         Args:
             csv_path: Path to CSV file containing cleave metadata
@@ -88,7 +87,7 @@ class DataCollector:
 
     @property
     def df(self) -> Optional[pd.DataFrame]:
-        """Lazy loading for memory efficiency"""
+        """Lazy loading for memory efficiency."""
         if self._df is None:
             try:
                 df = pd.read_csv(self.csv_path)
@@ -117,8 +116,8 @@ class DataCollector:
         return self._df
 
     def _set_label(self) -> Optional[pd.DataFrame]:
-        """
-        Read CSV file and add cleave quality labels based on certain criteria.
+        """Read CSV file and add cleave quality labels based on certain
+        criteria.
 
         Returns:
             pd.DataFrame: DataFrame with added CleaveCategory column
@@ -168,8 +167,7 @@ class DataCollector:
             raise ValueError(f"Unsupported Mode {self.classification_type}")
 
     def save_scaler_encoder(self, obj: object, filepath: str) -> None:
-        """
-        Save a scaler or encoder to disk for future use
+        """Save a scaler or encoder to disk for future use.
 
         Args:
           filepath: Path to save scaler or encoder
@@ -184,8 +182,8 @@ class DataCollector:
             raise FileExistsError("File Already exists!")
 
     def _clean_data(self) -> Optional[pd.DataFrame]:
-        """
-        Read CSV file and prepare data with cleave quality labels and one-hot encoding.
+        """Read CSV file and prepare data with cleave quality labels and one-
+        hot encoding.
 
         Returns:
             pd.DataFrame: Processed DataFrame with labels and one-hot encoding
@@ -213,8 +211,8 @@ class DataCollector:
         return df
 
     def _mask_background(self, img: tf.Tensor) -> tf.Tensor:
-        """
-        Mask background to prevent model from focusing on sharp gradient near edges.
+        """Mask background to prevent model from focusing on sharp gradient
+        near edges.
 
         Args:
             img: Image tensor of shape (H, W, C)
@@ -240,8 +238,7 @@ class DataCollector:
         return img * mask
 
     def get_backbone_preprocessor(self, backbone: str):
-        """
-        Return the preprocessing function for the specified backbone model.
+        """Return the preprocessing function for the specified backbone model.
 
         Args:
             backbone (str): Name of the backbone to use. Must be one of:
@@ -268,8 +265,7 @@ class DataCollector:
             )
 
     def load_process_images(self, filename: str) -> "tf.Tensor":
-        """
-        Load and preprocess image from file path.
+        """Load and preprocess image from file path.
 
         Args:
             filename: Image filename or path
@@ -326,8 +322,8 @@ class DataCollector:
         buffer_size: int = 32,
         batch_size: int = 16,
     ) -> Tuple["tf.data.Dataset", "tf.data.Dataset"]:
-        """
-        Create datasets using only grayscale images and labels with a custom image shape.
+        """Create datasets using only grayscale images and labels with a custom
+        image shape.
 
         Args:
             image_shape: Desired image shape (height, width, channels)
@@ -407,8 +403,7 @@ class DataCollector:
     def extract_data(
         self,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Extract data from DataFrame into separate arrays for model training.
+        """Extract data from DataFrame into separate arrays for model training.
 
         Returns:
             Tuple of (images, features, labels) arrays
@@ -430,9 +425,7 @@ class DataCollector:
 
     @staticmethod
     def _mask_features(images, features, p=0.3):
-        """
-        Randomly mask features to prevent reliance on numerical data
-        """
+        """Randomly mask features to prevent reliance on numerical data."""
 
         def mask():
             return tf.zeros_like(features)
@@ -443,8 +436,7 @@ class DataCollector:
     def _process_images_features(
         self, inputs: Tuple, label: np.ndarray
     ) -> Tuple[Tuple, np.ndarray]:
-        """
-        Process image and feature inputs for dataset creation.
+        """Process image and feature inputs for dataset creation.
 
         Args:
             inputs: Tuple of (image_input, features)
@@ -468,8 +460,8 @@ class DataCollector:
         masking: bool,
         p: Optional[float] = None,
     ) -> tf.data.Dataset:
-        """
-        Helper function to create datasets from tensor slices and map image processing to each element
+        """Helper function to create datasets from tensor slices and map image
+        processing to each element.
 
         Args:
             imgs: Array of images paths
@@ -516,8 +508,7 @@ class DataCollector:
         batch_size: int,
         n_splits: int = 5,
     ) -> List[Tuple[tf.data.Dataset, tf.data.Dataset]]:
-        """
-        Create datasets based on stratified k-fold cross validation.
+        """Create datasets based on stratified k-fold cross validation.
 
         Args:
             images: Array of image paths
@@ -589,8 +580,7 @@ class DataCollector:
         batch_size: int,
         feature_scaler_path: Optional[str] = None,
     ) -> Tuple[tf.data.Dataset, tf.data.Dataset, Optional[dict[int, float]]]:
-        """
-        Create train and test datasets with feature scaling.
+        """Create train and test datasets with feature scaling.
 
         Args:
             images: Array of image paths
@@ -657,7 +647,7 @@ class DataCollector:
             batch_size=batch_size,
             buffer_size=buffer_size,
             masking=True,
-            p=0.9
+            p=0.9,
         )
         test_ds = self._dataset_helper(
             test_imgs,
@@ -675,8 +665,7 @@ class DataCollector:
     def image_only_dataset(
         self, original_dataset: tf.data.Dataset
     ) -> tf.data.Dataset:
-        """
-        Convert dataset to image-only format (remove feature inputs).
+        """Convert dataset to image-only format (remove feature inputs).
 
         Args:
             original_dataset: Original dataset with (image, features) inputs
@@ -688,8 +677,7 @@ class DataCollector:
 
 
 class MLPDataCollector(DataCollector):
-    """
-    Data collector specifically for MLP regression models.
+    """Data collector specifically for MLP regression models.
 
     This class handles data preparation for tension prediction models,
     including proper scaling of both features and labels.
@@ -701,8 +689,7 @@ class MLPDataCollector(DataCollector):
         img_folder: str,
         backbone: Optional[str] = None,
     ):
-        """
-        Initialize the MLP data collector.
+        """Initialize the MLP data collector.
 
         Args:
             csv_path: Path to CSV file containing cleave metadata
@@ -713,8 +700,7 @@ class MLPDataCollector(DataCollector):
     def extract_data(
         self,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Extract data for MLP regression (tension prediction).
+        """Extract data for MLP regression (tension prediction).
 
         Returns:
             Tuple of (images, features, labels) arrays
@@ -724,11 +710,11 @@ class MLPDataCollector(DataCollector):
                 "No data available. Check if CSV file was loaded correctly."
             )
         filtered_df = self.df.loc[self.df["CleaveCategory"] == 1]
-        mean_tension = np.mean(filtered_df['CleaveTension'])
+        mean_tension = np.mean(filtered_df["CleaveTension"])
         delta = np.where(
-            self.df['CleaveCategory'] == 1,
+            self.df["CleaveCategory"] == 1,
             0.0,
-            mean_tension - self.df['CleaveTension']
+            mean_tension - self.df["CleaveTension"],
         ).astype(np.float32)
 
         images = self.df["ImagePath"].values
@@ -756,8 +742,8 @@ class MLPDataCollector(DataCollector):
         feature_scaler_path: Optional[str] = None,
         tension_scaler_path: Optional[str] = None,
     ) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
-        """
-        Create train and test datasets for MLP regression with proper scaling.
+        """Create train and test datasets for MLP regression with proper
+        scaling.
 
         Args:
             images: Array of image paths
@@ -845,8 +831,7 @@ class MLPDataCollector(DataCollector):
         batch_size: int,
         n_splits: int = 5,
     ) -> Tuple[List[Tuple[tf.data.Dataset, tf.data.Dataset]], MinMaxScaler]:
-        """
-        Create k-fold datasets for MLP regression with proper scaling.
+        """Create k-fold datasets for MLP regression with proper scaling.
 
         Args:
             images: Array of image paths
@@ -908,35 +893,39 @@ class MLPDataCollector(DataCollector):
             datasets.append((train_ds, test_ds))
 
         return datasets, label_scaler
-    
+
 
 class BadCleaveTensionClassifier(DataCollector):
-    def __init__(self, 
-                 csv_path: str,
-                 img_folder:str, 
-                 tension_threshold: int,
-                 backbone: Optional[str] = "efficientnet",
-                 encoder_path: Optional[str] = None,
-                 classification_type: Optional[str] = "binary"):
-        
+    def __init__(
+        self,
+        csv_path: str,
+        img_folder: str,
+        tension_threshold: int,
+        backbone: Optional[str] = "efficientnet",
+        encoder_path: Optional[str] = None,
+        classification_type: Optional[str] = "binary",
+    ):
+
         self.tension_threshold = tension_threshold
         super().__init__(
             csv_path=csv_path,
             img_folder=img_folder,
             classification_type="binary",
             backbone="efficientnet",
-            encoder_path=encoder_path
+            encoder_path=encoder_path,
         )
 
     def _clean_data(self):
         df = super()._clean_data()
-        df = df.loc[df['CleaveCategory'] == 0]
-        df['BadTensionsLabel'] = (df['CleaveTension'] > self.tension_threshold).astype(np.int32)
-        print(df['BadTensionsLabel'].value_counts())
+        df = df.loc[df["CleaveCategory"] == 0]
+        df["BadTensionsLabel"] = (
+            df["CleaveTension"] > self.tension_threshold
+        ).astype(np.int32)
+        print(df["BadTensionsLabel"].value_counts())
         return df
-    
+
     def extract_data(self):
         images, features, labels = super().extract_data()
-        labels = self.df['BadTensionsLabel']
+        labels = self.df["BadTensionsLabel"]
 
         return images, features, labels

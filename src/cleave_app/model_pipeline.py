@@ -1,15 +1,16 @@
-"""
-Model pipeline module for the Fiber Cleave Processing application.
+"""Model pipeline module for the Fiber Cleave Processing application.
 
-This module provides classes for building, training, and managing CNN and MLP models
-for fiber cleave quality classification and tension prediction.
+This module provides classes for building, training, and managing CNN
+and MLP models for fiber cleave quality classification and tension
+prediction.
 """
 
 import os
 import warnings
-from typing import Optional, Tuple, List
-import numpy as np
+from typing import List, Optional, Tuple
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 # Suppress TensorFlow warnings
@@ -18,35 +19,35 @@ warnings.filterwarnings("ignore")
 
 try:
     import tensorflow as tf
-    from tensorflow.keras.layers import (
-        RandomRotation,
-        RandomBrightness,
-        RandomZoom,
-        GaussianNoise,
-        RandomContrast,
-        Dense,
-        Concatenate,
-        Input,
-        Dropout,
-        BatchNormalization,
-        GlobalAveragePooling2D,
-        Conv2D,
-        MaxPooling2D,
-        Activation,
-    )
-    from tensorflow.keras.models import Sequential, Model
-    from tensorflow.keras.regularizers import l2
     from tensorflow.keras.applications import (
+        EfficientNetB0,
         MobileNetV2,
         ResNet50,
-        EfficientNetB0,
     )
     from tensorflow.keras.callbacks import (
-        ModelCheckpoint,
         EarlyStopping,
+        ModelCheckpoint,
         ReduceLROnPlateau,
         TensorBoard,
     )
+    from tensorflow.keras.layers import (
+        Activation,
+        BatchNormalization,
+        Concatenate,
+        Conv2D,
+        Dense,
+        Dropout,
+        GaussianNoise,
+        GlobalAveragePooling2D,
+        Input,
+        MaxPooling2D,
+        RandomBrightness,
+        RandomContrast,
+        RandomRotation,
+        RandomZoom,
+    )
+    from tensorflow.keras.models import Model, Sequential
+    from tensorflow.keras.regularizers import l2
 except ImportError as e:
     print(f"Warning: TensorFlow not found: {e}")
     print("Please install tensorflow>=2.19.0")
@@ -54,11 +55,10 @@ except ImportError as e:
 
 
 class CustomModel:
-    """
-    Class for defining custom models using pre-trained MobileNetV2.
+    """Class for defining custom models using pre-trained MobileNetV2.
 
-    This class provides functionality for building, compiling, and training
-    CNN models for fiber cleave classification.
+    This class provides functionality for building, compiling, and
+    training CNN models for fiber cleave classification.
     """
 
     def __init__(
@@ -68,8 +68,7 @@ class CustomModel:
         num_classes: int,
         classification_type: Optional[str] = "binary",
     ) -> None:
-        """
-        Initialize the custom model.
+        """Initialize the custom model.
 
         Args:
             train_ds: Training dataset
@@ -88,8 +87,7 @@ class CustomModel:
     def _get_backbone_model(
         self, backbone: str, image_shape: Tuple[int, int, int]
     ) -> tf.keras.Model:
-        """
-        Get pretrained backbone model based on specified backbone type.
+        """Get pretrained backbone model based on specified backbone type.
 
         Args:
             backbone: Type of backbone model ("mobilenet", "resnet", "efficientnet")
@@ -128,14 +126,16 @@ class CustomModel:
             )
 
         return pre_trained_model
-    
-    def get_data_augmentation(self, 
-                              rotation: float,
-                              brightness: float,
-                              height: float,
-                              width: float,
-                              contrast: float):
-        
+
+    def get_data_augmentation(
+        self,
+        rotation: float,
+        brightness: float,
+        height: float,
+        width: float,
+        contrast: float,
+    ):
+
         data_augmentation = Sequential(
             [
                 RandomRotation(factor=rotation),
@@ -145,7 +145,6 @@ class CustomModel:
             ]
         )
         return data_augmentation
-        
 
     def _build_custom_model(
         self, image_shape: Tuple[int, int, int], num_classes: int = 5
@@ -195,10 +194,9 @@ class CustomModel:
         rotation: float,
         backbone: Optional[str] = "mobilenet",
         unfreeze_from: Optional[int] = None,
-
     ) -> "tf.keras.Model":
-        """
-        Build a model using pre-trained MobileNetV2 to supplement small dataset.
+        """Build a model using pre-trained MobileNetV2 to supplement small
+        dataset.
 
         Args:
             image_shape: Dimensions of input images (height, width, channels)
@@ -224,8 +222,11 @@ class CustomModel:
 
         # Data augmentation pipeline
         data_augmentation = self.get_data_augmentation(
-            rotation=rotation, brightness=brightness,
-            height=height, width=width, contrast=contrast
+            rotation=rotation,
+            brightness=brightness,
+            height=height,
+            width=width,
+            contrast=contrast,
         )
 
         # CNN for images
@@ -272,8 +273,8 @@ class CustomModel:
         l2_factor: Optional[float] = None,
         unfreeze_from: Optional[int] = None,
     ) -> "tf.keras.Model":
-        """
-        Build a model that uses only the image input (no parameter features).
+        """Build a model that uses only the image input (no parameter
+        features).
 
         Args:
             image_shape: Dimensions of input images
@@ -345,8 +346,7 @@ class CustomModel:
         l2_factor: Optional[float] = None,
         unfreeze_from: Optional[int] = None,
     ) -> "tf.keras.Model":
-        """
-        Compile an image-only model.
+        """Compile an image-only model.
 
         Args:
             image_shape: Dimensions of input images
@@ -388,8 +388,7 @@ class CustomModel:
         metrics: Optional[List[str]] = None,
         num_classes: Optional[int] = 5,
     ) -> "tf.keras.Model":
-        """
-        Compile custom model after calling build_custom_model function.
+        """Compile custom model after calling build_custom_model function.
 
         Args:
             image_shape: Dimensions of input images
@@ -432,8 +431,7 @@ class CustomModel:
         unfreeze_from: Optional[int] = None,
         backbone: Optional[str] = "mobilenet",
     ) -> "tf.keras.Model":
-        """
-        Compile model after calling build_model function.
+        """Compile model after calling build_model function.
 
         Args:
             image_shape: Dimensions of input images
@@ -466,7 +464,7 @@ class CustomModel:
             height=height,
             width=width,
             rotation=rotation,
-            contrast=contrast
+            contrast=contrast,
         )
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         if self.classification_type == "binary":
@@ -483,8 +481,7 @@ class CustomModel:
         mode: str = "max",
         save_best_only: bool = True,
     ) -> ModelCheckpoint:
-        """
-        Create model checkpoints to avoid losing data while training.
+        """Create model checkpoints to avoid losing data while training.
 
         Args:
             checkpoint_filepath: Path to save model checkpoints
@@ -514,8 +511,8 @@ class CustomModel:
         factor: float = 2.0,
         monitor: str = "val_accuracy",
     ) -> ReduceLROnPlateau:
-        """
-        Create reduced learning rate callback if monitored value stops improving.
+        """Create reduced learning rate callback if monitored value stops
+        improving.
 
         Args:
             patience: Number of epochs before reducing learning rate
@@ -541,8 +538,8 @@ class CustomModel:
         mode: str = "max",
         monitor: str = "val_accuracy",
     ) -> EarlyStopping:
-        """
-        Create early stopping callback to monitor training success and prevent overfitting.
+        """Create early stopping callback to monitor training success and
+        prevent overfitting.
 
         Args:
             patience: Number of epochs to wait before stopping when monitor plateaus
@@ -564,8 +561,7 @@ class CustomModel:
     def create_tensorboard_callback(
         self, log_dir: str = "./logs", histogram_freq: int = 1
     ) -> TensorBoard:
-        """
-        Create TensorBoard callback for monitoring training.
+        """Create TensorBoard callback for monitoring training.
 
         Args:
             log_dir: Directory for TensorBoard logs
@@ -586,8 +582,7 @@ class CustomModel:
         history_file: Optional[str] = None,
         save_model_file: Optional[str] = None,
     ) -> tf.keras.callbacks.History:
-        """
-        Train model with possible callbacks to prevent overfitting.
+        """Train model with possible callbacks to prevent overfitting.
 
         Args:
             model: Model to be trained
@@ -603,8 +598,8 @@ class CustomModel:
         Returns:
             tf.keras.callbacks.History: Training history
         """
-        """callbacks = []
-        
+        """Callbacks = []
+
         if early_stopping:
             callbacks.append(early_stopping)
         if checkpoints:
@@ -612,7 +607,8 @@ class CustomModel:
         if tensorboard:
             callbacks.append(tensorboard)
         if reduce_lr:
-            callbacks.append(reduce_lr) """
+            callbacks.append(reduce_lr)
+        """
 
         if callbacks:
             history = model.fit(
@@ -665,8 +661,7 @@ class CustomModel:
         save_model_file: Optional[str] = None,
         callbacks: Optional[List] = None,
     ) -> Tuple[List[tf.keras.Model], List[tf.keras.callbacks.History]]:
-        """
-        Train model using k-fold cross validation.
+        """Train model using k-fold cross validation.
 
         Args:
             datasets: List of (train_ds, test_ds) tuples for each fold
@@ -753,8 +748,7 @@ class CustomModel:
     def get_averages_from_kfold(
         kfold_histories: List[tf.keras.callbacks.History],
     ) -> None:
-        """
-        Calculate and display average metrics from k-fold cross validation.
+        """Calculate and display average metrics from k-fold cross validation.
 
         Args:
             kfold_histories: List of training histories from k-fold training
@@ -793,8 +787,7 @@ class CustomModel:
         y_label: str,
         model_path: str,
     ) -> None:
-        """
-        Plot training metrics for visualization.
+        """Plot training metrics for visualization.
 
         Args:
             title: Title for the plot

@@ -1,18 +1,22 @@
-"""
-Main module for all logic related to XGBoost. Includes classes for training and predicting.
+"""Main module for all logic related to XGBoost.
+
+Includes classes for training and predicting.
 """
 
 from typing import Optional
-import tensorflow as tf
-import numpy as np
-from tensorflow.keras.models import Model
-import xgboost as xgb
+
 import joblib
-import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+import xgboost as xgb
+from sklearn.metrics import mean_absolute_error
+from tensorflow.keras.models import Model
 
 
 class XGBoostModel:
+    """This class provides basic logic for training the XGBoost regressor."""
 
     def __init__(self, csv_path: str, cnn_model_path: str, train_ds, test_ds):
         self.csv_path = csv_path
@@ -31,8 +35,7 @@ class XGBoostModel:
             self.feature_extractor = None
 
     def extract_features_and_labels(self, ds):
-        """
-        Extract image features and delta tension values from the dataset
+        """Extract image features and delta tension values from the dataset
         using feature extractor.
 
         Args:
@@ -55,8 +58,7 @@ class XGBoostModel:
         max_depth: Optional[int] = 4,
         random_state: Optional[int] = 42,
     ):
-        """
-        Training logic for the xgboost regression model.
+        """Training logic for the xgboost regression model.
 
         Args:
             n_estimators: Maximum number of trees to use during training
@@ -89,16 +91,13 @@ class XGBoostModel:
             verbose=True,
         )
 
-        from sklearn.metrics import mean_absolute_error
-
         y_pred = self.xgb_reg.predict(X_test)
         print("Val MAE:", mean_absolute_error(y_test, y_pred))
 
         return self.xgb_reg.evals_result()
 
     def save(self, save_path: str):
-        """
-        Saves xgboost model.
+        """Saves xgboost model.
 
         Args:
             save_path: Path to save model.
@@ -112,9 +111,7 @@ class XGBoostModel:
             raise ValueError("Model not trained yet.")
 
     def load(self, model_path: str):
-        """
-        Load model from path.
-        """
+        """Load model from path."""
         self.xgb_reg = joblib.load(model_path)
 
     def plot_metrics(
@@ -127,8 +124,7 @@ class XGBoostModel:
         x_label: str,
         y_label: str,
     ) -> None:
-        """
-        Basic plotting function for viewing metrics.
+        """Basic plotting function for viewing metrics.
 
         Args:
             title: Title of metric plot
@@ -149,6 +145,9 @@ class XGBoostModel:
 
 
 class XGBoostPredictor:
+    """This class implements basic logic for predicting and testing the change
+    in tensions."""
+
     def __init__(
         self,
         csv_path: str,
@@ -174,15 +173,13 @@ class XGBoostPredictor:
             self.feature_extractor = None
 
     def extract_cnn_features(self, image_path: str) -> np.ndarray:
-        """
-        Extract CNN features from a grayscale image.
+        """Extract CNN features from a grayscale image.
 
         Args:
             image_path: Path to image to extract features
 
         Returns:
             Extracted features from image.
-        
         """
         img_raw = tf.io.read_file(image_path)
         img = tf.image.decode_png(img_raw, channels=1)
@@ -198,7 +195,7 @@ class XGBoostPredictor:
         try:
             df = pd.read_csv(self.csv_path)
         except Exception as e:
-            raise RuntimeError(f"Failed to load CSV: {e}")
+            raise RuntimeError(f"Failed to load CSV: {e}") from e
 
         df["CleaveCategory"] = df.apply(
             lambda row: (
@@ -231,12 +228,14 @@ class XGBoostPredictor:
             self.model = joblib.load(self.xgb_path)
             self.scaler = joblib.load(self.scaler_path)
         except Exception as e:
-            raise RuntimeError(f"Failed to load model or scaler: {e}")
+            raise RuntimeError(f"Failed to load model or scaler: {e}") from e
 
     def predict(self):
         """Run tension predictions on filtered cleave data."""
         if not self.model or not self.scaler:
-            raise RuntimeError("Model and scaler must be loaded before prediction.")
+            raise RuntimeError(
+                "Model and scaler must be loaded before prediction."
+            )
 
         df, mean = self.extract_data()
         image_paths = df["ImagePath"]

@@ -2,11 +2,10 @@ from .model_pipeline import *
 
 
 class BuildMLPModel(CustomModel):
-    """
-    MLP model for tension prediction using features from pre-trained CNN.
+    """MLP model for tension prediction using features from pre-trained CNN.
 
-    This class builds regression models that use features extracted from a CNN
-    to predict optimal tension values for fiber cleaving.
+    This class builds regression models that use features extracted from
+    a CNN to predict optimal tension values for fiber cleaving.
     """
 
     def __init__(self, cnn_model_path: str, train_ds, test_ds):
@@ -17,8 +16,7 @@ class BuildMLPModel(CustomModel):
     def _build_pretrained_model(
         self, param_shape: Tuple[int, ...]
     ) -> tf.keras.Model:
-        """
-        Build MLP model for tension prediction.
+        """Build MLP model for tension prediction.
 
         Args:
             param_shape: Dimensions of numerical parameters
@@ -50,8 +48,7 @@ class BuildMLPModel(CustomModel):
         learning_rate: float = 0.001,
         metrics: Optional[List[str]] = None,
     ) -> "tf.keras.Model":
-        """
-        Compile MLP model for regression.
+        """Compile MLP model for regression.
 
         Args:
             param_shape: Dimensions of numerical parameters
@@ -75,8 +72,7 @@ class BuildMLPModel(CustomModel):
         mode: str = "min",
         monitor: str = "val_mae",
     ) -> "EarlyStopping":
-        """
-        Create early stopping callback for regression model.
+        """Create early stopping callback for regression model.
 
         Args:
             patience: Number of epochs to wait before stopping
@@ -102,8 +98,7 @@ class BuildMLPModel(CustomModel):
         mode: str = "min",
         save_best_only: bool = True,
     ) -> ModelCheckpoint:
-        """
-        Create model checkpoints for MLP model.
+        """Create model checkpoints for MLP model.
 
         Args:
             checkpoint_filepath: Path to save model checkpoints
@@ -139,8 +134,7 @@ class BuildMLPModel(CustomModel):
         history_file: Optional[str] = None,
         model_file: Optional[str] = None,
     ) -> Tuple[List[tf.keras.Model], List[tf.keras.callbacks.History]]:
-        """
-        Train MLP model using k-fold cross validation.
+        """Train MLP model using k-fold cross validation.
 
         Args:
             datasets: List of (train_ds, test_ds) tuples for each fold
@@ -222,8 +216,8 @@ class BuildMLPModel(CustomModel):
     def get_averages_from_kfold(
         kfold_histories: List[tf.keras.callbacks.History], scaler: any
     ) -> None:
-        """
-        Calculate and display average metrics from k-fold cross validation for MLP.
+        """Calculate and display average metrics from k-fold cross validation
+        for MLP.
 
         Args:
             kfold_histories: List of training histories from k-fold training
