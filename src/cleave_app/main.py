@@ -857,13 +857,13 @@ def _train_xgboost(config):
     xgb_model.save(config.xgb_path)
 
     xgb_model.plot_metrics(
-        title="RSME vs. Val RSME",
+        title="RMSE vs. Val RMSE",
         metric1=evals_result["validation_0"]["rmse"],
         metric2=evals_result["validation_1"]["rmse"],
         metric1_label="RSME",
-        metric2_label="Val RSME",
+        metric2_label="Val RMSE",
         x_label="Training Round",
-        y_label="RSME",
+        y_label="RMSE",
     )
 
 

@@ -5,6 +5,7 @@ Includes classes for training and predicting.
 
 from typing import Optional
 
+import os
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,6 +24,7 @@ class XGBoostModel:
         self.train_ds = train_ds
         self.test_ds = test_ds
         self.xgb_reg = None
+        self.xgb_path = None
 
         try:
             self.cnn_model = tf.keras.models.load_model(cnn_model_path)
@@ -107,6 +109,7 @@ class XGBoostModel:
         """
         if self.xgb_reg is not None:
             joblib.dump(self.xgb_reg, save_path)
+            self.xgb_path = save_path
         else:
             raise ValueError("Model not trained yet.")
 
@@ -141,6 +144,11 @@ class XGBoostModel:
         plt.xlabel(x_label)
         plt.ylabel(y_label)
         plt.legend(loc="upper right")
+        model_dir = os.path.dirname(self.xgb_path)
+        basename = os.path.basename(self.xgb_path)
+        stem, _ = os.path.splitext(basename)
+        save_plot = os.path.join(model_dir, f"{stem}_{title}.png")
+        plt.savefig(save_plot)
         plt.show()
 
 
