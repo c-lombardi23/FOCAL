@@ -58,6 +58,24 @@ The models use transfer learning with either MobileNetV2, ResNet, or EfficientNe
 git clone https://github.com/c-lombardi23/ImageProcessingClone.git
 cd ImageProcessing
 
+```
+
+Create Virtual Enviornment
+
+```bash
+python -m venv myenv
+```
+On Windows:
+
+```bash
+myenv\Scripts\activate
+```
+
+On Linux:
+
+```bash
+source myenv/bin/activate
+
 # Install in development mode
 pip install -e .
 
