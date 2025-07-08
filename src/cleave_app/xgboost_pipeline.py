@@ -36,7 +36,7 @@ class XGBoostModel:
             print(f"Error loading model or extracting layer: {e}")
             self.feature_extractor = None
 
-    def extract_features_and_labels(self, ds):
+    def _extract_features_and_labels(self, ds):
         """Extract image features and delta tension values from the dataset
         using feature extractor.
 
@@ -72,8 +72,8 @@ class XGBoostModel:
             Trained xgboost model
         """
 
-        X_train, y_train = self.extract_features_and_labels(self.train_ds)
-        X_test, y_test = self.extract_features_and_labels(self.test_ds)
+        X_train, y_train = self._extract_features_and_labels(self.train_ds)
+        X_test, y_test = self._extract_features_and_labels(self.test_ds)
 
         self.xgb_reg = xgb.XGBRegressor(
             objective="reg:squarederror",
@@ -184,7 +184,7 @@ class XGBoostPredictor:
             print(f"[CNN Load Error]: {e}")
             self.feature_extractor = None
 
-    def extract_cnn_features(self, image_path: str) -> np.ndarray:
+    def _extract_cnn_features(self, image_path: str) -> np.ndarray:
         """Extract CNN features from a grayscale image.
 
         Args:
@@ -202,7 +202,7 @@ class XGBoostPredictor:
         # remove single dimensional entries
         return self.feature_extractor(img).numpy().squeeze()
 
-    def extract_data(self,
+    def _extract_data(self,
                      angle_threshold: float,
                      diameter_threshold: float):
         """Load and filter dataset for prediction (only bad cleaves)."""
@@ -251,7 +251,7 @@ class XGBoostPredictor:
                 "Model and scaler must be loaded before prediction."
             )
 
-        df, mean = self.extract_data(angle_threshold=self.angle_threshold,
+        df, mean = self._extract_data(angle_threshold=self.angle_threshold,
                                      diameter_threshold=self.diameter_threshold)
         image_paths = df["ImagePath"]
         tensions = df["CleaveTension"]
@@ -261,7 +261,7 @@ class XGBoostPredictor:
         predicted_deltas = []
 
         for img_path in image_paths:
-            features = self.extract_cnn_features(img_path)
+            features = self._extract_cnn_features(img_path)
             pred_scaled = self.model.predict(features.reshape(1, -1))[0]
             delta = self.scaler.inverse_transform([[pred_scaled]])[0][0]
             predicted_deltas.append(delta)
