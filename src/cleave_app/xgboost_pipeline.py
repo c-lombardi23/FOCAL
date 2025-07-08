@@ -205,7 +205,16 @@ class XGBoostPredictor:
     def _extract_data(self,
                      angle_threshold: float,
                      diameter_threshold: float):
-        """Load and filter dataset for prediction (only bad cleaves)."""
+        """Load and filter dataset for prediction (only bad cleaves).
+
+        Args:
+            angle_threshold: Maximum angle to be considered good cleave
+            diameter_threshold: Maximum diameter of scribe mark to be considered good cleave
+
+        Returns:
+            Df of bad cleaves and the mean of the good cleaves
+
+        """
         try:
             df = pd.read_csv(self.csv_path)
         except Exception as e:
