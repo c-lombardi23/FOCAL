@@ -224,6 +224,8 @@ class TrainXGBoostConfig(ModelConfig):
 
 class TestXGBoostConfig(TestMLPConfig):
     xgb_path: str
+    angle_threshold: float
+    diameter_threshold: float
 
 
 class GradCamConfig(BaseConfig):

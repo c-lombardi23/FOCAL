@@ -160,14 +160,18 @@ class XGBoostPredictor:
         self,
         csv_path: str,
         cnn_model_path: str,
+        angle_threshold: float,
+        diameter_threshold: float,
         xgb_path: Optional[str] = None,
-        scaler_path: Optional[str] = None,
+        scaler_path: Optional[str] = None
     ):
         self.csv_path = csv_path
         self.xgb_path = xgb_path
         self.scaler_path = scaler_path
         self.model = None
         self.scaler = None
+        self.angle_threshold = angle_threshold
+        self.diameter_threshold = diameter_threshold
 
         # Load CNN
         try:
@@ -198,7 +202,9 @@ class XGBoostPredictor:
         # remove single dimensional entries
         return self.feature_extractor(img).numpy().squeeze()
 
-    def extract_data(self):
+    def extract_data(self,
+                     angle_threshold: float,
+                     diameter_threshold: float):
         """Load and filter dataset for prediction (only bad cleaves)."""
         try:
             df = pd.read_csv(self.csv_path)
@@ -208,8 +214,8 @@ class XGBoostPredictor:
         df["CleaveCategory"] = df.apply(
             lambda row: (
                 1
-                if row["CleaveAngle"] <= 0.45
-                and row["ScribeDiameter"] < 17
+                if row["CleaveAngle"] <= angle_threshold
+                and row["ScribeDiameter"] < diameter_threshold
                 and not row["Hackle"]
                 and not row["Misting"]
                 else 0
@@ -245,7 +251,8 @@ class XGBoostPredictor:
                 "Model and scaler must be loaded before prediction."
             )
 
-        df, mean = self.extract_data()
+        df, mean = self.extract_data(angle_threshold=self.angle_threshold,
+                                     diameter_threshold=self.diameter_threshold)
         image_paths = df["ImagePath"]
         tensions = df["CleaveTension"]
         true_delta = df["TrueDelta"]

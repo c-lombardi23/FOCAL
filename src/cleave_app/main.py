@@ -871,6 +871,8 @@ def _test_xgboost(config):
     xgb_predicter = XGBoostPredictor(
         xgb_path=config.xgb_path,
         csv_path=config.csv_path,
+        angle_threshold=config.angle_threshold,
+        diameter_threshold=config.diameter_threshold,
         scaler_path=config.label_scaler_path,
         cnn_model_path=config.model_path,
     )
