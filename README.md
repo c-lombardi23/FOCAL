@@ -55,7 +55,7 @@ The models use transfer learning with either MobileNetV2, ResNet, or EfficientNe
 
 ```bash
 # Clone the repository
-git clone https://github.com/c-lombardi23/ImageProcessing.git
+git clone https://github.com/c-lombardi23/ImageProcessingClone.git
 cd ImageProcessing
 
 # Install in development mode

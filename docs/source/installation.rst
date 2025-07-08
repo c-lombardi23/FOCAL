@@ -7,12 +7,6 @@ Requirements
 * Python 3.10 or higher
 * pip package manager
 
-Install from PyPI
------------------
-
-The easiest way to install ImageProcessingClone is using pip::
-
-    pip install cleave_app
 
 Install from Source
 -------------------
