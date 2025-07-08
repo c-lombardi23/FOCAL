@@ -38,4 +38,11 @@ The package will automatically install these dependencies:
 * numpy
 * pandas
 * scikit-learn
-* [remaining dependencies from requirements.txt]
+* tensorflow
+* keras-tuner
+* joblib
+* Pillow
+* pydantic
+* opencv-python
+* typer
+* click

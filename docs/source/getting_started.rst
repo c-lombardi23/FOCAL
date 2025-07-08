@@ -1,163 +1,108 @@
+.. _getting-started:
+
 Getting Started
 ===============
 
-This quickstart will have you training your first model in only a few steps.
+Welcome to Fiber Cleave Processing! This guide provides a hands-on walkthrough to get you from installation to training your first classification model in just a few minutes.
 
-1. **Clone & install**  
-   To clone and install in “editable” mode:
+.. note::
+   This guide focuses on one common task to get you started quickly. For a full list of all configuration options and modes, please see the :doc:`Configuration <configuration>` page.
 
-   .. code-block:: bash
+Prerequisites
+-------------
 
-      git clone https://github.com/c-lombardi23/ImageProcessing.git
-      cd ImageProcessingClone
-      pip install -e ".[dev]"
+*   Python 3.10+
+*   Git
 
-2. **Select a mode**  
-   You drive the CLI by setting the `mode` field in your config:
+Step 1: Clone and Install
+-------------------------
 
-   2. **Select a mode**  
-   You drive the CLI by setting the `mode` field in your config:
+First, clone the repository and install the package in "editable" mode. This makes the `cleave-app` command available in your terminal.
 
-   ``train_cnn``
-       Train the CNN model using both images and numerical features
-       
-       - ``bad_good``: Train on binary classification
-       - ``multiclass``: Train on multiple classes
+.. code-block:: bash
 
-   ``train_mlp``
-       Train the MLP regression model (uses a pre-trained CNN)
+   git clone https://github.com/c-lombardi23/ImageProcessing.git
+   cd ImageProcessingClone
+   pip install -e ".[dev]"
 
-   ``train_image_only``
-       Train a CNN on images only
+Step 2: Prepare Your Data
+-------------------------
 
-   ``train_kfold_cnn``
-       CNN training with k-fold cross-validation
+The application expects your data to be organized in a specific way.
 
-   ``train_kfold_mlp``
-       MLP training with k-fold cross-validation
+.. code-block:: text
 
-   ``test_cnn``
-       Evaluate a trained CNN model
+   your_project/
+   ├── images/
+   │   ├── image1.png
+   │   └── ...
+   ├── data.csv
+   └── config_files/
+       └── your_config.json
 
-   ``test_mlp``
-       Predict tension with a trained MLP
+- **`images/`**: A folder containing all your PNG or JPG images.
+- **`data.csv`**: A CSV file containing image filenames and their corresponding features. Must include the columns: ``CleaveAngle``, ``CleaveTension``, ``ScribeDiameter``, ``Misting``, ``Hackle``, ``Tearing``.
 
-   ``test_image_only``
-       Evaluate an image-only CNN
+Step 3: Create a Minimal Configuration
+---------------------------------------
 
-   ``image_hyperparameter``
-       Tune hyperparameters for image-only CNN
+To begin, we will train a simple binary classification model. You only need to define a few essential settings; the application will use sensible defaults for the rest.
 
-   ``cnn_hyperparameter``
-       Tune hyperparameters for combined CNN+features
+Create a new file at `config_files/train_binary_cnn.json` and add the following:
 
-   ``mlp_hyperparameter``
-       Tune hyperparameters for MLP
+.. code-block:: json
 
-   ``grad_cam``
-       Generate Grad-CAM heatmaps
+   {
+       "mode": "train_cnn",
+       "cnn_mode": "bad_good",
 
-   ``custom_model``
-       Train a small custom CNN from scratch
+       "csv_path": "data.csv",
+       "img_folder": "images/",
+       "model_path": "my_first_model.keras",
 
-   ``train_xgboost``
-       Train the XGBoost regression model
+       "batch_size": 16,
+       "max_epochs": 10,
+       "num_classes": 1,
+       "classification_type": "binary",
 
-   ``test_xgboost``
-       Test the XGBoost regression model
+       "image_shape": [224, 224, 3],
+       "feature_shape": [6],
 
+       "dropout1": 0.0,
+       "dropout2": 0.2,
+       "dropout3": 0.4,
+       "dense1": 62,
+       "dense2": 32
+   }
 
-3. **Data Preparation**
+.. tip::
+   This minimal config is all you need for a first run. For a detailed explanation of every available parameter, see the :doc:`Configuration <configuration>` reference.
 
- Your data should be organized as follows:
+Step 4: Run the Training
+------------------------
 
-   .. code-block:: text
+You are now ready to run the command-line interface. Point it to the configuration file you just created.
 
-      your_project/
-      ├── images/
-      │   ├── image1.png
-      │   ├── image2.png
-      │   └── ...
-      ├── data.csv
-      └── config_files/
-         └── your_config.json
+.. code-block:: bash
 
-   **CSV Format:** Your CSV should contain columns for image filenames and corresponding features/labels.
-   Required columns are CleaveAngle, CleaveTension, ScribeDiameter, Misting, Hackle, Tearing
+   cleave-app --file_path config_files/train_binary_cnn.json
 
-   **Image Requirements:**
-   * Supported formats: PNG, JPG, JPEG
-   * Recommended size: 224x224 pixels (will be resized automatically)
-   * Images should be in a single folder
+You will see training progress in the console. When it's finished, you will find `my_first_model.keras` in your project root.
 
-4. **Write your config file**  
-   In the project root, open or create a JSON under `config_files/`, e.g. `config_files/train_cnn.json`:
+Step 5: What's Next?
+--------------------
 
-   .. code-block:: json
+Congratulations! You have successfully trained and saved your first model.
 
-      {
-      "csv_path": "your_path_to_csv.csv",
-      "img_folder": "image_folder_path",
-      "feature_scaler_path": "/path_to/feature_scaler/pkl",
-      "classification_path": "/path_to/classification_report.csv",
+Now that you understand the basic workflow, you can explore more advanced features:
 
-      "image_shape": [224, 224, 3],
-      "feature_shape": [6],
+*   **Predict with Your Model:** Use the ``test_cnn`` mode to evaluate your saved model on new data.
+*   **Try Other Models:** Experiment with ``train_mlp`` or ``train_xgboost`` for tension prediction.
+*   **See All Options:** Dive into the :doc:`Configuration <configuration>` page to see all available modes and settings for fine-tuning your models.
 
-      "mode": "train_cnn",
-      "cnn_mode": "bad_good",
-      "backbone": "efficientnet",
-      "backbone_name": "resnet",
-      "model_path": "/path_to/save_model.keras",
-      "num_classes": 1,
-      "classification_type": "binary",
+Troubleshooting
+---------------
 
-
-      "learning_rate": 0.01,
-      "batch_size": 16,
-      "buffer_size": 40,
-      "test_size": 0.25,
-      "max_epochs": 50,
-      "objective": "val_accuracy",
-      "tension_threshold": 190,
-
-      "brightness": 0.1,
-      "height": 0.0,
-      "width": 0.0,
-      "contrast": 0.0,
-      "rotation": 0.05,
-
-      "dropout1": 0.0,
-      "dropout2": 0.4,
-      "dropout3": 0.4,
-      "dense1": 64,
-      "dense2": 32,
-      
-
-      "early_stopping": "n",
-      "patience": 5,
-      "monitor": "val_loss",
-      "method": "min",
-   
-      "set_mask": "y"
-      }
-
-5. **Run the CLI**  
-
-   .. code-block:: bash
-
-      cleave-app --file_path config_files/train_cnn.json
-
-All results (training progress, plots, reports) will print to the console and be saved wherever you pointed your `save_model_file`, `save_history_file`, etc.
-
-6. **Common Issues:**
-
-* **ModuleNotFoundError:** Make sure you installed in editable mode with ``pip install -e ".[dev]"``
-* **Memory errors:** Reduce ``batch_size`` in your config file
-* **File not found:** Check that all paths in your config use forward slashes or double backslashes
-
-**Getting Help:**
-* Check the logs for detailed error messages
-* Verify your config file syntax with a JSON validator
-* Make sure your CSV and image paths are correct
-
+- **ModuleNotFoundError:** Ensure you ran `pip install -e ".[dev]"`.
+- **Memory errors:** Reduce the `batch_size` in your config file.
+- **File not found:** Paths in your config file are relative to your project root. Ensure they are correct.

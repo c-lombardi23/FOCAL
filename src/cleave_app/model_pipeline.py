@@ -1,8 +1,8 @@
 """Model pipeline module for the Fiber Cleave Processing application.
 
 This module provides classes for building, training, and managing CNN
-and MLP models for fiber cleave quality classification and tension
-prediction.
+model for fiber cleave quality classification. It uses binary classification to place
+the image as either a good or bad cleave.
 """
 
 import os
