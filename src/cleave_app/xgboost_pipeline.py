@@ -292,6 +292,7 @@ class XGBoostPredictor:
                 "Predicted Delta": np.array(predicted_deltas).round(2),
             }
         )
-        df.to_csv(f"{self.xgb_path}_performance.csv", index=False)
+        basepath = self.xgb_path.strip(".pkl")
+        df.to_csv(f"{basepath}_performance.csv", index=False)
 
         return predictions
