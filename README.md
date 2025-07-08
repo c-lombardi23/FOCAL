@@ -51,12 +51,6 @@ The models use transfer learning with either MobileNetV2, ResNet, or EfficientNe
 - TensorFlow 2.19 or higher
 - CUDA-compatible GPU (recommended for training)
 
-### Install from PyPI
-
-```bash
-pip install FiberCleaveProcessing
-```
-
 ### Install from Source
 
 ```bash
@@ -75,7 +69,22 @@ pip install -e ".[dev]"
 
 ```bash
 cleave-app --help
+
 ```
+### Build Documentation
+
+```bash
+sphinx-build docs/source docs/build
+```
+
+### Display Documentation
+
+```bash
+cd docs/build
+python -m http.server 8000
+```
+go to http://localhost:8000/ in browser 
+
 
 ## 🏃‍♂️ Quick Start
 
