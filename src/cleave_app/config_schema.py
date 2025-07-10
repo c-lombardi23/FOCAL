@@ -11,74 +11,53 @@ import json
 import os
 
 # Import typing hints for better code clarity and static analysis.
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type, Literal
 
 # Import core components from Pydantic for data validation and modeling.
 from pydantic import BaseModel, field_validator, model_validator
 
+from pathlib import Path
+
 
 # Define a Mixin class for Early Stopping parameters.
 class EarlyStoppingMixin(BaseModel):
-    """Adds early-stopping configuration parameters.
-
-    Fields:
-      - early_stopping (str): 'y' to enable early stopping, 'n' to disable.
-      - patience (int): Number of epochs to wait for improvement.
-      - monitor (str): Metric to monitor (e.g. 'val_loss', 'val_accuracy').
-      - method (str): 'min' or 'max' to indicate direction of improvement.
-    """
+    """Adds early-stopping configuration parameters."""
 
     # Flag to enable ('y') or disable ('n') the early stopping callback.
     early_stopping: Optional[str] = "n"
     # Number of epochs with no improvement after which training will be stopped.
     patience: Optional[int] = 3
-    # The metric to be monitored for early stopping (e.g., 'val_accuracy').
+    # The metric to be monitored for early stopping 
     monitor: Optional[str] = "val_accuracy"
-    # The direction of improvement ('min' for loss, 'max' for accuracy).
-    method: Optional[str] = "max"
+    # The direction of improvement 
+    method: Literal["max", "min"] = "max"
 
 
 # Define a Mixin class for Model Checkpointing parameters.
 class CheckpointMixin(BaseModel):
-    """Adds model-checkpointing configuration parameters.
-
-    Fields:
-      - checkpoints (str): 'y' to enable checkpoints, 'n' to disable.
-      - checkpoint_filepath (str): Path where to save the checkpoint file.
-      - monitor (str): Metric to monitor for saving best model.
-      - method (str): 'min' or 'max' depending on the monitored metric.
-    """
+    """Adds model-checkpointing configuration parameters."""
 
     # Flag to enable ('y') or disable ('n') the model checkpoint callback.
     checkpoints: Optional[str] = "n"
     # Filepath where the best model checkpoint will be saved.
-    checkpoint_filepath: Optional[str] = None
+    checkpoint_filepath: Optional[Path] = None
     # The metric to be monitored for saving the best model.
     monitor: Optional[str] = "val_accuracy"
     # The direction of improvement for the monitored metric.
-    method: Optional[str] = "max"
+    method: Literal["max", "min"] = "max"
 
 
 # Define the base configuration class that all other configs inherit from.
 class BaseConfig(BaseModel):
-    """Basic config for all classes.
-
-    Fields:
-      - csv_path: (str) : path to csv data for images
-      - img_folder (str): folder containing images
-      - mode: (str) : differnente modes e.g. test_cnn, train_cnn, etc.
-      - set_mask (str): y/n for masking images to remove background
-      - image_shape (list): array of image dimensions
-      - feature_shape (list): array of feature dimensions
-    """
+    """Basic config for all classes."""
 
     # Path to the CSV file containing metadata for the images.
-    csv_path: str
+    csv_path: Path
     # Path to the directory containing all the image files.
-    img_folder: str
-    # The operational mode for the CLI (e.g., 'train_cnn', 'test_mlp').
+    img_folder: Path
+    # The operational mode for the CLI 
     mode: str
-    # The target shape for images after resizing (height, width, channels).
+    # The target shape for images after resizing 
     image_shape: List[int]
     # Flag to enable ('y') or disable ('n') background masking on images.
     set_mask: Optional[str] = None
@@ -132,20 +111,20 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     contrast: Optional[float] = 0.0
 
     # --- File Path Configurations ---
-    # Path to save or load the feature scaler (e.g., StandardScaler).
-    feature_scaler_path: Optional[str] = None
-    # Path to save or load the label scaler (for regression tasks).
-    label_scaler_path: Optional[str] = None
+    # Path to save or load the feature scaler
+    feature_scaler_path: Optional[Path] = None
+    # Path to save or load the label scaler 
+    label_scaler_path: Optional[Path] = None
     # Path to load a pre-trained CNN model or save the current one.
-    model_path: Optional[str] = None
-    # Path to save the final classification report (e.g., a CSV file).
-    classification_path: Optional[str] = None
+    model_path: Optional[Path] = None
+    # Path to save the final classification report
+    classification_path: Optional[Path] = None
     # Path to save or load a One-Hot Encoder.
-    encoder_path: Optional[str] = None
+    encoder_path: Optional[Path] = None
     # Path to save the trained model file.
-    save_model_file: Optional[str] = None
-    # Path to save the training history (e.g., as a JSON file).
-    save_history_file: Optional[str] = None
+    save_model_file: Optional[Path] = None
+    # Path to save the training history
+    save_history_file: Optional[Path] = None
 
     # --- Hyperparameter Tuning ---
     # Directory to store Keras Tuner trial history and results.
@@ -164,7 +143,7 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     test_size: Optional[float] = 0.2
     # Maximum number of epochs to train the model.
     max_epochs: Optional[int] = None
-    # The objective metric for callbacks to monitor (e.g., 'val_loss').
+    # The objective metric for callbacks to monitor
     objective: Optional[str] = None
     # The epoch number to start or continue training from.
     initial_epochs: Optional[int] = None
@@ -174,6 +153,8 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
 
 # Define configuration specific to training the hybrid CNN+MLP model.
 class TrainCNNConfig(ModelConfig):
+    """Defines configuration for training a hybrid CNN model."""
+
     # Specifies the mode within CNN training.
     cnn_mode: str
     # The shape of the numerical feature vector.
@@ -196,7 +177,7 @@ class TrainCNNConfig(ModelConfig):
     diameter_threshold: float
     # The tension threshold used for binary classification.
     tension_threshold: Optional[int] = 190
-    # The name of the pre-trained backbone to use (e.g., 'efficientnet').
+    # The name of the pre-trained backbone to use 
     backbone: Optional[str] = "efficientnet"
     # Layer index from which to start unfreezing weights for fine-tuning.
     unfreeze_from: Optional[int] = None
@@ -205,7 +186,7 @@ class TrainCNNConfig(ModelConfig):
     # Number of epochs to wait before reducing the learning rate.
     reduce_lr_patience: Optional[int] = None
     # The type of classification ('binary' or 'multiclass').
-    classification_type: Optional[str] = "binary"
+    classification_type: Literal["binary", "multiclass"] = "binary"
 
     # Define a Pydantic model validator that runs after initial field validation.
     @model_validator(mode="after")
@@ -222,8 +203,10 @@ class TrainCNNConfig(ModelConfig):
 
 # Define configuration specific to training the MLP-only model.
 class TrainMLPConfig(ModelConfig):
-    # Path to the image (used for context, not for training the MLP).
-    img_path: str
+    """Defines configuration for training an MLP-only model."""
+
+    # Path to the image 
+    img_path: Path
 
     # Define a post-validation check for this model.
     @model_validator(mode="after")
@@ -231,7 +214,7 @@ class TrainMLPConfig(ModelConfig):
         # Validate the feature shape required for the MLP model.
         if self.feature_shape != [5]:
             raise ValueError("Feature shape must be 5 for MLP")
-        # Validate the image shape (for consistency, though not used in training).
+        # Validate the image shape 
         if self.image_shape != [224, 224, 3]:
             raise ValueError("Image shape not compatible")
         # Return the validated model instance.
@@ -240,28 +223,30 @@ class TrainMLPConfig(ModelConfig):
 
 # Define configuration specific to testing the hybrid CNN+MLP model.
 class TestCNNConfig(BaseConfig):
+    """Defines configuration for testing a hybrid CNN model."""
+
     # Specifies the mode within CNN testing.
     cnn_mode: str
     # The tension threshold for classification logic.
     tension_threshold: Optional[int] = 190
     # Path to a trained tension prediction model.
-    tension_model_path: Optional[str] = None
+    tension_model_path: Optional[Path] = None
     # Path to a saved feature scaler.
-    feature_scaler_path: Optional[str] = None
+    feature_scaler_path: Optional[Path] = None
     # Path to the trained CNN model file.
-    model_path: Optional[str] = None
+    model_path: Optional[Path] = None
     # A list of numerical features to use for a single test prediction.
     test_features: Optional[List[float]] = None
     # Path to a single image for testing.
-    img_path: Optional[str] = None
+    img_path: Optional[Path] = None
     # Path to a saved label scaler.
-    label_scaler_path: Optional[str] = None
+    label_scaler_path: Optional[Path] = None
     # Path to a saved label encoder.
-    encoder_path: Optional[str] = None
+    encoder_path: Optional[Path] = None
     # The name of the pre-trained backbone used in the model.
     backbone: Optional[str] = None
     # Path to save the output classification report.
-    classification_path: Optional[str] = None
+    classification_path: Optional[Path] = None
 
     # Define a post-validation check for this model.
     @model_validator(mode="after")
@@ -278,14 +263,16 @@ class TestCNNConfig(BaseConfig):
 
 # Define configuration specific to testing the MLP-only model.
 class TestMLPConfig(BaseConfig):
+    """Defines configuration for testing an MLP-only model."""
+
     # Path to a saved feature scaler.
-    feature_scaler_path: Optional[str] = None
+    feature_scaler_path: Optional[Path] = None
     # Path to a saved label scaler.
-    label_scaler_path: Optional[str] = None
+    label_scaler_path: Optional[Path] = None
     # Path to the trained MLP model file.
-    model_path: Optional[str] = None
+    model_path: Optional[Path] = None
     # Path to a single image for context.
-    img_path: Optional[str] = None
+    img_path: Optional[Path] = None
     # A list of numerical features for a single test prediction.
     test_features: Optional[List[float]] = None
 
@@ -304,36 +291,44 @@ class TestMLPConfig(BaseConfig):
 
 # Define configuration for testing an image-only classification model.
 class TestImageOnlyConfig(BaseConfig):
+    """Defines configuration for testing an image-only model."""
+
     # Path to the trained image-only model file.
-    model_path: Optional[str] = None
+    model_path: Optional[Path] = None
     # Path to the saved label encoder.
-    encoder_path: Optional[str] = None
+    encoder_path: Optional[Path] = None
     # Path to a single image for testing.
-    img_path: Optional[str] = None
+    img_path: Optional[Path] = None
     # The name of the backbone used in the model.
     backbone: Optional[str] = None
-    # The type of classification ('binary' or 'multiclass').
-    classification_type: Optional[str] = "binary"
+    # The type of classification 
+    classification_type: Literal["binary", "multiclass"] = "binary"
     # Path to save the output classification report.
-    classification_path: Optional[str] = None
+    classification_path: Optional[Path] = None
 
 
 # Define a config for K-Fold Cross-Validation on the CNN model.
 class TrainKFoldCNNConfig(TrainCNNConfig):
+    """Defines configuration for K-Fold cross-validation on a CNN model."""
+
     # This class inherits all fields and validators from TrainCNNConfig.
     pass
 
 
 # Define a config for K-Fold Cross-Validation on the MLP model.
 class TrainKFoldMLPConfig(TrainMLPConfig):
+    """Defines configuration for K-Fold cross-validation on an MLP model."""
+
     # This class inherits all fields and validators from TrainMLPConfig.
     pass
 
 
 # Define configuration for training an XGBoost model.
 class TrainXGBoostConfig(ModelConfig):
+    """Defines configuration for training an XGBoost model."""
+
     # Path to save the trained XGBoost model.
-    xgb_path: Optional[str] = None
+    xgb_path: Optional[Path] = None
     # Number of boosting rounds (trees) in the XGBoost model.
     n_estimators: Optional[int] = 200
     # Maximum depth of each tree in the XGBoost model.
@@ -344,8 +339,10 @@ class TrainXGBoostConfig(ModelConfig):
 
 # Define configuration for testing an XGBoost model.
 class TestXGBoostConfig(TestMLPConfig):
+    """Defines configuration for testing an XGBoost model."""
+
     # Path to the trained XGBoost model file.
-    xgb_path: str
+    xgb_path: Path
     # The angle threshold for classification logic.
     angle_threshold: float
     # The diameter threshold for classification logic.
@@ -354,18 +351,20 @@ class TestXGBoostConfig(TestMLPConfig):
 
 # Define configuration for generating Grad-CAM heatmaps.
 class GradCamConfig(BaseConfig):
+    """Defines configuration for generating Grad-CAM visualizations."""
+
     # Path to the trained model for which to generate the heatmap.
-    model_path: Optional[str] = None
+    model_path: Optional[Path] = None
     # Path to the input image for Grad-CAM.
-    img_path: Optional[str] = None
+    img_path: Optional[Path] = None
     # Numerical features required if the model is multi-input.
     test_features: Optional[List[float]] = None
-    # The name of the backbone model (for finding layers).
+    # The name of the backbone model 
     backbone_name: Optional[str] = None
     # The name of the final convolutional layer to visualize.
     conv_layer_name: Optional[str] = None
     # Filepath to save the output heatmap image.
-    heatmap_file: Optional[str] = None
+    heatmap_file: Optional[Path] = None
 
     # Define a post-validation check for this model.
     @model_validator(mode="after")
@@ -378,63 +377,25 @@ class GradCamConfig(BaseConfig):
 
 
 # Define configuration for training an image-only classification model.
-class TrainImageOnlyConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
-    # Threshold for angle classification.
+class TrainImageOnlyConfig(ModelConfig):
+    """Configuration for training an image-only classification model."""
+
+    # Max angle for good cleave
     angle_threshold: float
-    # Threshold for diameter classification.
+    # Max diameter for good cleave
     diameter_threshold: float
-    # The name of the pre-trained backbone to use.
-    backbone: Optional[str] = "mobilenet"
-    # Initial learning rate for the optimizer.
-    learning_rate: Optional[float] = 0.001
-    # Shuffle buffer size for the dataset.
-    buffer_size: Optional[int] = 32
-    # Number of samples per training batch.
-    batch_size: Optional[int] = 8
-    # Fraction of data for the test set.
-    test_size: Optional[float] = 0.2
-    # Dropout rate for the first dropout layer.
+    # Dropout 1 rate
     dropout1_rate: Optional[float] = 0.1
-    # Number of units in the dense layer.
+    # Number of FC layers
     dense_units: Optional[int] = 32
-    # Dropout rate for the second dropout layer.
+    # Dropout before final layer
     dropout2_rate: Optional[float] = 0.2
-    # L2 regularization factor.
+    # L2 regularization
     l2_factor: Optional[float] = None
-    # Maximum number of training epochs.
-    max_epochs: Optional[int] = None
-    # Directory for Keras Tuner results.
-    tuner_directory: Optional[str] = None
-    # Objective metric for tuning and callbacks.
-    objective: Optional[str] = "val_accuracy"
-    # Name of the Keras Tuner project.
-    project_name: Optional[str] = None
-    # Path to save the model file.
-    save_model_file: Optional[str] = None
-    # Path to save the training history.
-    save_history_file: Optional[str] = None
-    # Starting epoch for resuming training.
-    initial_epochs: Optional[int] = None
-    # Flag ('y'/'n') to resume training.
-    continue_train: Optional[str] = None
-    # Path to a file with the best tuner parameters.
+    # Tuner params from best search
     best_tuner_params: Optional[str] = None
-    # Path to save the classification report.
-    classification_path: Optional[str] = None
-    # Number of output classes for the model.
+    # Number of classes to use
     num_classes: Optional[int] = 5
-    # Factor to reduce learning rate by on plateau.
-    reduce_lr: Optional[float] = None
-    # Patience for the ReduceLROnPlateau callback.
-    reduce_lr_patience: Optional[int] = None
-    # Layer index to unfreeze for fine-tuning.
-    unfreeze_from: Optional[int] = None
-    # Path to a saved label encoder.
-    encoder_path: Optional[str] = None
-    # The type of classification ('binary' or 'multiclass').
-    classification_type: Optional[str] = "binary"
-    # Path to save or load the model.
-    model_path: Optional[str] = None
 
     # Define a post-validation check for this model.
     @model_validator(mode="after")
@@ -448,6 +409,8 @@ class TrainImageOnlyConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
 
 # Define a config for hyperparameter tuning the image-only model.
 class ImageHyperparameterConfig(TrainImageOnlyConfig):
+    """Defines configuration for hyperparameter tuning an image-only model."""
+
     # This class inherits all fields from TrainImageOnlyConfig.
     pass
 
