@@ -31,6 +31,7 @@ from .hyperparameter_tuning import (
     ImageHyperparameterTuning,
     MLPHyperparameterTuning,
 )
+from .mlflow_utils import log_cnn_training_run
 from .mlp_model import BuildMLPModel
 from .model_pipeline import CustomModel
 from .prediction_testing import (
@@ -179,6 +180,16 @@ def _train_cnn(config) -> None:
             callbacks=callbacks,
             history_file=config.save_history_file,
             save_model_file=config.save_model_file,
+        )
+
+        log_cnn_training_run(
+            config, 
+            compiled_model,
+            history,
+             artifacts={
+                "model": config.save_model_file,
+                "history": config.save_history_file,
+            }, 
         )
 
         # Plot training metrics

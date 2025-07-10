@@ -1,8 +1,8 @@
 {
   "csv_path": "C:\\Thorlabs\\400LA_1.csv",
   "img_folder": "C:\\Thorlabs\\400LA\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_feature_scaler.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\label_scaler2.pkl",
+  "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model4_feature_scaler.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\label_scaler4.pkl",
   "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
   "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
 
@@ -49,11 +49,11 @@
   "monitor": "val_accuracy",
   "method": "max",
   "checkpoints": "y",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_checkpoint.keras",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model4_checkpoint.keras",
 
   "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
-  "save_model_file": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3.keras",
-  "save_history_file": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_history",
+  "save_model_file": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model4.keras",
+  "save_history_file": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model4_history",
 
   "set_mask": "y"
 }
