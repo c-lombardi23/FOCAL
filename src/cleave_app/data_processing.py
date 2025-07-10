@@ -291,7 +291,15 @@ class DataCollector:
             raise ImportError("TensorFlow is required for image processing")
 
         def _load_image(file, preprocess_input):
-            """Load and preprocess a single image."""
+            """Load an image and process using same preprocessing as backbone.
+
+            Args:
+                file: path to image 
+                preprocess_input: processing from backbone model
+
+            Returns:
+                loaded and resized image
+            """
             file = file.numpy().decode("utf-8")
             full_path = os.path.join(self.img_folder, file)
 
@@ -364,7 +372,18 @@ class DataCollector:
             random_state=42,
         )
 
-        def _load_grayscale_image(filename):
+        def _load_grayscale_image(filename: str):
+            """Load image in one color channel.
+
+            Args:
+                filename: filepath for mimage
+
+            Raises:
+                ValueError: if image cannot be converted 
+
+            Returns:
+                loaded image
+            """
             file = filename.numpy().decode("utf-8")
             full_path = os.path.join(self.img_folder, file)
             try:
