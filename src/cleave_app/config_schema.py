@@ -100,26 +100,8 @@ class BaseConfig(BaseModel):
     @field_validator("mode")
     @classmethod
     def valid_modes(cls, value):
-        # A list of all valid operational modes for the application.
-        valid_modes = [
-            "train_cnn",
-            "train_mlp",
-            "cnn_hyperparameter",
-            "mlp_hyperparameter",
-            "test_cnn",
-            "test_mlp",
-            "train_kfold_cnn",
-            "train_kfold_mlp",
-            "grad_cam",
-            "train_image_only",
-            "image_hyperparameter",
-            "test_image_only",
-            "custom_model",
-            "train_xgboost",
-            "test_xgboost",
-        ]
         # Check if the provided mode is in the list of valid modes.
-        if value not in valid_modes:
+        if value not in MODE_TO_CONFIG.keys():
             # If the mode is not valid, raise a ValueError.
             raise ValueError(f"{value} is not a valid mode!")
         # If the mode is valid, return the value.
