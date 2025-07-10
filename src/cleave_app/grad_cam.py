@@ -90,7 +90,9 @@ class GradCAM:
         heatmap = np.uint8(255 * heatmap)
         return heatmap
 
-    def overlay_heatmap(self, heatmap, image, alpha=0.3, colormap=cv2.COLORMAP_JET):
+    def overlay_heatmap(
+        self, heatmap, image, alpha=0.3, colormap=cv2.COLORMAP_JET
+    ):
         """
         Overlays the heatmap on the image.
 

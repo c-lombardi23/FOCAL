@@ -163,7 +163,7 @@ class XGBoostPredictor:
         angle_threshold: float,
         diameter_threshold: float,
         xgb_path: Optional[str] = None,
-        scaler_path: Optional[str] = None
+        scaler_path: Optional[str] = None,
     ):
         self.csv_path = csv_path
         self.xgb_path = xgb_path
@@ -202,9 +202,7 @@ class XGBoostPredictor:
         # remove single dimensional entries
         return self.feature_extractor(img).numpy().squeeze()
 
-    def _extract_data(self,
-                     angle_threshold: float,
-                     diameter_threshold: float):
+    def _extract_data(self, angle_threshold: float, diameter_threshold: float):
         """Load and filter dataset for prediction (only bad cleaves).
 
         Args:
@@ -260,8 +258,10 @@ class XGBoostPredictor:
                 "Model and scaler must be loaded before prediction."
             )
 
-        df, mean = self._extract_data(angle_threshold=self.angle_threshold,
-                                     diameter_threshold=self.diameter_threshold)
+        df, mean = self._extract_data(
+            angle_threshold=self.angle_threshold,
+            diameter_threshold=self.diameter_threshold,
+        )
         image_paths = df["ImagePath"]
         tensions = df["CleaveTension"]
         true_delta = df["TrueDelta"]

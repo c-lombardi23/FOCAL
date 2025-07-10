@@ -52,7 +52,6 @@ html_theme_options = {
             "class": "",
         },
     ],
-
     "light_css_variables": {
         "color-brand-primary": "red",
         "color-brand-content": "#CC3333",

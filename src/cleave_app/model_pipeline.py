@@ -699,12 +699,12 @@ class CustomModel:
             )
             es = EarlyStopping(
                 monitor="val_accuracy",
-                patience=8,
+                patience=4,
                 restore_best_weights=True,
                 verbose=1,
             )
 
-            callbacks = []
+            callbacks = [es]
 
             if callbacks:
                 history = model.fit(
@@ -721,6 +721,7 @@ class CustomModel:
                     epochs=epochs,
                     initial_epoch=initial_epoch,
                     validation_data=test_ds,
+
                 )
 
             kfold_histories.append(history)

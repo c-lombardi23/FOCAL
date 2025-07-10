@@ -119,9 +119,9 @@ class DataCollector:
             self._df = self._clean_data()
         return self._df
 
-    def _set_label(self,
-                   angle_threshold: float,
-                   diameter_threshold: float) -> Optional[pd.DataFrame]:
+    def _set_label(
+        self, angle_threshold: float, diameter_threshold: float
+    ) -> Optional[pd.DataFrame]:
         """Read CSV file and add cleave quality labels based on certain
         criteria.
 
@@ -194,8 +194,10 @@ class DataCollector:
         Returns:
             pd.DataFrame: Processed DataFrame with labels and one-hot encoding
         """
-        df = self._set_label(angle_threshold=self.angle_threshold,
-                             diameter_threshold=self.angle_threshold)
+        df = self._set_label(
+            angle_threshold=self.angle_threshold,
+            diameter_threshold=self.angle_threshold,
+        )
         if df is None:
             return None
         if self.classification_type == "multiclass":

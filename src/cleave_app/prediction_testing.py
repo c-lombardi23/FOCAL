@@ -354,7 +354,7 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
 
         pred_labels = []
 
-        if self.image_only == False:
+        if not self.image_only:
             for img_path in pred_image_paths:
                 feature_vector = np.zeros((6,), dtype=np.float32)
                 classification = self.tester.test_prediction(
@@ -387,8 +387,6 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
         print(len(pred_labels))
         return true_labels, pred_labels
 
-
-from typing import Optional
 
 
 class TensionPredictor:

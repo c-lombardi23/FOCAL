@@ -37,7 +37,9 @@ image1.png,PM15U25d,2025-06-09 15:37,123.5,0.22,193,60,2552,17.28,0,0,1
     csv_path.write_text(csv_content)
 
     # Test DataCollector initialization
-    collector = DataCollector(csv_path=str(csv_path), img_folder=str(img_folder) + "/")
+    collector = DataCollector(
+        csv_path=str(csv_path), img_folder=str(img_folder) + "/"
+    )
 
     # Verify the dataframe was created correctly
     assert collector.df is not None
