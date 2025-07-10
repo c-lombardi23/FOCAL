@@ -76,7 +76,7 @@ class XGBoostModel:
         X_test, y_test = self._extract_features_and_labels(self.test_ds)
 
         self.xgb_reg = xgb.XGBRegressor(
-            objective="reg:squarederror",
+            objective="reg:absoluteerror",
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             max_depth=max_depth,

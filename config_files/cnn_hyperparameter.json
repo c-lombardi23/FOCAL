@@ -1,13 +1,12 @@
 {
-  "csv_path": "C:\\Thorlabs\\125PM_2_Categories.csv",
-  "img_folder": "C:\\Thorlabs\\125PM\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1.pkl",
+  "csv_path": "C:\\Thorlabs\\400LA_1.csv",
+  "img_folder": "C:\\Thorlabs\\400LA\\",
   "label_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\label_scaler1.pkl",
   "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
   "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
 
   "image_shape": [224, 224, 3],
-  "feature_shape": [6],
+  "feature_shape": [5],
   "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
   "mode": "cnn_hyperparameter",
@@ -15,11 +14,12 @@
   "backbone": "efficientnet",
   "backbone_name": "resnet",
   "model_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\image_features1.keras",
-  "project_name": "Images_Features1",
+  "project_name": "400LA_tuning1",
   "num_classes": 1,
   "classification_type": "binary",
 
-
+  "angle_threshold": 0.49,
+  "diameter_threshold": 52,
   "learning_rate": 0.01,
   "batch_size": 16,
   "buffer_size": 40,
@@ -48,9 +48,7 @@
   "checkpoints": "y",
   "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_checkpoint.keras",
 
-  "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_7_7\\HyperParameterTuning1",
-  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_7_7\\HyperParameterTuning1\\Images_Features1\\best_model.keras",
-  "save_history_file": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_history",
+  "tuner_directory": "C:\\Users\\clombardi\\400LA_Train1\\HyperParameterTuning1",
 
   "set_mask": "y"
 }

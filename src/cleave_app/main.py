@@ -128,8 +128,8 @@ def _train_cnn(config) -> None:
             )
         else:
             raise ValueError(f"Unsupported cnn mode: {config.cnn_mode}")
-
         images, features, labels = data.extract_data()
+        print(images)
         train_ds, test_ds, class_weights = data.create_datasets(
             images,
             features,
@@ -219,7 +219,9 @@ def _train_mlp(config) -> None:
         raise ImportError("TensorFlow is required for MLP training")
 
     try:
-        data = MLPDataCollector(config.csv_path, config.img_folder)
+        data = MLPDataCollector(config.csv_path, config.img_folder,
+                                angle_threshold=config.angle_threshold,
+                                diameter_threshold=config.diameter_threshold)
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images,
@@ -296,7 +298,7 @@ def _train_kfold_cnn(config) -> None:
             config.buffer_size,
             config.batch_size,
         )
-        
+
         _, kfold_histories = CustomModel.train_kfold(
             datasets,
             config.image_shape,
@@ -482,6 +484,8 @@ def _test_cnn(config) -> None:
                 config.img_folder,
                 image_only=False,
                 backbone=config.backbone,
+                angle_threshold=config.angle_threshold,
+                diameter_threshold=config.diameter_threshold
             )
         elif config.cnn_mode == "tension":
             tester = TestTensionPredictions(
@@ -826,6 +830,8 @@ def _train_xgboost(config):
         csv_path=config.csv_path,
         img_folder=config.img_folder,
         backbone=None,
+        angle_threshold=config.angle_threshold,
+        diameter_threshold=config.diameter_threshold
     )
 
     images, features, labels = data.extract_data()

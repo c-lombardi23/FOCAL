@@ -27,9 +27,9 @@ class EarlyStoppingMixin(BaseModel):
     early_stopping: Optional[str] = "n"
     # Number of epochs with no improvement after which training will be stopped.
     patience: Optional[int] = 3
-    # The metric to be monitored for early stopping 
+    # The metric to be monitored for early stopping (e.g., 'val_accuracy').
     monitor: Optional[str] = "val_accuracy"
-    # The direction of improvement 
+    # The direction of improvement ('min' for loss, 'max' for accuracy).
     method: Literal["max", "min"] = "max"
 
 
@@ -55,9 +55,9 @@ class BaseConfig(BaseModel):
     csv_path: Path
     # Path to the directory containing all the image files.
     img_folder: Path
-    # The operational mode for the CLI 
+    # The operational mode for the CLI (e.g., 'train_cnn', 'test_mlp').
     mode: str
-    # The target shape for images after resizing 
+    # The target shape for images after resizing (height, width, channels).
     image_shape: List[int]
     # Flag to enable ('y') or disable ('n') background masking on images.
     set_mask: Optional[str] = None
@@ -111,20 +111,20 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     contrast: Optional[float] = 0.0
 
     # --- File Path Configurations ---
-    # Path to save or load the feature scaler
-    feature_scaler_path: Optional[Path] = None
-    # Path to save or load the label scaler 
-    label_scaler_path: Optional[Path] = None
+    # Path to save or load the feature scaler (e.g., StandardScaler).
+    feature_scaler_path: Optional[str] = None
+    # Path to save or load the label scaler (for regression tasks).
+    label_scaler_path: Optional[str] = None
     # Path to load a pre-trained CNN model or save the current one.
-    model_path: Optional[Path] = None
-    # Path to save the final classification report
-    classification_path: Optional[Path] = None
+    model_path: Optional[str] = None
+    # Path to save the final classification report 
+    classification_path: Optional[str] = None
     # Path to save or load a One-Hot Encoder.
-    encoder_path: Optional[Path] = None
+    encoder_path: Optional[str] = None
     # Path to save the trained model file.
-    save_model_file: Optional[Path] = None
-    # Path to save the training history
-    save_history_file: Optional[Path] = None
+    save_model_file: Optional[str] = None
+    # Path to save the training history 
+    save_history_file: Optional[str] = None
 
     # --- Hyperparameter Tuning ---
     # Directory to store Keras Tuner trial history and results.
@@ -143,7 +143,7 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     test_size: Optional[float] = 0.2
     # Maximum number of epochs to train the model.
     max_epochs: Optional[int] = None
-    # The objective metric for callbacks to monitor
+    # The objective metric for callbacks to monitor (e.g., 'val_loss').
     objective: Optional[str] = None
     # The epoch number to start or continue training from.
     initial_epochs: Optional[int] = None
@@ -153,8 +153,6 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
 
 # Define configuration specific to training the hybrid CNN+MLP model.
 class TrainCNNConfig(ModelConfig):
-    """Defines configuration for training a hybrid CNN model."""
-
     # Specifies the mode within CNN training.
     cnn_mode: str
     # The shape of the numerical feature vector.
@@ -177,7 +175,7 @@ class TrainCNNConfig(ModelConfig):
     diameter_threshold: float
     # The tension threshold used for binary classification.
     tension_threshold: Optional[int] = 190
-    # The name of the pre-trained backbone to use 
+    # The name of the pre-trained backbone to use (e.g., 'efficientnet').
     backbone: Optional[str] = "efficientnet"
     # Layer index from which to start unfreezing weights for fine-tuning.
     unfreeze_from: Optional[int] = None
@@ -192,8 +190,8 @@ class TrainCNNConfig(ModelConfig):
     @model_validator(mode="after")
     def valid_shapes(self):
         # Validate that the feature shape is correct for this mode.
-        if self.feature_shape and self.feature_shape != [6]:
-            raise ValueError("Feature shape must be 6 for CNN")
+        if self.feature_shape and self.feature_shape != [5]:
+            raise ValueError("Feature shape must be 5 for CNN")
         # Validate that the image shape is compatible with standard models.
         if self.image_shape != [224, 224, 3]:
             raise ValueError("Image shape not compatible")
@@ -203,18 +201,18 @@ class TrainCNNConfig(ModelConfig):
 
 # Define configuration specific to training the MLP-only model.
 class TrainMLPConfig(ModelConfig):
-    """Defines configuration for training an MLP-only model."""
-
-    # Path to the image 
-    img_path: Path
+    # Path to the image (used for context, not for training the MLP).
+    img_path: str
+    angle_threshold: float
+    diameter_threshold: float
 
     # Define a post-validation check for this model.
     @model_validator(mode="after")
     def valid_shapes(self):
         # Validate the feature shape required for the MLP model.
-        if self.feature_shape != [5]:
-            raise ValueError("Feature shape must be 5 for MLP")
-        # Validate the image shape 
+        if self.feature_shape != [4]:
+            raise ValueError("Feature shape must be 4 for MLP")
+        # Validate the image shape (for consistency, though not used in training).
         if self.image_shape != [224, 224, 3]:
             raise ValueError("Image shape not compatible")
         # Return the validated model instance.
@@ -223,37 +221,37 @@ class TrainMLPConfig(ModelConfig):
 
 # Define configuration specific to testing the hybrid CNN+MLP model.
 class TestCNNConfig(BaseConfig):
-    """Defines configuration for testing a hybrid CNN model."""
-
     # Specifies the mode within CNN testing.
     cnn_mode: str
     # The tension threshold for classification logic.
     tension_threshold: Optional[int] = 190
     # Path to a trained tension prediction model.
-    tension_model_path: Optional[Path] = None
+    tension_model_path: Optional[str] = None
     # Path to a saved feature scaler.
-    feature_scaler_path: Optional[Path] = None
+    feature_scaler_path: Optional[str] = None
     # Path to the trained CNN model file.
-    model_path: Optional[Path] = None
+    model_path: Optional[str] = None
     # A list of numerical features to use for a single test prediction.
     test_features: Optional[List[float]] = None
     # Path to a single image for testing.
-    img_path: Optional[Path] = None
+    img_path: Optional[str] = None
     # Path to a saved label scaler.
-    label_scaler_path: Optional[Path] = None
+    label_scaler_path: Optional[str] = None
     # Path to a saved label encoder.
-    encoder_path: Optional[Path] = None
+    encoder_path: Optional[str] = None
     # The name of the pre-trained backbone used in the model.
     backbone: Optional[str] = None
     # Path to save the output classification report.
-    classification_path: Optional[Path] = None
+    classification_path: Optional[str] = None
+    angle_threshold: float
+    diameter_threshold: float
 
     # Define a post-validation check for this model.
     @model_validator(mode="after")
     def valid_shapes(self):
         # Validate the required feature shape for CNN testing.
-        if self.feature_shape != [6]:
-            raise ValueError("Feature shape must be 6 for CNN")
+        if self.feature_shape != [5]:
+            raise ValueError("Feature shape must be 5 for CNN")
         # Validate the required image shape for CNN testing.
         if self.image_shape != [224, 224, 3]:
             raise ValueError("Image shape not compatible")
@@ -263,16 +261,14 @@ class TestCNNConfig(BaseConfig):
 
 # Define configuration specific to testing the MLP-only model.
 class TestMLPConfig(BaseConfig):
-    """Defines configuration for testing an MLP-only model."""
-
     # Path to a saved feature scaler.
-    feature_scaler_path: Optional[Path] = None
+    feature_scaler_path: Optional[str] = None
     # Path to a saved label scaler.
-    label_scaler_path: Optional[Path] = None
+    label_scaler_path: Optional[str] = None
     # Path to the trained MLP model file.
-    model_path: Optional[Path] = None
+    model_path: Optional[str] = None
     # Path to a single image for context.
-    img_path: Optional[Path] = None
+    img_path: Optional[str] = None
     # A list of numerical features for a single test prediction.
     test_features: Optional[List[float]] = None
 
@@ -280,8 +276,8 @@ class TestMLPConfig(BaseConfig):
     @model_validator(mode="after")
     def valid_shapes(self):
         # Validate the required feature shape for MLP testing.
-        if self.feature_shape != [5]:
-            raise ValueError("Feature shape must be 5 for MLP")
+        if self.feature_shape != [4]:
+            raise ValueError("Feature shape must be 4 for MLP")
         # Validate the image shape for consistency.
         if self.image_shape != [224, 224, 3]:
             raise ValueError("Image shape not compatible")
@@ -291,58 +287,50 @@ class TestMLPConfig(BaseConfig):
 
 # Define configuration for testing an image-only classification model.
 class TestImageOnlyConfig(BaseConfig):
-    """Defines configuration for testing an image-only model."""
-
     # Path to the trained image-only model file.
-    model_path: Optional[Path] = None
+    model_path: Optional[str] = None
     # Path to the saved label encoder.
-    encoder_path: Optional[Path] = None
+    encoder_path: Optional[str] = None
     # Path to a single image for testing.
-    img_path: Optional[Path] = None
+    img_path: Optional[str] = None
     # The name of the backbone used in the model.
     backbone: Optional[str] = None
-    # The type of classification 
+    # The type of classification ('binary' or 'multiclass').
     classification_type: Literal["binary", "multiclass"] = "binary"
     # Path to save the output classification report.
-    classification_path: Optional[Path] = None
+    classification_path: Optional[str] = None
 
 
 # Define a config for K-Fold Cross-Validation on the CNN model.
 class TrainKFoldCNNConfig(TrainCNNConfig):
-    """Defines configuration for K-Fold cross-validation on a CNN model."""
-
     # This class inherits all fields and validators from TrainCNNConfig.
     pass
 
 
 # Define a config for K-Fold Cross-Validation on the MLP model.
 class TrainKFoldMLPConfig(TrainMLPConfig):
-    """Defines configuration for K-Fold cross-validation on an MLP model."""
-
     # This class inherits all fields and validators from TrainMLPConfig.
     pass
 
 
 # Define configuration for training an XGBoost model.
 class TrainXGBoostConfig(ModelConfig):
-    """Defines configuration for training an XGBoost model."""
-
     # Path to save the trained XGBoost model.
-    xgb_path: Optional[Path] = None
+    xgb_path: Optional[str] = None
     # Number of boosting rounds (trees) in the XGBoost model.
     n_estimators: Optional[int] = 200
     # Maximum depth of each tree in the XGBoost model.
     max_depth: Optional[int] = 4
     # Seed for the random number generator for reproducibility.
     random_state: Optional[int] = 42
+    angle_threshold: float
+    diameter_threshold: float
 
 
 # Define configuration for testing an XGBoost model.
 class TestXGBoostConfig(TestMLPConfig):
-    """Defines configuration for testing an XGBoost model."""
-
     # Path to the trained XGBoost model file.
-    xgb_path: Path
+    xgb_path: str
     # The angle threshold for classification logic.
     angle_threshold: float
     # The diameter threshold for classification logic.
@@ -351,20 +339,18 @@ class TestXGBoostConfig(TestMLPConfig):
 
 # Define configuration for generating Grad-CAM heatmaps.
 class GradCamConfig(BaseConfig):
-    """Defines configuration for generating Grad-CAM visualizations."""
-
     # Path to the trained model for which to generate the heatmap.
-    model_path: Optional[Path] = None
+    model_path: Optional[str] = None
     # Path to the input image for Grad-CAM.
-    img_path: Optional[Path] = None
+    img_path: Optional[str] = None
     # Numerical features required if the model is multi-input.
     test_features: Optional[List[float]] = None
-    # The name of the backbone model 
+    # The name of the backbone model (for finding layers).
     backbone_name: Optional[str] = None
     # The name of the final convolutional layer to visualize.
     conv_layer_name: Optional[str] = None
     # Filepath to save the output heatmap image.
-    heatmap_file: Optional[Path] = None
+    heatmap_file: Optional[str] = None
 
     # Define a post-validation check for this model.
     @model_validator(mode="after")
@@ -379,12 +365,12 @@ class GradCamConfig(BaseConfig):
 # Define configuration for training an image-only classification model.
 class TrainImageOnlyConfig(ModelConfig):
     """Configuration for training an image-only classification model."""
-
+    
     # Max angle for good cleave
     angle_threshold: float
     # Max diameter for good cleave
     diameter_threshold: float
-    # Dropout 1 rate
+    # Dropout 1 rate 
     dropout1_rate: Optional[float] = 0.1
     # Number of FC layers
     dense_units: Optional[int] = 32
@@ -409,8 +395,6 @@ class TrainImageOnlyConfig(ModelConfig):
 
 # Define a config for hyperparameter tuning the image-only model.
 class ImageHyperparameterConfig(TrainImageOnlyConfig):
-    """Defines configuration for hyperparameter tuning an image-only model."""
-
     # This class inherits all fields from TrainImageOnlyConfig.
     pass
 

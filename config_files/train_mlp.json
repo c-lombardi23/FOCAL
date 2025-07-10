@@ -18,7 +18,8 @@
   "num_classes": 1,
   "classification_type": "binary",
 
-
+  "angle_threshold": 0.45,
+  "diameter_threshold": 17.0,
   "learning_rate": 0.01,
   "batch_size": 16,
   "buffer_size": 40,

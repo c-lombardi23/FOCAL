@@ -101,7 +101,7 @@ class DataCollector:
                     "ScribeDiameter",
                     "Misting",
                     "Hackle",
-                    "Tearing",
+                    #"Tearing",
                     "ImagePath",
                 ]
                 missing_columns = [
@@ -157,6 +157,7 @@ class DataCollector:
             df["CleaveCategory"] = df.apply(label, axis=1)
             return df
         if self.classification_type == "binary":
+
             df["CleaveCategory"] = df.apply(
                 lambda row: (
                     1
@@ -196,7 +197,7 @@ class DataCollector:
         """
         df = self._set_label(
             angle_threshold=self.angle_threshold,
-            diameter_threshold=self.angle_threshold,
+            diameter_threshold=self.diameter_threshold,
         )
         if df is None:
             return None
@@ -215,7 +216,7 @@ class DataCollector:
 
         # Clean image path by removing the base folder path
         df["ImagePath"] = df["ImagePath"].str.replace(
-            self.img_folder, "", regex=False
+            f"{self.img_folder}\\", "", regex=False
         )
         return df
 
@@ -444,7 +445,7 @@ class DataCollector:
                 "ScribeDiameter",
                 "Misting",
                 "Hackle",
-                "Tearing",
+                #"Tearing",
             ]
         ].values.astype(np.float32)
         labels = self.df["CleaveCategory"].values.astype(np.float32)
@@ -715,6 +716,8 @@ class MLPDataCollector(DataCollector):
         self,
         csv_path: str,
         img_folder: str,
+        angle_threshold: float, 
+        diameter_threshold:float,
         backbone: Optional[str] = None,
     ):
         """Initialize the MLP data collector.
@@ -723,7 +726,9 @@ class MLPDataCollector(DataCollector):
             csv_path: Path to CSV file containing cleave metadata
             img_folder: Path to folder containing cleave images
         """
-        super().__init__(csv_path, img_folder, backbone=backbone)
+        super().__init__(csv_path, img_folder, backbone=backbone,
+                         angle_threshold=angle_threshold,
+                         diameter_threshold=diameter_threshold)
 
     def extract_data(
         self,
@@ -752,7 +757,7 @@ class MLPDataCollector(DataCollector):
                 "ScribeDiameter",
                 "Misting",
                 "Hackle",
-                "Tearing",
+                #"Tearing",
             ]
         ].values.astype(np.float32)
         labels = delta

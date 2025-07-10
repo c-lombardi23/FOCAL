@@ -36,6 +36,8 @@ class TestPredictions(DataCollector):
         csv_path: str,
         scalar_path: str,
         img_folder: str,
+        angle_threshold: float,
+        diameter_threshold: float,
         encoder_path: str = None,
         image_only: bool = False,
         backbone: str = "mobilenet",
@@ -57,6 +59,8 @@ class TestPredictions(DataCollector):
             backbone=backbone,
             encoder_path=encoder_path,
             classification_type=classification_type,
+            angle_threshold=angle_threshold,
+            diameter_threshold=diameter_threshold
         )
         if self.classification_type == "multiclass":
             self.class_names = self.encoder.categories_[0].tolist()
@@ -77,13 +81,13 @@ class TestPredictions(DataCollector):
             pd.DataFrame | None: DataFrame with cleave quality and one-hot labels, or None if file not found.
         """
         try:
-            df = self._set_label()
+            df = self._set_label(self.angle_threshold, self.diameter_threshold)
         except FileNotFoundError:
             print("CSV file not found!")
             return None
         # Clean image path
         df["ImagePath"] = df["ImagePath"].str.replace(
-            self.img_folder, "", regex=False
+            f"{self.img_folder}\\", "", regex=False
         )
         # One-hot encode CleaveCategory
         if self.classification_type == "multiclass":
@@ -141,7 +145,7 @@ class TestPredictions(DataCollector):
                     "ScribeDiameter",
                     "Misting",
                     "Hackle",
-                    "Tearing",
+                    #"Tearing",
                 ]
             ].values
             # if self.scaler is not None:
@@ -166,7 +170,7 @@ class TestPredictions(DataCollector):
         pred_labels = [np.argmax(pred[0]) for pred in predictions]
         if self.classification_type == "binary":
             pred_labels = [
-                (pred[0, 0] > 0.52).astype(int) for pred in predictions
+                (pred[0, 0] > 0.4).astype(int) for pred in predictions
             ]
         elif self.classification_type == "multiclass":
             pred_labels = [np.argmax(pred[0]) for pred in predictions]
