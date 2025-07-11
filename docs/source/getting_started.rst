@@ -89,7 +89,17 @@ You are now ready to run the command-line interface. Point it to the configurati
 
 You will see training progress in the console. When it's finished, you will find `my_first_model.keras` in your project root.
 
-Step 5: What's Next?
+Step 5: Track Training and Testing on MLFlow
+--------------------------------------------
+
+.. code-block:: bash
+
+   mlflow ui
+
+Go to https://localhost:5000/ in browser to view and track info with mlflow gui.
+
+
+Step 6: What's Next?
 --------------------
 
 Congratulations! You have successfully trained and saved your first model.
