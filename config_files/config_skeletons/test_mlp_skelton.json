@@ -1,0 +1,26 @@
+{
+  "_comment_mode": "This field MUST be 'test_mlp' for this configuration file.",
+  "mode": "test_mlp",
+
+  "//": "--- 1. Required Base Parameters ---",
+  "_comment_base": "These paths are required by the schema but are mainly for context when making predictions.",
+  "csv_path": "/path/to/your/cleave_data.csv",
+  "img_folder": "/path/to/your/image_folder/",
+  "image_shape": [224, 224, 3],
+  "feature_shape": [4],
+  
+  "//": "--- 2. Required Paths for Model and Scalers ---",
+  "_comment_paths": "You must provide the trained MLP model and BOTH the feature and label scalers from its training.",
+  "model_path": "/path/to/your/trained_mlp_model.keras",
+  "feature_scaler_path": "/path/to/your/mlp_feature_scaler.pkl",
+  "label_scaler_path": "/path/to/your/tension_label_scaler.pkl",
+  
+  "//": "--- 3. Required Fields for a Single Prediction Test ---",
+  "_comment_single_test": "To test the MLP, provide the numerical features for which you want to predict tension.",
+  "test_features": [126.0, 1.5, 90.0, 0.5],
+  
+  "//": "--- 4. Optional Fields ---",
+  "_comment_optional": "The img_path can be provided for context but is not used in the MLP's prediction logic.",
+  "img_path": null,
+  "set_mask": null
+}

@@ -1,0 +1,38 @@
+{
+  "_comment_mode": "This field MUST be 'test_cnn' for this configuration file.",
+  "mode": "test_cnn",
+
+  "//": "--- 1. Required Base Parameters for Batch Testing ---",
+  "csv_path": "/path/to/your/cleave_data.csv",
+  "img_folder": "/path/to/your/image_folder/",
+  "image_shape": [224, 224, 3],
+  "feature_shape": [5],
+  
+  "//": "--- 2. Required Paths for Model and Data ---",
+  "_comment_paths": "You must provide the path to the trained model and its associated feature scaler.",
+  "model_path": "/path/to/your/trained_cnn_model.keras",
+  "feature_scaler_path": "/path/to/your/feature_scaler.pkl",
+  
+  "//": "--- 3. CNN Testing Specific Parameters ---",
+  "_comment_cnn_mode": "Set the logic for the TestPredictions class. 'good_bad' for standard classification, 'tension' for the two-step tension-based classification.",
+  "cnn_mode": "good_bad",
+  "backbone": "efficientnet",
+  "angle_threshold": 2.0,
+  "diameter_threshold": 128.0,
+  "classification_path": "./reports/cnn_classification_report.txt",
+
+  "//": "--- 4. Parameters for 'tension' cnn_mode ONLY ---",
+  "_comment_tension_mode": "These fields are only required if cnn_mode is set to 'tension'.",
+  "tension_threshold": 190,
+  "tension_model_path": "/path/to/your/trained_tension_mlp_model.keras",
+  
+  "//": "--- 5. Optional Fields for Single Prediction Test ---",
+  "_comment_single_test": "To test a single image, provide its path and numerical features below.",
+  "img_path": null,
+  "test_features": null,
+
+  "//": "--- 6. Unused/Optional Fields ---",
+  "label_scaler_path": null,
+  "encoder_path": null,
+  "set_mask": null
+}

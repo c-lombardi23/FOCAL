@@ -1,0 +1,28 @@
+{
+  "_comment_mode": "This field MUST be 'test_xgboost' for this configuration file.",
+  "mode": "test_xgboost",
+
+  "//": "--- 1. Required Base Parameters for Batch Testing ---",
+  "csv_path": "/path/to/your/cleave_data.csv",
+  "img_folder": "/path/to/your/image_folder/",
+  "image_shape": [224, 224, 3],
+  "feature_shape": [4],
+  
+  "//": "--- 2. Required Paths for Models and Scaler ---",
+  "_comment_paths": "You must provide the trained XGBoost model, the CNN feature extractor, and the label scaler.",
+  "xgb_path": "/path/to/your/trained_xgboost_model.json",
+  "model_path": "/path/to/your/trained_cnn_feature_extractor.keras",
+  "label_scaler_path": "/path/to/your/tension_label_scaler.pkl",
+  
+  "//": "--- 3. Data Filtering Parameters ---",
+  "_comment_filtering": "These thresholds define which data points are considered valid for the test set.",
+  "angle_threshold": 2.0,
+  "diameter_threshold": 128.0,
+  
+  "//": "--- 4. Unused/Optional Fields ---",
+  "_comment_unused": "The following fields are part of the base config but are not used by this test script.",
+  "feature_scaler_path": null,
+  "img_path": null,
+  "test_features": null,
+  "set_mask": null
+}
