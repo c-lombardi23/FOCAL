@@ -15,7 +15,7 @@ def log_cnn_training_run(config,
                          model: Model, 
                          history: Any, 
                          dataset_path: str,
-                         artifacts=Optional[Dict[str, Optional[str]]] = None) -> None:
+                         artifacts:Optional[Dict[str, Optional[str]]] = None) -> None:
     """
     Logs training run details for CNN models using MLflow.
 
@@ -69,7 +69,7 @@ def log_mlp_training_run(config,
                          model: Model, 
                          history: Any,
                          dataset_path: str, 
-                         artifacts=Optional[Dict[str, Optional[str]]] = None) -> None:
+                         artifacts:Optional[Dict[str, Optional[str]]] = None) -> None:
     """
     Logs training run details for MLP models using MLflow.
 
@@ -121,7 +121,7 @@ def log_image_training_run(config,
                          model: Model, 
                          history: Any, 
                          dataset_path: str,
-                         artifacts=Optional[Dict[str, Optional[str]]] = None) -> None:
+                         artifacts:Optional[Dict[str, Optional[str]]] = None) -> None:
     """
     Logs training run details for CNN models (image_only) using MLflow.
 
