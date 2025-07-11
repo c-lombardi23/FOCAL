@@ -97,6 +97,14 @@ python -m http.server 8000
 ```
 go to http://localhost:8000/ in browser 
 
+### Displaying MLFlow Runs
+
+```bash
+mlflow ui
+```
+
+got to https://localhost:5000/ in browser
+
 
 ## 🏃‍♂️ Quick Start
 

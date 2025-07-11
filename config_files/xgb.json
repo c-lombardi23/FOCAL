@@ -9,7 +9,7 @@
   "feature_shape": [4],
   "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
-  "mode": "train_xgboost",
+  "mode": "test_xgboost",
   "backbone": "efficientnet",
   "backbone_name": "efficientnetb0",
   "model_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_checkpoint.keras",

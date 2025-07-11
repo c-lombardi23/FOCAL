@@ -267,11 +267,10 @@ class TrainXGBoost(BaseCommand):
         xgb_model.save(config.xgb_path)
 
         X_train, y_train = xgb_model._extract_features_and_labels(train_ds)
-        print(X_train[:2])
         log_xgb_training_run(
-            config,
-            xgb_model.get_model(),
-            evals_result,
+            config=config,
+            model=xgb_model.get_model(),
+            evals_result=evals_result,
             X_train=X_train,
             y_train=y_train,
             dataset_path=config.csv_path,
