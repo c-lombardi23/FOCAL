@@ -31,7 +31,7 @@ from .hyperparameter_tuning import (
     ImageHyperparameterTuning,
     MLPHyperparameterTuning,
 )
-from .mlflow_utils import log_cnn_training_run
+from .mlflow_utils import *
 from .mlp_model import BuildMLPModel
 from .model_pipeline import CustomModel
 from .prediction_testing import (
@@ -186,6 +186,7 @@ def _train_cnn(config) -> None:
             config, 
             compiled_model,
             history,
+            dataset_path=config.csv_path,
              artifacts={
                 "model": config.save_model_file,
                 "history": config.save_history_file,
@@ -230,7 +231,8 @@ def _train_mlp(config) -> None:
         raise ImportError("TensorFlow is required for MLP training")
 
     try:
-        data = MLPDataCollector(config.csv_path, config.img_folder,
+        data = MLPDataCollector(config.csv_path, 
+                                config.img_folder,
                                 angle_threshold=config.angle_threshold,
                                 diameter_threshold=config.diameter_threshold)
         images, features, labels = data.extract_data()
@@ -245,18 +247,42 @@ def _train_mlp(config) -> None:
             tension_scaler_path=config.label_scaler_path,
         )
 
-        trainable_model = BuildMLPModel(config.model_path, train_ds, test_ds)
+        trainable_model = BuildMLPModel(config.model_path, 
+                                        train_ds, 
+                                        test_ds,
+                                        num_classes=config.num_classes)
 
         # Setup callbacks
         callbacks = _setup_callbacks(config, trainable_model)
         max_epochs = config.max_epochs or 20
 
-        history = trainable_model.train(
+        compiled_model = trainable_model.compile_model(
             param_shape=config.feature_shape,
             learning_rate=config.learning_rate,
-            callbacks=callbacks,
-            class_weight=None,
+            dense1=config.dense1,
+            dense2=config.dense2,
+            dropout1=config.dropout1,
+            dropout2=config.dropout2,
+            dropout3=config.dropout3
+        )
+        history = trainable_model.train_model(
+            class_weights=None,
+            model=compiled_model,
             epochs=max_epochs,
+            callbacks=callbacks,
+            history_file=config.save_history_file,
+            save_model_file=config.save_model_file,
+        )
+
+        log_mlp_training_run(
+            config,
+            compiled_model,
+            history,
+            dataset_path=config.csv_path,
+            artifacts={
+                "model": config.save_model_file,
+                "history": config.save_history_file
+            },
         )
 
         # Plot training metrics
@@ -512,18 +538,27 @@ def _test_cnn(config) -> None:
         true_labels, pred_labels, predictions = tester.gather_predictions()
 
         if true_labels is not None:
-            tester.display_confusion_matrix(
+            confusion_Path = tester.display_confusion_matrix(
                 true_labels, pred_labels, model_path=config.model_path
             )
 
             tester.display_classification_report(
                 true_labels, pred_labels, config.classification_path
             )
-            tester.plot_roc(
+            roc_path = tester.plot_roc(
                 "ROC Curve",
                 true_labels=true_labels,
                 pred_probabilites=predictions,
             )
+            log_cnn_test_results(tester=tester,
+                                 run_name="cnn_test_results",
+                                 confusion_matrix_path=confusion_Path,
+                                 model_path=config.model_path,
+                                 classification_path=config.classification_path,
+                                 roc_path=roc_path,
+                                 true_labels=true_labels,
+                                 pred_labels=pred_labels,
+                                 predictions=predictions)
 
         else:
             print("No predictions generated - check data paths")
@@ -636,9 +671,9 @@ def _image_only(config) -> None:
                 config.image_shape,
                 config.learning_rate or 0.001,
                 backbone=config.backbone,
-                dropout1_rate=config.dropout1_rate,
-                dense_units=config.dense_units,
-                dropout2_rate=config.dropout2_rate,
+                dropout1=config.dropout1,
+                dense1=config.dense1,
+                dropout2=config.dropout2,
                 l2_factor=config.l2_factor,
                 num_classes=config.num_classes,
                 unfreeze_from=config.unfreeze_from,
@@ -654,6 +689,17 @@ def _image_only(config) -> None:
             callbacks=callbacks,
             history_file=config.save_history_file,
             save_model_file=config.save_model_file,
+        )
+
+        log_image_training_run(
+            config,
+            compiled_model,
+            history,
+            dataset_path=config.csv_path,
+            artifacts={
+                "model": config.save_model_file,
+                "history": config.save_history_file
+            },
         )
 
         # Plot training metrics
@@ -872,8 +918,25 @@ def _train_xgboost(config):
         learning_rate=config.learning_rate,
         max_depth=config.max_depth,
         random_state=config.random_state,
+        gamma = config.gamma,
+        subsample=config.subsample,
+        reg_lambda=config.reg_lambda
     )
     xgb_model.save(config.xgb_path)
+
+    X_train, y_train = xgb_model._extract_features_and_labels(train_ds)
+    print(X_train[:2])
+    log_xgb_training_run(
+            config, 
+            xgb_model.get_model(),
+            evals_result,
+            X_train=X_train,
+            y_train=y_train,
+            dataset_path=config.csv_path,
+             artifacts={
+                "model": config.xgb_path
+            }, 
+        )
 
     xgb_model.plot_metrics(
         title="RMSE vs. Val RMSE",

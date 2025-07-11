@@ -8,13 +8,21 @@ class BuildMLPModel(CustomModel):
     a CNN to predict optimal tension values for fiber cleaving.
     """
 
-    def __init__(self, cnn_model_path: str, train_ds, test_ds):
-        super().__init__(train_ds, test_ds)
+    def __init__(self, cnn_model_path: str, train_ds, test_ds, num_classes):
+        super().__init__(train_ds, test_ds, num_classes=num_classes)
         # load your frozen CNN
         self.cnn_model = tf.keras.models.load_model(cnn_model_path)
+        self.feature_output = self.cnn_model.get_layer("global_avg").output
+        self.image_input = self.cnn_model.input[0]
 
-    def _build_pretrained_model(
-        self, param_shape: Tuple[int, ...]
+
+    def _build_pretrained_model(self, 
+                                param_shape: Tuple[int, ...],
+                                dense1: int,
+                                dense2: int,
+                                dropout1: float,
+                                dropout2: float,
+                                dropout3: float
     ) -> tf.keras.Model:
         """Build MLP model for tension prediction.
 
@@ -24,17 +32,18 @@ class BuildMLPModel(CustomModel):
         Returns:
             tf.keras.Model: Regression model for tension prediction
         """
-        x = Dense(64, name="first_dense_layer", activation="relu")(
-            self.feature_output
-        )
-        x = Dense(32, name="second_dense_layer", activation="relu")(x)
+        x = Dropout(dropout1, name="dropout_1")(self.feature_output)
         feature_input = Input(shape=param_shape, name="feature_input")
-        y = Dense(16, name="third_dense_layer", activation="relu")(
+
+        y = Dense(dense1, name="dense_1", activation="relu")(
             feature_input
         )
+        y = Dropout(dropout2, name="dropout_2")(y)
 
         combined = Concatenate()([x, y])
-        z = Dense(64, activation="relu")(combined)
+        z = Dense(dense2, name="dense_2", activation="relu")(combined)
+        z = Dropout(dropout3, name="dropout3")(z)
+
         output = Dense(1, name="tension_output")(z)
         regression_model = Model(
             inputs=[self.image_input, feature_input], outputs=output
@@ -44,6 +53,11 @@ class BuildMLPModel(CustomModel):
 
     def compile_model(
         self,
+        dense1: int,
+        dense2: int,
+        dropout1: float,
+        dropout2: float,
+        dropout3: float,
         param_shape: Tuple[int, ...],
         learning_rate: float = 0.001,
         metrics: Optional[List[str]] = None,
@@ -61,7 +75,13 @@ class BuildMLPModel(CustomModel):
         if metrics is None:
             metrics = ["mae"]
 
-        model = self._build_pretrained_model(param_shape)
+        model = self._build_pretrained_model(param_shape=param_shape,
+                                             dense1=dense1,
+                                             dense2=dense2,
+                                             dropout1=dropout1,
+                                             dropout2=dropout2,
+                                             dropout3=dropout3)
+        
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         model.compile(optimizer=optimizer, loss="mse", metrics=metrics)
         return model

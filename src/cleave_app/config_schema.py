@@ -201,10 +201,26 @@ class TrainCNNConfig(ModelConfig):
 
 # Define configuration specific to training the MLP-only model.
 class TrainMLPConfig(ModelConfig):
+    # backbone name from CNN training
+    backbone: str
+    # Dropout rate for the first dropout layer in the CNN head.
+    dropout1: float
+    # Number of neurons in the first dense layer of the numerical branch.
+    dense1: int
+    # Dropout rate for the second dropout layer.
+    dropout2: float
+    # Number of neurons in the second dense layer of the classification head.
+    dense2: int
+    # Dropout rate for the final dropout layer before the output.
+    dropout3: float
     # Path to the image (used for context, not for training the MLP).
-    img_path: str
+    img_path: Optional[str] = None
+    num_classes: int
     angle_threshold: float
     diameter_threshold: float
+    reduce_lr: Optional[float] = None
+    # Number of epochs to wait before reducing the learning rate.
+    reduce_lr_patience: Optional[int] = None
 
     # Define a post-validation check for this model.
     @model_validator(mode="after")
@@ -261,6 +277,7 @@ class TestCNNConfig(BaseConfig):
 
 # Define configuration specific to testing the MLP-only model.
 class TestMLPConfig(BaseConfig):
+    
     # Path to a saved feature scaler.
     feature_scaler_path: Optional[str] = None
     # Path to a saved label scaler.
@@ -299,6 +316,7 @@ class TestImageOnlyConfig(BaseConfig):
     classification_type: Literal["binary", "multiclass"] = "binary"
     # Path to save the output classification report.
     classification_path: Optional[str] = None
+    
 
 
 # Define a config for K-Fold Cross-Validation on the CNN model.
@@ -315,6 +333,8 @@ class TrainKFoldMLPConfig(TrainMLPConfig):
 
 # Define configuration for training an XGBoost model.
 class TrainXGBoostConfig(ModelConfig):
+    # MSA or RMSE
+    error_type: str
     # Path to save the trained XGBoost model.
     xgb_path: Optional[str] = None
     # Number of boosting rounds (trees) in the XGBoost model.
@@ -323,6 +343,12 @@ class TrainXGBoostConfig(ModelConfig):
     max_depth: Optional[int] = 4
     # Seed for the random number generator for reproducibility.
     random_state: Optional[int] = 42
+    # Minimum loss reduction
+    gamma: Optional[float] = 0.0
+    # Subsample ratio to prevent overfitting
+    subsample: Optional[float] = 1.0
+    # L2 regularization
+    reg_lambda: Optional[float] = 1.0
     angle_threshold: float
     diameter_threshold: float
 
@@ -365,23 +391,40 @@ class GradCamConfig(BaseConfig):
 # Define configuration for training an image-only classification model.
 class TrainImageOnlyConfig(ModelConfig):
     """Configuration for training an image-only classification model."""
-    
+    backbone: str
+    unfreeze_from: Optional[int] = 0
     # Max angle for good cleave
     angle_threshold: float
     # Max diameter for good cleave
     diameter_threshold: float
     # Dropout 1 rate 
-    dropout1_rate: Optional[float] = 0.1
+    dropout1: Optional[float] = 0.1
     # Number of FC layers
-    dense_units: Optional[int] = 32
+    dense1: Optional[int] = 32
     # Dropout before final layer
-    dropout2_rate: Optional[float] = 0.2
+    dropout2: Optional[float] = 0.2
     # L2 regularization
     l2_factor: Optional[float] = None
     # Tuner params from best search
     best_tuner_params: Optional[str] = None
     # Number of classes to use
     num_classes: Optional[int] = 5
+    classification_type: str
+    reduce_lr: Optional[float] = None
+    # Number of epochs to wait before reducing the learning rate.
+    reduce_lr_patience: Optional[int] = None
+
+    # --- Data Augmentation Parameters ---
+    # Maximum brightness adjustment factor for data augmentation.
+    brightness: Optional[float] = 0.0
+    # Maximum rotation angle in degrees for data augmentation.
+    rotation: Optional[float] = 0.0
+    # Maximum vertical shift as a fraction of image height for augmentation.
+    height: Optional[float] = 0.0
+    # Maximum horizontal shift as a fraction of image width for augmentation.
+    width: Optional[float] = 0.0
+    # Maximum contrast adjustment factor for data augmentation.
+    contrast: Optional[float] = 0.0
 
     # Define a post-validation check for this model.
     @model_validator(mode="after")

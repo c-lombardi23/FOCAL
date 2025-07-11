@@ -265,11 +265,16 @@ class CustomModel:
     def _build_image_only_model(
         self,
         image_shape: Tuple[int, int, int],
-        backbone: Optional[str] = "mobilenet",
+        backbone: Optional[str] = "efficientnet",
         num_classes: int = 5,
-        dropout1_rate: Optional[float] = 0.1,
-        dense_units: Optional[int] = 32,
-        dropout2_rate: Optional[float] = 0.2,
+        rotation: Optional[float] = 0.0,
+        height: Optional[float] = 0.0,
+        width: Optional[float] = 0.0,
+        contrast: Optional[float] = 0.0,
+        brightness: Optional[float] = 0.0,
+        dropout1: Optional[float] = 0.1,
+        dense1: Optional[int] = 32,
+        dropout2: Optional[float] = 0.2,
         l2_factor: Optional[float] = None,
         unfreeze_from: Optional[int] = None,
     ) -> "tf.keras.Model":
@@ -295,32 +300,30 @@ class CustomModel:
             for layer in pre_trained_model.layers[:unfreeze_from]:
                 layer.trainable = False
 
-        data_augmentation = Sequential(
-            [
-                RandomRotation(factor=0.0),
-                RandomBrightness(factor=0.0),
-                RandomZoom(height_factor=0.0, width_factor=0.0),
-                GaussianNoise(stddev=0.00),
-                RandomContrast(0.0),
-            ]
+        data_augmentation = self.get_data_augmentation(
+            rotation=rotation,
+            brightness=brightness,
+            height=height,
+            width=width,
+            contrast=contrast,
         )
 
         image_input = Input(shape=image_shape)
         x = data_augmentation(image_input)
         x = pre_trained_model(x)
         x = GlobalAveragePooling2D(name="global_avg")(x)
-        x = Dropout(dropout1_rate, name="dropout")(x)
+        x = Dropout(dropout1, name="dropout_1")(x)
         if l2_factor:
             x = Dense(
-                dense_units,
+                dense1,
                 name="dense1",
                 activation="relu",
                 kernel_regularizer=l2(l2_factor),
             )(x)
         else:
-            x = Dense(dense_units, name="dense1", activation="relu")(x)
+            x = Dense(dense1, name="dense1", activation="relu")(x)
 
-        x = Dropout(dropout2_rate, name="dropout_2")(x)
+        x = Dropout(dropout2, name="dropout_2")(x)
         if self.classification_type == "binary":
             activation = "sigmoid"
         elif self.classification_type == "multiclass":
@@ -340,9 +343,9 @@ class CustomModel:
         metrics: Optional[List[str]] = None,
         backbone: Optional[str] = "mobilenet",
         num_classes: int = 5,
-        dropout1_rate: Optional[float] = 0.1,
-        dense_units: Optional[int] = 32,
-        dropout2_rate: Optional[float] = 0.2,
+        dropout1: Optional[float] = 0.1,
+        dense1: Optional[int] = 32,
+        dropout2: Optional[float] = 0.2,
         l2_factor: Optional[float] = None,
         unfreeze_from: Optional[int] = None,
     ) -> "tf.keras.Model":
@@ -366,12 +369,12 @@ class CustomModel:
         model = self._build_image_only_model(
             image_shape,
             backbone=backbone,
-            dropout1_rate=dropout1_rate,
-            dense_units=dense_units,
-            dropout2_rate=dropout2_rate,
+            dropout1=dropout1,
+            dense1=dense1,
+            dropout2=dropout2,
             num_classes=num_classes,
             l2_factor=l2_factor,
-            unfreeze_from=None,
+            unfreeze_from=unfreeze_from,
         )
         optimizer = tf.keras.optimizers.AdamW(learning_rate=learning_rate)
         if self.classification_type == "binary":

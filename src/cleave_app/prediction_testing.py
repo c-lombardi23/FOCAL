@@ -68,6 +68,7 @@ class TestPredictions(DataCollector):
             self.class_names = [0, 1]
         self.scalar_path = scalar_path
         self.model = tf.keras.models.load_model(model_path)
+        self.model_path = model_path
         self.image_only = image_only
         self.ohe = None
         if not self.image_only and self.scalar_path:
@@ -213,6 +214,7 @@ class TestPredictions(DataCollector):
         )
         plt.savefig(save_confusion)
         plt.show()
+        return save_confusion
 
     def display_classification_report(
         self,
@@ -278,10 +280,19 @@ class TestPredictions(DataCollector):
         plt.xlabel("False Positive Rate")
         plt.ylabel("True Positive Rate")
         plt.legend(loc="lower right")
+
+        model_dir = os.path.dirname(self.model_path)
+        basename = os.path.basename(self.model_path)
+        stem, _ = os.path.splitext(basename)
+        save_roc = os.path.join(
+            model_dir, f"{stem}_roc_curve.png"
+        )
+        plt.savefig(save_roc)
         plt.show()
         optimal_idx = np.argmax(tpr - fpr)
         optimal_threshold = thresholds[optimal_idx]
         print(f"Optimal Threshold: {optimal_threshold:.2f}")
+        return save_roc
 
 
 class TestTensionPredictions(BadCleaveTensionClassifier):

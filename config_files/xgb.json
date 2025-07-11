@@ -2,15 +2,14 @@
   "csv_path": "C:\\Thorlabs\\400LA_1.csv",
   "img_folder": "C:\\Thorlabs\\400LA\\",
   "feature_scaler_path": "",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\tension_scaler4.pkl",
-  "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
-  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
+  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\tension_scaler1.pkl",
+  
 
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
   "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
-  "mode": "test_xgboost",
+  "mode": "train_xgboost",
   "backbone": "efficientnet",
   "backbone_name": "efficientnetb0",
   "model_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_checkpoint.keras",
@@ -27,9 +26,13 @@
   "max_epochs": 15,
   "objective": "val_accuracy",
 
+  "error_type": "reg:squarederror",
   "n_estimators" : 800,
   "max_depth": 8,
   "random_state": 42,
+  "gamma": 0.1,
+  "subsample": 0.8,
+  "reg_lambda": 1.0,
 
   "early_stopping": "n",
   "patience": 5,
@@ -38,9 +41,7 @@
   "checkpoints": "n",
   "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\tensions_checkpoint2.keras",
 
-
-  "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
-  "xgb_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\xgb4.pkl",
+  "xgb_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\xgb1.pkl",
   "save_history_file": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\xgb_history4",
 
   "set_mask": "y"
