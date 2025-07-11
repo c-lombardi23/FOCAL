@@ -58,14 +58,14 @@ class XGBoostModel:
 
     def train(
         self,
-        error_type = "reg:squarederror",
+        error_type="reg:squarederror",
         n_estimators: Optional[int] = 200,
         learning_rate: Optional[float] = 0.05,
         max_depth: Optional[int] = 4,
         random_state: Optional[int] = 42,
         gamma: Optional[float] = 0.0,
         subsample: Optional[float] = 1.0,
-        reg_lambda: Optional[float] = 1.0
+        reg_lambda: Optional[float] = 1.0,
     ):
         """Training logic for the xgboost regression model.
 
@@ -90,7 +90,7 @@ class XGBoostModel:
             random_state=random_state,
             gamma=gamma,
             subsample=subsample,
-            reg_lambda=reg_lambda
+            reg_lambda=reg_lambda,
         )
 
         self.xgb_reg.fit(

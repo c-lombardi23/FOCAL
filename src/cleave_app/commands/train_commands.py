@@ -1,8 +1,11 @@
+"""Module for defining training logic to call from main entry point"""
+
 from .base_command import BaseCommand
-from cleave_app.data_processing import(
+from .utils import _setup_callbacks
+from cleave_app.data_processing import (
     DataCollector,
     BadCleaveTensionClassifier,
-    MLPDataCollector
+    MLPDataCollector,
 )
 from cleave_app.model_pipeline import CustomModel
 from cleave_app.mlp_model import BuildMLPModel
@@ -11,73 +14,17 @@ from cleave_app.mlflow_utils import (
     log_cnn_training_run,
     log_mlp_training_run,
     log_xgb_training_run,
-    log_image_training_run
+    log_image_training_run,
 )
 
-from typing import List, Callable
 import tensorflow as tf
 import traceback
 
-@staticmethod
-def _setup_callbacks(config, trainable_model) -> List[Callable]:
-        """Setup training callbacks based on configuration.
-
-        Args:
-            config: Configuration object containing callback parameters
-            trainable_model: Model instance that has callback creation methods
-
-        Returns:
-            List[Callable]: List of configured callbacks
-        """
-        callbacks = []
-
-        # Setup checkpoint callback
-        if (
-            config.checkpoints == "y"
-            and config.checkpoint_filepath
-            and config.monitor
-            and config.method
-        ):
-            checkpoint = trainable_model.create_checkpoints(
-                config.checkpoint_filepath, config.monitor, config.method
-            )
-            callbacks.append(checkpoint)
-
-        # Setup early stopping callback
-        if (
-            config.early_stopping == "y"
-            and config.patience
-            and config.monitor
-            and config.method
-        ):
-            es = trainable_model.create_early_stopping(
-                config.patience, config.method, config.monitor
-            )
-            callbacks.append(es)
-
-        # Setup learning rate reduction callback
-        if config.reduce_lr is not None:
-            if config.reduce_lr_patience is not None:
-                reduce_lr = trainable_model.reduce_on_plateau(
-                    patience=config.reduce_lr_patience,
-                    factor=config.reduce_lr,
-                )
-            else:
-                reduce_lr = trainable_model.reduce_on_plateau(
-                    factor=config.reduce_lr
-                )
-            callbacks.append(reduce_lr)
-
-        return callbacks
 
 class TrainCNN(BaseCommand):
+    """Train a CNN model for fiber cleave classification."""
 
     def _execute_command(self, config) -> None:
-        """Train a CNN model for fiber cleave classification.
-
-        Args:
-            config: Configuration object containing training parameters
-        """
         if tf is None:
             raise ImportError("TensorFlow is required for CNN training")
 
@@ -92,10 +39,10 @@ class TrainCNN(BaseCommand):
             )
         elif config.cnn_mode == "tension":
             data = BadCleaveTensionClassifier(
-            csv_path=config.csv_path,
-            img_folder=config.img_folder,
-            backbone=config.backbone,
-            tension_threshold=config.tension_threshold,
+                csv_path=config.csv_path,
+                img_folder=config.img_folder,
+                backbone=config.backbone,
+                tension_threshold=config.tension_threshold,
             )
         else:
             raise ValueError(f"Unsupported cnn mode: {config.cnn_mode}")
@@ -112,10 +59,10 @@ class TrainCNN(BaseCommand):
 
         trainable_model = CustomModel(
             train_ds,
-                test_ds,
-                classification_type=config.classification_type,
-                num_classes=config.num_classes,
-            )
+            test_ds,
+            classification_type=config.classification_type,
+            num_classes=config.num_classes,
+        )
 
         if config.continue_train == "y":
             compiled_model = tf.keras.models.load_model(config.model_path)
@@ -152,14 +99,14 @@ class TrainCNN(BaseCommand):
         )
 
         log_cnn_training_run(
-            config, 
+            config,
             compiled_model,
             history,
             dataset_path=config.csv_path,
             artifacts={
                 "model": config.save_model_file,
                 "history": config.save_history_file,
-            }, 
+            },
         )
 
         # Plot training metrics
@@ -186,21 +133,18 @@ class TrainCNN(BaseCommand):
 
 
 class TrainMLP(BaseCommand):
+    """Train an MLP model for tension prediction."""
 
     def _execute_command(self, config) -> None:
-        """Train an MLP model for tension prediction.
-
-        Args:
-            config: Configuration object containing training parameters
-        """
         if tf is None:
             raise ImportError("TensorFlow is required for MLP training")
 
-    
-        data = MLPDataCollector(config.csv_path, 
-                                config.img_folder,
-                                angle_threshold=config.angle_threshold,
-                                diameter_threshold=config.diameter_threshold)
+        data = MLPDataCollector(
+            config.csv_path,
+            config.img_folder,
+            angle_threshold=config.angle_threshold,
+            diameter_threshold=config.diameter_threshold,
+        )
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images,
@@ -213,10 +157,12 @@ class TrainMLP(BaseCommand):
             tension_scaler_path=config.label_scaler_path,
         )
 
-        trainable_model = BuildMLPModel(config.model_path, 
-                                        train_ds, 
-                                        test_ds,
-                                        num_classes=config.num_classes)
+        trainable_model = BuildMLPModel(
+            config.model_path,
+            train_ds,
+            test_ds,
+            num_classes=config.num_classes,
+        )
 
         # Setup callbacks
         callbacks = _setup_callbacks(config, trainable_model)
@@ -229,7 +175,7 @@ class TrainMLP(BaseCommand):
             dense2=config.dense2,
             dropout1=config.dropout1,
             dropout2=config.dropout2,
-            dropout3=config.dropout3
+            dropout3=config.dropout3,
         )
         history = trainable_model.train_model(
             class_weights=None,
@@ -247,7 +193,7 @@ class TrainMLP(BaseCommand):
             dataset_path=config.csv_path,
             artifacts={
                 "model": config.save_model_file,
-                "history": config.save_history_file
+                "history": config.save_history_file,
             },
         )
 
@@ -275,6 +221,7 @@ class TrainMLP(BaseCommand):
 
 
 class TrainXGBoost(BaseCommand):
+    """Train an XGBoost model for predicting delta in tension"""
 
     def _execute_command(self, config):
 
@@ -283,7 +230,7 @@ class TrainXGBoost(BaseCommand):
             img_folder=config.img_folder,
             backbone=None,
             angle_threshold=config.angle_threshold,
-            diameter_threshold=config.diameter_threshold
+            diameter_threshold=config.diameter_threshold,
         )
 
         images, features, labels = data.extract_data()
@@ -313,25 +260,23 @@ class TrainXGBoost(BaseCommand):
             learning_rate=config.learning_rate,
             max_depth=config.max_depth,
             random_state=config.random_state,
-            gamma = config.gamma,
+            gamma=config.gamma,
             subsample=config.subsample,
-            reg_lambda=config.reg_lambda
+            reg_lambda=config.reg_lambda,
         )
         xgb_model.save(config.xgb_path)
 
         X_train, y_train = xgb_model._extract_features_and_labels(train_ds)
         print(X_train[:2])
         log_xgb_training_run(
-                config, 
-                xgb_model.get_model(),
-                evals_result,
-                X_train=X_train,
-                y_train=y_train,
-                dataset_path=config.csv_path,
-                artifacts={
-                    "model": config.xgb_path
-                }, 
-            )
+            config,
+            xgb_model.get_model(),
+            evals_result,
+            X_train=X_train,
+            y_train=y_train,
+            dataset_path=config.csv_path,
+            artifacts={"model": config.xgb_path},
+        )
 
         xgb_model.plot_metrics(
             title="RMSE vs. Val RMSE",
@@ -343,14 +288,11 @@ class TrainXGBoost(BaseCommand):
             y_label="RMSE",
         )
 
+
 class TrainImageOnly(BaseCommand):
+    """Train the CNN model with only images."""
 
     def _execute_command(self, config) -> None:
-        """Train image-only model (no parameter features).
-
-        Args:
-            config: Configuration object containing training parameters
-        """
 
         if tf is None:
             raise ImportError("TensorFlow is required for image-only training")
@@ -420,7 +362,7 @@ class TrainImageOnly(BaseCommand):
                 dataset_path=config.csv_path,
                 artifacts={
                     "model": config.save_model_file,
-                    "history": config.save_history_file
+                    "history": config.save_history_file,
                 },
             )
 
@@ -451,15 +393,11 @@ class TrainImageOnly(BaseCommand):
             traceback.print_exc()
             raise
 
+
 class KFoldCNN(BaseCommand):
+    """Train CNN model using k-fold cross validation."""
 
     def _execute_command(self, config) -> None:
-        """Train CNN model using k-fold cross validation.
-
-        Args:
-            config: Configuration object containing training parameters
-        """
-    
         data = DataCollector(
             config.csv_path,
             config.img_folder,
@@ -488,16 +426,11 @@ class KFoldCNN(BaseCommand):
 
         CustomModel.get_averages_from_kfold(kfold_histories)
 
-    
 
 class KFoldMLP(BaseCommand):
+    """Train MLP model using k-fold cross validation."""
 
     def _execute_command(self, config) -> None:
-        """Train MLP model using k-fold cross validation.
-
-        Args:
-            config: Configuration object containing training parameters
-        """
         data = MLPDataCollector(
             config.csv_path, config.img_folder, backbone=None
         )
@@ -523,6 +456,7 @@ class KFoldMLP(BaseCommand):
 
 
 class TrainCustomModel(BaseCommand):
+    """Train a custom CNN model without pre-trained base."""
 
     def _execute_command(self, config) -> None:
         data = DataCollector(
@@ -576,4 +510,3 @@ class TrainCustomModel(BaseCommand):
             "accuracy",
             model_path=config.save_model_file,
         )
-     

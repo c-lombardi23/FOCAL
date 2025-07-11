@@ -101,7 +101,7 @@ class DataCollector:
                     "ScribeDiameter",
                     "Misting",
                     "Hackle",
-                    #"Tearing",
+                    # "Tearing",
                     "ImagePath",
                 ]
                 missing_columns = [
@@ -295,7 +295,7 @@ class DataCollector:
             """Load an image and process using same preprocessing as backbone.
 
             Args:
-                file: path to image 
+                file: path to image
                 preprocess_input: processing from backbone model
 
             Returns:
@@ -380,7 +380,7 @@ class DataCollector:
                 filename: filepath for mimage
 
             Raises:
-                ValueError: if image cannot be converted 
+                ValueError: if image cannot be converted
 
             Returns:
                 loaded image
@@ -445,7 +445,7 @@ class DataCollector:
                 "ScribeDiameter",
                 "Misting",
                 "Hackle",
-                #"Tearing",
+                # "Tearing",
             ]
         ].values.astype(np.float32)
         labels = self.df["CleaveCategory"].values.astype(np.float32)
@@ -716,8 +716,8 @@ class MLPDataCollector(DataCollector):
         self,
         csv_path: str,
         img_folder: str,
-        angle_threshold: float, 
-        diameter_threshold:float,
+        angle_threshold: float,
+        diameter_threshold: float,
         backbone: Optional[str] = None,
     ):
         """Initialize the MLP data collector.
@@ -726,9 +726,13 @@ class MLPDataCollector(DataCollector):
             csv_path: Path to CSV file containing cleave metadata
             img_folder: Path to folder containing cleave images
         """
-        super().__init__(csv_path, img_folder, backbone=backbone,
-                         angle_threshold=angle_threshold,
-                         diameter_threshold=diameter_threshold)
+        super().__init__(
+            csv_path,
+            img_folder,
+            backbone=backbone,
+            angle_threshold=angle_threshold,
+            diameter_threshold=diameter_threshold,
+        )
 
     def extract_data(
         self,
@@ -757,7 +761,7 @@ class MLPDataCollector(DataCollector):
                 "ScribeDiameter",
                 "Misting",
                 "Hackle",
-                #"Tearing",
+                # "Tearing",
             ]
         ].values.astype(np.float32)
         labels = delta

@@ -60,7 +60,7 @@ class TestPredictions(DataCollector):
             encoder_path=encoder_path,
             classification_type=classification_type,
             angle_threshold=angle_threshold,
-            diameter_threshold=diameter_threshold
+            diameter_threshold=diameter_threshold,
         )
         if self.classification_type == "multiclass":
             self.class_names = self.encoder.categories_[0].tolist()
@@ -146,7 +146,7 @@ class TestPredictions(DataCollector):
                     "ScribeDiameter",
                     "Misting",
                     "Hackle",
-                    #"Tearing",
+                    # "Tearing",
                 ]
             ].values
             # if self.scaler is not None:
@@ -284,9 +284,7 @@ class TestPredictions(DataCollector):
         model_dir = os.path.dirname(self.model_path)
         basename = os.path.basename(self.model_path)
         stem, _ = os.path.splitext(basename)
-        save_roc = os.path.join(
-            model_dir, f"{stem}_roc_curve.png"
-        )
+        save_roc = os.path.join(model_dir, f"{stem}_roc_curve.png")
         plt.savefig(save_roc)
         plt.show()
         optimal_idx = np.argmax(tpr - fpr)
@@ -401,7 +399,6 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
             return None, pred_labels
         print(len(pred_labels))
         return true_labels, pred_labels
-
 
 
 class TensionPredictor:

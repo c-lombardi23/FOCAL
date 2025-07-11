@@ -1,3 +1,6 @@
+"""This module defines the logic for displaying heatmaps for an image
+to view where the CNN model is focusing on."""
+
 import cv2
 import numpy as np
 import tensorflow as tf

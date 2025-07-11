@@ -1,5 +1,8 @@
+"""Abstract class to define all main function logic."""
+
 import traceback
 from abc import ABC, abstractmethod
+
 
 class BaseCommand(ABC):
     """An abstract class for all the command classes to inherit from"""

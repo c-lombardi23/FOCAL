@@ -1,3 +1,5 @@
+"""Main module for defining MLP training logic."""
+
 from .model_pipeline import *
 
 
@@ -15,14 +17,14 @@ class BuildMLPModel(CustomModel):
         self.feature_output = self.cnn_model.get_layer("global_avg").output
         self.image_input = self.cnn_model.input[0]
 
-
-    def _build_pretrained_model(self, 
-                                param_shape: Tuple[int, ...],
-                                dense1: int,
-                                dense2: int,
-                                dropout1: float,
-                                dropout2: float,
-                                dropout3: float
+    def _build_pretrained_model(
+        self,
+        param_shape: Tuple[int, ...],
+        dense1: int,
+        dense2: int,
+        dropout1: float,
+        dropout2: float,
+        dropout3: float,
     ) -> tf.keras.Model:
         """Build MLP model for tension prediction.
 
@@ -35,9 +37,7 @@ class BuildMLPModel(CustomModel):
         x = Dropout(dropout1, name="dropout_1")(self.feature_output)
         feature_input = Input(shape=param_shape, name="feature_input")
 
-        y = Dense(dense1, name="dense_1", activation="relu")(
-            feature_input
-        )
+        y = Dense(dense1, name="dense_1", activation="relu")(feature_input)
         y = Dropout(dropout2, name="dropout_2")(y)
 
         combined = Concatenate()([x, y])
@@ -75,13 +75,15 @@ class BuildMLPModel(CustomModel):
         if metrics is None:
             metrics = ["mae"]
 
-        model = self._build_pretrained_model(param_shape=param_shape,
-                                             dense1=dense1,
-                                             dense2=dense2,
-                                             dropout1=dropout1,
-                                             dropout2=dropout2,
-                                             dropout3=dropout3)
-        
+        model = self._build_pretrained_model(
+            param_shape=param_shape,
+            dense1=dense1,
+            dense2=dense2,
+            dropout1=dropout1,
+            dropout2=dropout2,
+            dropout3=dropout3,
+        )
+
         optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         model.compile(optimizer=optimizer, loss="mse", metrics=metrics)
         return model

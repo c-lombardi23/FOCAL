@@ -26,18 +26,18 @@ from .commands.train_commands import (
     TrainImageOnly,
     KFoldCNN,
     KFoldMLP,
-    TrainCustomModel
+    TrainCustomModel,
 )
 from .commands.test_commands import (
     TestCNN,
     TestMLP,
     TestImageOnly,
-    TestXGBoost
+    TestXGBoost,
 )
 from .commands.hyperparameter_commands import (
     CNNHyperparameterSearch,
     MLPHyperparameterSearch,
-    ImageHyperparameterSearch
+    ImageHyperparameterSearch,
 )
 from .commands.grad_cam_commands import GradCamDisplay
 
@@ -47,6 +47,7 @@ except ImportError:
     print("Warning: TensorFlow not found. Please install tensorflow>=2.19.0")
     traceback.print_exc()
     tf = None
+
 
 def main(args: Optional[list] = None) -> int:
     """Main entry point for the CLI application.
@@ -94,7 +95,7 @@ Examples:
             "cnn_hyperparameter": CNNHyperparameterSearch,
             "mlp_hyperparameter": MLPHyperparameterSearch,
             "image_hyperparameter": ImageHyperparameterSearch,
-            "grad_cam": GradCamDisplay
+            "grad_cam": GradCamDisplay,
         }
         command_class = command_map.get(config.mode)
 
@@ -107,7 +108,7 @@ Examples:
 
         command_instance = command_class()
         command_instance.execute(config)
-        
+
     except Exception as e:
         print(f"Error: {e}")
         traceback.print_exc()

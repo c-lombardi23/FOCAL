@@ -724,7 +724,6 @@ class CustomModel:
                     epochs=epochs,
                     initial_epoch=initial_epoch,
                     validation_data=test_ds,
-
                 )
 
             kfold_histories.append(history)

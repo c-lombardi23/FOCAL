@@ -117,13 +117,13 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     label_scaler_path: Optional[str] = None
     # Path to load a pre-trained CNN model or save the current one.
     model_path: Optional[str] = None
-    # Path to save the final classification report 
+    # Path to save the final classification report
     classification_path: Optional[str] = None
     # Path to save or load a One-Hot Encoder.
     encoder_path: Optional[str] = None
     # Path to save the trained model file.
     save_model_file: Optional[str] = None
-    # Path to save the training history 
+    # Path to save the training history
     save_history_file: Optional[str] = None
 
     # --- Hyperparameter Tuning ---
@@ -277,7 +277,7 @@ class TestCNNConfig(BaseConfig):
 
 # Define configuration specific to testing the MLP-only model.
 class TestMLPConfig(BaseConfig):
-    
+
     # Path to a saved feature scaler.
     feature_scaler_path: Optional[str] = None
     # Path to a saved label scaler.
@@ -316,7 +316,6 @@ class TestImageOnlyConfig(BaseConfig):
     classification_type: Literal["binary", "multiclass"] = "binary"
     # Path to save the output classification report.
     classification_path: Optional[str] = None
-    
 
 
 # Define a config for K-Fold Cross-Validation on the CNN model.
@@ -391,13 +390,14 @@ class GradCamConfig(BaseConfig):
 # Define configuration for training an image-only classification model.
 class TrainImageOnlyConfig(ModelConfig):
     """Configuration for training an image-only classification model."""
+
     backbone: str
     unfreeze_from: Optional[int] = 0
     # Max angle for good cleave
     angle_threshold: float
     # Max diameter for good cleave
     diameter_threshold: float
-    # Dropout 1 rate 
+    # Dropout 1 rate
     dropout1: Optional[float] = 0.1
     # Number of FC layers
     dense1: Optional[int] = 32
