@@ -1,5 +1,6 @@
-from typing import List, Callable
 import traceback
+from typing import Callable, List
+
 import pandas as pd
 
 

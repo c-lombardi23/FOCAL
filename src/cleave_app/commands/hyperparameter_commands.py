@@ -1,13 +1,12 @@
 """This module defines the logic for optimizing hyperparameters for each model."""
 
+from cleave_app.data_processing import DataCollector, MLPDataCollector
+from cleave_app.hyperparameter_tuning import (HyperParameterTuning,
+                                              ImageHyperparameterTuning,
+                                              MLPHyperparameterTuning)
+
 from .base_command import BaseCommand
 from .utils import _run_search_helper
-from cleave_app.data_processing import DataCollector, MLPDataCollector
-from cleave_app.hyperparameter_tuning import (
-    HyperParameterTuning,
-    MLPHyperparameterTuning,
-    ImageHyperparameterTuning,
-)
 
 
 class CNNHyperparameterSearch(BaseCommand):

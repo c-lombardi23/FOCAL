@@ -2,12 +2,14 @@
 Tests for the data processing module.
 """
 
-import pytest
-import pandas as pd
-from cleave_app.data_processing import DataCollector
 from io import BytesIO
-from PIL import Image
+
 import numpy as np
+import pandas as pd
+import pytest
+from PIL import Image
+
+from cleave_app.data_processing import DataCollector
 
 
 @pytest.fixture

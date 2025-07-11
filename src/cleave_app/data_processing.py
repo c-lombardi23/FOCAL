@@ -17,22 +17,16 @@ warnings.filterwarnings("ignore")
 
 try:
     import tensorflow as tf
-    from sklearn.model_selection import (
-        KFold,
-        StratifiedKFold,
-        train_test_split,
-    )
+    from sklearn.model_selection import (KFold, StratifiedKFold,
+                                         train_test_split)
     from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
     from sklearn.utils.class_weight import compute_class_weight
-    from tensorflow.keras.applications.efficientnet import (
-        preprocess_input as _efficientnet_preprocess,
-    )
-    from tensorflow.keras.applications.mobilenet_v2 import (
-        preprocess_input as _mobilenet_preprocess,
-    )
-    from tensorflow.keras.applications.resnet50 import (
-        preprocess_input as _resnet_preprocess,
-    )
+    from tensorflow.keras.applications.efficientnet import \
+        preprocess_input as _efficientnet_preprocess
+    from tensorflow.keras.applications.mobilenet_v2 import \
+        preprocess_input as _mobilenet_preprocess
+    from tensorflow.keras.applications.resnet50 import \
+        preprocess_input as _resnet_preprocess
 except ImportError as e:
     print(f"Warning: Required ML libraries not found: {e}")
     print("Please install tensorflow>=2.19.0 and scikit-learn>=1.7.0")

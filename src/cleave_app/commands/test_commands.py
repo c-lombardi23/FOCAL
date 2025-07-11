@@ -1,14 +1,13 @@
 """This module define the logic for testing each model."""
 
-from cleave_app.prediction_testing import (
-    TestPredictions,
-    TestTensionPredictions,
-    TensionPredictor,
-)
-from cleave_app.mlflow_utils import log_cnn_test_results
-from cleave_app.xgboost_pipeline import XGBoostPredictor
-from .base_command import BaseCommand
 import traceback
+
+from cleave_app.mlflow_utils import log_cnn_test_results
+from cleave_app.prediction_testing import (TensionPredictor, TestPredictions,
+                                           TestTensionPredictions)
+from cleave_app.xgboost_pipeline import XGBoostPredictor
+
+from .base_command import BaseCommand
 
 
 class TestCNN(BaseCommand):

@@ -16,30 +16,17 @@ from typing import Optional
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore")
 
+from .commands.grad_cam_commands import GradCamDisplay
+from .commands.hyperparameter_commands import (CNNHyperparameterSearch,
+                                               ImageHyperparameterSearch,
+                                               MLPHyperparameterSearch)
+from .commands.test_commands import (TestCNN, TestImageOnly, TestMLP,
+                                     TestXGBoost)
+from .commands.train_commands import (KFoldCNN, KFoldMLP, TrainCNN,
+                                      TrainCustomModel, TrainImageOnly,
+                                      TrainMLP, TrainXGBoost)
 # Import application modules
 from .config_schema import load_config
-
-from .commands.train_commands import (
-    TrainCNN,
-    TrainMLP,
-    TrainXGBoost,
-    TrainImageOnly,
-    KFoldCNN,
-    KFoldMLP,
-    TrainCustomModel,
-)
-from .commands.test_commands import (
-    TestCNN,
-    TestMLP,
-    TestImageOnly,
-    TestXGBoost,
-)
-from .commands.hyperparameter_commands import (
-    CNNHyperparameterSearch,
-    MLPHyperparameterSearch,
-    ImageHyperparameterSearch,
-)
-from .commands.grad_cam_commands import GradCamDisplay
 
 try:
     import tensorflow as tf

@@ -3,9 +3,9 @@
 Includes classes for training and predicting.
 """
 
+import os
 from typing import Optional
 
-import os
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np

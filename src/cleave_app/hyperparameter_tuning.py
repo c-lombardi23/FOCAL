@@ -17,18 +17,11 @@ try:
     from keras.applications import EfficientNetB0, MobileNetV2, ResNet50
     from keras_tuner import BayesianOptimization, Hyperband, HyperModel
     from tensorflow.keras.callbacks import EarlyStopping
-    from tensorflow.keras.layers import (
-        BatchNormalization,
-        Concatenate,
-        Dense,
-        Dropout,
-        GlobalAveragePooling2D,
-        Input,
-        RandomBrightness,
-        RandomContrast,
-        RandomRotation,
-        RandomZoom,
-    )
+    from tensorflow.keras.layers import (BatchNormalization, Concatenate,
+                                         Dense, Dropout,
+                                         GlobalAveragePooling2D, Input,
+                                         RandomBrightness, RandomContrast,
+                                         RandomRotation, RandomZoom)
     from tensorflow.keras.models import Model, Sequential
     from tensorflow.keras.regularizers import l2
 except ImportError as e:

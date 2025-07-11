@@ -1,12 +1,12 @@
 import os
+from typing import Any, Dict, List, Optional
+
 import mlflow
 import mlflow.tensorflow
 import mlflow.xgboost
-from mlflow.models.signature import infer_signature
-import pandas as pd
 import numpy as np
-
-from typing import List, Optional, Any, Dict
+import pandas as pd
+from mlflow.models.signature import infer_signature
 from tensorflow.keras.models import Model
 
 
