@@ -1,0 +1,53 @@
+{
+  "csv_path": "PATH/TO/YOUR/DATA.csv",
+  "img_folder": "PATH/TO/YOUR/IMAGES/",
+  "feature_scaler_path": "PATH/TO/FEATURE_SCALER.pkl",
+  "label_scaler_path": "PATH/TO/LABEL_SCALER.pkl",
+  "classification_path": "PATH/TO/CLASSIFICATION_CSV.csv",
+  "img_path": "PATH/TO/SINGLE/IMAGE.png",
+
+  "image_shape": [224, 224, 3],
+  "feature_shape": [5],
+
+  "angle_threshold": 0.0,
+  "diameter_threshold": 0.0,
+
+  "mode": "train_kfold_cnn",
+  "cnn_mode": "bad_good",
+  "backbone": "efficientnet",
+  "model_path": "PATH/TO/SAVED/MODEL.keras",
+  "num_classes": 1,
+  "classification_type": "binary",
+
+  "learning_rate": 0.01,
+  "batch_size": 16,
+  "buffer_size": 40,
+  "test_size": 0.2,
+  "max_epochs": 2,
+  "objective": "val_accuracy",
+  "tension_threshold": 190,
+
+  "brightness": 0.0,
+  "height": 0.0,
+  "width": 0.0,
+  "contrast": 0.0,
+  "rotation": 0.0,
+
+  "dropout1": 0.1,
+  "dropout2": 0.8,
+  "dropout3": 0.2,
+  "dense1": 32,
+  "dense2": 32,
+
+  "early_stopping": "y",
+  "patience": 8,
+  "monitor": "val_accuracy",
+  "method": "max",
+  "checkpoints": "y",
+  "checkpoint_filepath": "PATH/TO/CHECKPOINT/model_checkpoint.keras",
+
+  "save_model_file": "PATH/TO/SAVE/MODEL.keras",
+  "save_history_file": "PATH/TO/SAVE/HISTORY/history_file",
+
+  "set_mask": "y"
+}
