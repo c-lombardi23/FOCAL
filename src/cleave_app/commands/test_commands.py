@@ -5,7 +5,7 @@ from cleave_app.prediction_testing import (
     TestTensionPredictions,
     TensionPredictor,
 )
-from cleave_app.mlflow_utils import log_cnn_test_results
+from cleave_app.mlflow_utils import log_classifier_test_results
 from cleave_app.xgboost_pipeline import XGBoostPredictor
 from .base_command import BaseCommand
 
@@ -51,11 +51,12 @@ class TestCNN(BaseCommand):
                 true_labels=true_labels,
                 pred_probabilites=predictions,
             )
-            log_cnn_test_results(
+            log_classifier_test_results(
                 tester=tester,
                 run_name="cnn_test_results",
                 confusion_matrix_path=confusion_Path,
                 model_path=config.model_path,
+                dataset_path=config.csv_path,
                 classification_path=config.classification_path,
                 roc_path=roc_path,
                 true_labels=true_labels,
@@ -103,13 +104,36 @@ class TestImageOnly(BaseCommand):
         )
         true_labels, pred_labels, predictions = tester.gather_predictions()
 
+        true_labels, pred_labels, predictions = tester.gather_predictions()
+
         if true_labels is not None:
-            tester.display_confusion_matrix(
+            confusion_Path = tester.display_confusion_matrix(
                 true_labels, pred_labels, model_path=config.model_path
             )
+
             tester.display_classification_report(
                 true_labels, pred_labels, config.classification_path
             )
+            roc_path = tester.plot_roc(
+                "ROC Curve",
+                true_labels=true_labels,
+                pred_probabilites=predictions,
+            )
+            log_classifier_test_results(
+                tester=tester,
+                run_name="image_only_test_results",
+                confusion_matrix_path=confusion_Path,
+                model_path=config.model_path,
+                dataset_path=config.csv_path,
+                classification_path=config.classification_path,
+                roc_path=roc_path,
+                true_labels=true_labels,
+                pred_labels=pred_labels,
+                predictions=predictions,
+                image_only=True
+                
+            )
+
         else:
             print("No predictions generated - check data paths")
 

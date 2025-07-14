@@ -267,19 +267,24 @@ def log_xgb_training_run(
                 mlflow.log_artifact(path, artifact_path=key)
 
 
-def log_cnn_test_results(
+def log_classifier_test_results(
     tester,
     run_name: str,
     model_path: str,
+    dataset_path: str,
     confusion_matrix_path: str,
     classification_path: str,
     roc_path: str,
     true_labels: List[int],
     pred_labels: List[int],
     predictions: List[float],
+    image_only: Optional[bool] = False,
 ) -> None:
 
-    mlflow.set_experiment("cnn_test_results")
+    if image_only:
+        mlflow.set_experiment("image_only_results")
+    else:
+        mlflow.set_experiment("cnn_test_results")
     with mlflow.start_run(run_name=run_name):
         if os.path.exists(confusion_matrix_path):
             mlflow.log_artifact(confusion_matrix_path, artifact_path="plots")
@@ -305,8 +310,21 @@ def log_cnn_test_results(
         model_dir = os.path.dirname(model_path)
         basename = os.path.basename(model_path)
         stem, _ = os.path.splitext(basename)
-        predictions_path = os.path.join(
-            model_dir, f"{stem}_cnn_predictions.csv"
+        if image_only:
+            predictions_path = os.path.join(
+            model_dir, f"{stem}_image_only_predictions.csv"
         )
+        else:
+            predictions_path = os.path.join(
+                model_dir, f"{stem}_cnn_predictions.csv"
+            )
         df.to_csv(predictions_path, index=False)
         mlflow.log_artifact(predictions_path, artifact_path="Predictions")
+
+        mlflow.log_artifact(dataset_path, artifact_path="dataset")
+        df = pd.read_csv(dataset_path)
+        mlflow.log_input(
+            mlflow.data.from_pandas(
+                df, source=dataset_path, name=str(dataset_path)
+            )
+        )
