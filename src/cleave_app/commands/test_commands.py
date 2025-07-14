@@ -7,7 +7,7 @@ from cleave_app.prediction_testing import (
 )
 from cleave_app.mlflow_utils import (
     log_classifier_test_results,
-    log_xgb_test_results
+    log_regressor_test_results
 )
 from cleave_app.xgboost_pipeline import XGBoostPredictor
 from .base_command import BaseCommand
@@ -80,13 +80,23 @@ class TestMLP(BaseCommand):
             model_path=config.model_path,
             image_folder=config.img_folder,
             tension_scaler_path=config.label_scaler_path,
-            feature_scaler_path=config.feature_scaler_path,
             csv_path=config.csv_path,
             angle_threshold=config.angle_threshold,
             diameter_threshold=config.diameter_threshold
         )
 
-        predictor.predict()
+        tensions, true_delta, predicted_deltas, predictions =  predictor.predict()
+
+        log_regressor_test_results(
+            model_path=config.model_path,
+            run_name="mlp_results",
+            experiment_name="mlp_results",
+            dataset_path=config.csv_path,
+            tensions=tensions,
+            predicted_delta=predicted_deltas,
+            predictions=predictions,
+            true_delta=true_delta
+        )
 
 
 class TestImageOnly(BaseCommand):
@@ -157,9 +167,10 @@ class TestXGBoost(BaseCommand):
         xgb_predicter.load()
         tensions, predicted_deltas, predictions, true_delta = xgb_predicter.predict()
 
-        log_xgb_test_results(
+        log_regressor_test_results(
             model_path=config.xgb_path,
             run_name="xgb_results",
+            experiment_name="xgb_results",
             dataset_path=config.csv_path,
             tensions=tensions,
             predicted_delta=predicted_deltas,

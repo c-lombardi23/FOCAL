@@ -331,17 +331,17 @@ def log_classifier_test_results(
             )
         )
 
-def log_xgb_test_results(
+def log_regressor_test_results(
     model_path: str,
     run_name: str,
     dataset_path: str,
+    experiment_name: str,
     tensions: List[float],
     predicted_delta: List[float],
     predictions: List[float],
     true_delta: List[float]
     ) -> None:
 
-    experiment_name = "xgb_results"
     try:
         experiment_id = mlflow.create_experiment(experiment_name)
     except MlflowException as e:

@@ -504,6 +504,7 @@ class TensionPredictor:
 
         predictions = []
         predicted_deltas = []
+        pred_ts = []
 
         for img_path in image_paths:
             image = self.load_and_preprocess_image(img_path, self.image_folder)
@@ -521,6 +522,7 @@ class TensionPredictor:
             true_delta, predicted_deltas, tensions
         ):
             pred_t = current_t + delta_pred
+            pred_ts.append(pred_t)
             print(
                 f"Current: {current_t:.2f} | True delta: {true_t:.2f} | Pred delta: {delta_pred:.2f} | Pred T: {pred_t:.2f} | Target T: {mean:.2f}"
             )
@@ -536,7 +538,7 @@ class TensionPredictor:
         basepath = self.model_path.strip(".keras")
         df.to_csv(f"{basepath}_performance.csv", index=False)
 
-        return predictions
+        return tensions, true_delta, predicted_deltas, pred_ts
 
     
     def plot_metric(
