@@ -8,11 +8,12 @@
   "img_folder": "/path/to/your/image_folder/",
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
+  "angle_threshold": 0.48,
+  "diameter_threshold": 17,
   
   "//": "--- 2. Required Paths for Model and Scalers ---",
   "_comment_paths": "You must provide the trained MLP model and BOTH the feature and label scalers from its training.",
   "model_path": "/path/to/your/trained_mlp_model.keras",
-  "feature_scaler_path": "/path/to/your/mlp_feature_scaler.pkl",
   "label_scaler_path": "/path/to/your/tension_label_scaler.pkl",
   
   "//": "--- 3. Required Fields for a Single Prediction Test ---",

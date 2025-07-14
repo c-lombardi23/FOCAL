@@ -275,9 +275,8 @@ class TestCNNConfig(BaseConfig):
 
 # Define configuration specific to testing the MLP-only model.
 class TestMLPConfig(BaseConfig):
-
-    # Path to a saved feature scaler.
-    feature_scaler_path: Optional[str] = None
+    angle_threshold: float
+    diameter_threshold: float
     # Path to a saved label scaler.
     label_scaler_path: Optional[str] = None
     # Path to the trained MLP model file.
@@ -361,7 +360,9 @@ class TestXGBoostConfig(TestMLPConfig):
 
 
 # Define configuration for generating Grad-CAM heatmaps.
-class GradCamConfig(BaseConfig):
+class GradCamConfig(BaseModel):
+    mode: str
+    image_shape: List[int]
     # Path to the trained model for which to generate the heatmap.
     model_path: Optional[str] = None
     # Path to the input image for Grad-CAM.
@@ -369,7 +370,7 @@ class GradCamConfig(BaseConfig):
     # Numerical features required if the model is multi-input.
     test_features: Optional[List[float]] = None
     # The name of the backbone model (for finding layers).
-    backbone_name: Optional[str] = None
+    backbone: Optional[str] = None
     # The name of the final convolutional layer to visualize.
     conv_layer_name: Optional[str] = None
     # Filepath to save the output heatmap image.

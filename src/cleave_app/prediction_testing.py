@@ -405,8 +405,9 @@ class TensionPredictor:
         model_path: str,
         image_folder: str,
         csv_path: str,
-        tension_scaler_path: Optional[str] = None,
-        feature_scaler_path: Optional[str] = None,
+        angle_threshold: float,
+        diameter_threshold: float,
+        tension_scaler_path: Optional[str] = None
     ):
         """Initialize TensionPredictor.
 
@@ -414,16 +415,18 @@ class TensionPredictor:
             model (tf.keras.Model): Trained MLP model for tension prediction.
             image_folder (str): Path to image folder.
             image_path (str): Path to image for prediction.
+            angle_threshold: Maximum angle for good cleave.
+            diameter_threshold: Maximum diameter for good cleave.
             tension_scaler_path (str): Path to saved tension scaler.
-            feature_scaler_path (str): Path to saved feature scaler.
         """
+        self.model_path = model_path
         self.model = tf.keras.models.load_model(model_path)
         self.image_folder = image_folder
         if tension_scaler_path:
             self.tension_scaler = joblib.load(tension_scaler_path)
-        if feature_scaler_path:
-            self.feature_scaler = joblib.load(feature_scaler_path)
         self.csv_path = csv_path
+        self.angle_threshold = angle_threshold
+        self.diameter_threshold = diameter_threshold
 
     def load_and_preprocess_image(
         self, file_path: str, img_folder: str
@@ -445,66 +448,97 @@ class TensionPredictor:
         img = tf.image.grayscale_to_rgb(img)
         # Normalize image
         return img
-
-    def PredictTension(self, features: "list[float]") -> float:
-        """Predict tension for given image and features.
+    
+    def _extract_data(self, angle_threshold: float, diameter_threshold: float):
+        """Load and filter dataset for prediction (only bad cleaves).
 
         Args:
-            features (list[float]): Feature vector for prediction.
+            angle_threshold: Maximum angle to be considered good cleave
+            diameter_threshold: Maximum diameter of scribe mark to be considered good cleave
 
         Returns:
-            float: Predicted tension value (inverse transformed to original scale).
+            Df of bad cleaves and the mean of the good cleaves
+
         """
-        image = self.load_and_preprocess_image(
-            self.image_path, self.image_folder
-        )
-        image = tf.expand_dims(image, axis=0)
-        features = np.array(features).reshape(1, -1)
-        features = tf.convert_to_tensor(features, dtype=tf.float32)
-        # Predict tension
-        features = self.feature_scaler.transform(features)
-        predicted_tension = self.model.predict([image, features])
-        # Scale tension back to normal units
-        predicted_tension = self.tension_scaler.inverse_transform(
-            predicted_tension
-        )
-        return predicted_tension[0][0]
+        try:
+            df = pd.read_csv(self.csv_path)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load CSV: {e}") from e
 
-    def find_best_tension_for_image(
-        self,
-        tension_range: List[float],
-        other_features: Optional[np.ndarray] = None,
-    ) -> None:
-        """Find the tension that gives the best cleave quality prediction."""
-        df = pd.read_csv(self.csv_path)
+        df["CleaveCategory"] = df.apply(
+            lambda row: (
+                1
+                if row["CleaveAngle"] <= angle_threshold
+                and row["ScribeDiameter"] < diameter_threshold
+                and not row["Hackle"]
+                and not row["Misting"]
+                else 0
+            ),
+            axis=1,
+        )
+        # Compute mean tension from good cleaves
+        good_mean = df[df["CleaveCategory"] == 1]["CleaveTension"].mean()
+
+        # Keep only bad cleaves
+        bad_df = df[df["CleaveCategory"] == 0].copy()
+
+        # Compute true delta (label) = good_mean - current
+        bad_df["TrueDelta"] = good_mean - bad_df["CleaveTension"]
+
+        return bad_df, good_mean
+
+    def predict(self):
+        """Run tension predictions on filtered cleave data."""
+        if not self.model or not self.tension_scaler:
+            raise RuntimeError(
+                "Model and scaler must be loaded before prediction."
+            )
+
+        df, mean = self._extract_data(
+            angle_threshold=self.angle_threshold,
+            diameter_threshold=self.diameter_threshold,
+        )
         image_paths = df["ImagePath"]
-        best_tensions = []
-        for img in image_paths:
-            img = self.load_and_preprocess_image(img, self.image_folder)
-            img = tf.expand_dims(img, axis=0)
-            best_tension = None
-            best_prob = -1
+        tensions = df["CleaveTension"]
+        true_delta = df["TrueDelta"]
 
-            for tension in tension_range:
-                if other_features is None:
-                    features = np.zeros((6,))
-                    features[1] = tension
-                    features = np.expand_dims(features, axis=0)
-                else:
-                    features = other_features.copy()
-                    features[1] = tension
+        predictions = []
+        predicted_deltas = []
 
-                prediction = self.model.predict([img, features])
-                quality_prob = prediction[0][0]
+        for img_path in image_paths:
+            image = self.load_and_preprocess_image(img_path, self.image_folder)
+            image = tf.expand_dims(image, 0)
 
-                if quality_prob > best_prob:
-                    best_prob = quality_prob
-                    best_tension = tension
-                    best_tensions.append((best_tension, best_prob))
+            features = np.zeros((4,))
+            features = features.reshape(1, -1)
 
-        for tension, prob in best_tensions:
-            print(f"Best Tension: {tension:.2f}g -> Prob {prob:.2f}")
+            pred_scaled = self.model.predict([image, features])[0]
+            delta = self.tension_scaler.inverse_transform(pred_scaled.reshape(1, -1))[0][0]
+            predicted_deltas.append(delta)
+            predictions.append(delta + tensions.iloc[len(predictions)])
 
+        for true_t, delta_pred, current_t in zip(
+            true_delta, predicted_deltas, tensions
+        ):
+            pred_t = current_t + delta_pred
+            print(
+                f"Current: {current_t:.2f} | True delta: {true_t:.2f} | Pred delta: {delta_pred:.2f} | Pred T: {pred_t:.2f} | Target T: {mean:.2f}"
+            )
+
+        df = pd.DataFrame(
+            {
+                "Current Tension": np.array(tensions).round(2),
+                "True Delta": np.array(true_delta).round(2),
+                "Predicted Tension": np.array(predictions).round(2),
+                "Predicted Delta": np.array(predicted_deltas).round(2),
+            }
+        )
+        basepath = self.model_path.strip(".keras")
+        df.to_csv(f"{basepath}_performance.csv", index=False)
+
+        return predictions
+
+    
     def plot_metric(
         self,
         title: str,

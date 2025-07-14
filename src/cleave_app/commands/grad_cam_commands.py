@@ -14,10 +14,10 @@ class GradCamDisplay(BaseCommand):
                 config.model_path,
                 config.img_path,
                 config.test_features,
-                backbone_name=config.backbone_name,
+                backbone_name=config.backbone,
                 class_index=0,
                 conv_layer_name=None,
-                heatmap_file="C:\\Users\\clombardi\\heatmap_7_1.png",
+                heatmap_file=config.heatmap_file,
             )
         else:
             print("Missing image path or test features for GradCAM")

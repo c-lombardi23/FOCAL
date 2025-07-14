@@ -1,12 +1,12 @@
 """This module define the logic for testing each model."""
 
-import traceback
-
+from cleave_app.prediction_testing import (
+    TestPredictions,
+    TestTensionPredictions,
+    TensionPredictor,
+)
 from cleave_app.mlflow_utils import log_cnn_test_results
-from cleave_app.prediction_testing import (TensionPredictor, TestPredictions,
-                                           TestTensionPredictions)
 from cleave_app.xgboost_pipeline import XGBoostPredictor
-
 from .base_command import BaseCommand
 
 
@@ -71,22 +71,18 @@ class TestMLP(BaseCommand):
     """Test MLP model performance."""
 
     def _execute_command(self, config) -> None:
-
+        
         predictor = TensionPredictor(
             model_path=config.model_path,
             image_folder=config.img_folder,
             tension_scaler_path=config.label_scaler_path,
             feature_scaler_path=config.feature_scaler_path,
             csv_path=config.csv_path,
+            angle_threshold=config.angle_threshold,
+            diameter_threshold=config.diameter_threshold
         )
-        """
-        if config.test_features is not None:
-            prediction = predictor.PredictTension(config.test_features)
-            print(f"Predicted tension: {prediction}")
-        else:
-            print("No test features provided")
-        """
-        predictor.find_best_tension_for_image([100, 200])
+        
+        predictor.predict()
 
 
 class TestImageOnly(BaseCommand):
