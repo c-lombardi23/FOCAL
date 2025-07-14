@@ -640,6 +640,17 @@ class CustomModel:
         image_shape: Tuple[int, int, int],
         param_shape: Tuple[int, ...],
         learning_rate: float,
+        num_classes: int,
+        dropout1: float,
+        dense1: int,
+        dropout2: float,
+        dense2: int,
+        dropout3: float,
+        brightness: float,
+        height: float,
+        width: float,
+        contrast: float,
+        rotation: float,
         metrics: List[str] = None,
         epochs: int = 5,
         initial_epoch: int = 0,
@@ -676,11 +687,21 @@ class CustomModel:
         ):
             print(f"\n=== Training fold {fold + 1} ===")
 
-            custom_model = CustomModel(train_ds, test_ds)
+            custom_model = CustomModel(train_ds, test_ds, num_classes)
             model = custom_model.compile_model(
                 image_shape=image_shape,
                 param_shape=param_shape,
                 learning_rate=learning_rate,
+                dropout1=dropout1,
+                dense1=dense1,
+                dropout2=dropout2,
+                dense2=dense2,
+                dropout3=dropout3,
+                brightness=brightness,
+                height=height,
+                width=width,
+                contrast=contrast,
+                rotation=rotation,
                 metrics=metrics,
             )
             es = EarlyStopping(

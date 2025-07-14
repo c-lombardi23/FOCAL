@@ -149,12 +149,18 @@ class BuildMLPModel(CustomModel):
         cnn_model_path: str,
         param_shape: Tuple[int, ...],
         learning_rate: float,
+        num_classes: int,
+        dense1: int,
+        dense2: int,
+        dropout1: float,
+        dropout2: float,
+        dropout3: float,
         checkpoints: Optional[ModelCheckpoint] = None,
         epochs: int = 5,
         initial_epoch: int = 0,
         early_stopping: Optional[EarlyStopping] = None,
         history_file: Optional[str] = None,
-        model_file: Optional[str] = None,
+        save_model_file: Optional[str] = None,
     ) -> Tuple[List[tf.keras.Model], List[tf.keras.callbacks.History]]:
         """Train MLP model using k-fold cross validation.
 
@@ -189,10 +195,15 @@ class BuildMLPModel(CustomModel):
         ):
             print(f"\n=== Training MLP fold {fold + 1} ===")
 
-            custom_model = BuildMLPModel(cnn_model_path, train_ds, test_ds)
+            custom_model = BuildMLPModel(cnn_model_path, train_ds, test_ds, num_classes)
             model = custom_model.compile_model(
                 param_shape=param_shape,
                 learning_rate=learning_rate,
+                dense1=dense1,
+                dense2=dense2,
+                dropout1=dropout1,
+                dropout2=dropout2,
+                dropout3=dropout3,
                 metrics=["mae", "mse"],
             )
 
@@ -225,9 +236,9 @@ class BuildMLPModel(CustomModel):
             else:
                 print("History not saved")
 
-            if model_file:
-                os.makedirs(os.path.dirname(model_file), exist_ok=True)
-                model.save(f"{model_file}_fold{fold+1}.keras")
+            if save_model_file:
+                os.makedirs(os.path.dirname(save_model_file), exist_ok=True)
+                model.save(f"{save_model_file}_fold{fold+1}.keras")
                 print(f"Fold {fold+1} model saved")
             else:
                 print("Model not saved")

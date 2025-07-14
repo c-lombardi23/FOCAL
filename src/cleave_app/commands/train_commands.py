@@ -415,9 +415,20 @@ class KFoldCNN(BaseCommand):
             config.image_shape,
             config.feature_shape,
             config.learning_rate or 0.001,
+            num_classes=config.num_classes,
             epochs=config.max_epochs,
             history_file=config.save_history_file,
             save_model_file=config.save_model_file,
+            dense1=config.dense1,
+            dense2=config.dense2,
+            dropout1=config.dropout1,
+            dropout2=config.dropout2,
+            dropout3=config.dropout3,
+            brightness=config.brightness,
+            contrast=config.contrast,
+            height=config.height,
+            width=config.width,
+            rotation=config.rotation
         )
 
         CustomModel.get_averages_from_kfold(kfold_histories)
@@ -428,7 +439,9 @@ class KFoldMLP(BaseCommand):
 
     def _execute_command(self, config) -> None:
         data = MLPDataCollector(
-            config.csv_path, config.img_folder, backbone=None
+            config.csv_path, config.img_folder, backbone=None,
+            angle_threshold=config.angle_threshold,
+            diameter_threshold=config.diameter_threshold
         )
         images, features, labels = data.extract_data()
         datasets, scaler = data.create_kfold_datasets(
@@ -444,6 +457,12 @@ class KFoldMLP(BaseCommand):
             config.model_path,
             config.feature_shape,
             config.learning_rate or 0.001,
+            dense1=config.dense1,
+            dense2 = config.dense2,
+            dropout1=config.dropout1,
+            dropout2=config.dropout2,
+            dropout3=config.dropout3,
+            num_classes=config.num_classes,
             history_file=config.save_history_file,
             save_model_file=config.save_model_file,
         )
