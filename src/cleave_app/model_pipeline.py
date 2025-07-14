@@ -744,7 +744,7 @@ class CustomModel:
 
             if save_model_file:
                 os.makedirs(os.path.dirname(save_model_file), exist_ok=True)
-                model.save(f"{save_model_file}_fold{fold+1}.keras")
+                model.save(f"{save_model_file.strip(".keras")}_fold{fold+1}.keras")
                 print(f"Fold {fold+1} model saved")
             else:
                 print("Model not saved")
