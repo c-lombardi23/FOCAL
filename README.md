@@ -22,7 +22,7 @@ A machine learning package for fiber cleave quality classification and tension p
 - [Contributing](#contributing)
 - [License](#license)
 
-## 🎯 Project Description
+## Project Description
 
 This project implements a comprehensive machine learning pipeline for analyzing fiber cleave quality using images from the THORLABS Fiber Cleave Analyzer (FCA). The system consists of three main components:
 
@@ -32,7 +32,7 @@ This project implements a comprehensive machine learning pipeline for analyzing 
 
 The models use transfer learning with either MobileNetV2, ResNet, or EfficientNetB0 as the backbone and are optimized using Keras Tuner for hyperparameter optimization.
 
-## ✨ Key Features
+## Key Features
 
 - **Transfer Learning**: Uses pre-trained models for robust feature extraction
 - **Multi-Modal Input**: Combines image features with numerical parameters
@@ -43,7 +43,7 @@ The models use transfer learning with either MobileNetV2, ResNet, or EfficientNe
 - **Command Line Interface**: Easy-to-use CLI for training and inference
 - **Comprehensive Logging**: Training history and model checkpoints
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 
@@ -106,7 +106,7 @@ mlflow ui
 got to https://localhost:5000/ in browser
 
 
-## 🏃‍♂️ Quick Start
+## Quick Start
 
 1. **Prepare your data**:
    - Organize cleave images in a folder
@@ -119,7 +119,7 @@ got to https://localhost:5000/ in browser
    cleave-app --file_path config.json
    ```
 
-## ⚙️ Configuration
+## Configuration
 
 The application uses a JSON configuration file to specify all parameters. **Each mode uses a dedicated config class with its own required and optional fields.** The CLI automatically loads the correct config class for the selected mode.
 
@@ -181,7 +181,7 @@ The application uses a JSON configuration file to specify all parameters. **Each
 
 > **Extensibility:** To add a new mode, simply add a new config class in `config_schema.py` and update the mode-to-config mapping.
 
-## 📖 Usage Examples
+## Usage Examples
 
 ### Training a Classification Model
 
@@ -217,7 +217,7 @@ cleave-app --file_path config_test_mlp.json
 cleave-app --file_path config_kfold.json
 ```
 
-## 🧠 Tips for Better Accuracy
+## Tips for Better Accuracy
 
 If your image-only model is not achieving the desired accuracy, consider the following strategies:
 
@@ -286,7 +286,7 @@ for layer in pre_trained_model.layers[:-20]:
 
 For more details, see the [Configuration](#configuration) and [Usage Examples](#usage-examples) sections above.
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 - **Deep Learning**: TensorFlow 2.19+, Keras
 - **Hyperparameter Tuning**: Keras Tuner
@@ -298,7 +298,7 @@ For more details, see the [Configuration](#configuration) and [Usage Examples](#
 - **Testing**: pytest
 - **DevTools**: Pydantic, Black, Pylint, Flake8
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ImageProcessingClone/
@@ -320,7 +320,7 @@ ImageProcessingClone/
 └── README.md                     # This file
 ```
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
@@ -335,17 +335,17 @@ We welcome contributions! Please feel free to submit a Pull Request. For major c
 7. Push to the branch: `git push origin feature/new_feature`
 8. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - THORLABS for the Fiber Cleave Analyzer (FCA)
 - TensorFlow and Keras 
 - The open-source community for various tools and libraries
 
-## 📞 Support
+## Support
 
 If you encounter any issues or have questions:
 
