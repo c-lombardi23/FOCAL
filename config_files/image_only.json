@@ -2,16 +2,13 @@
   "csv_path": "C:\\Thorlabs\\400LA_1.csv",
   "img_folder": "C:\\Thorlabs\\400LA\\",
   "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
-  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
 
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
-  "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
-  "mode": "train_image_only",
+  "mode": "test_image_only",
   "backbone": "efficientnet",
-  "backbone_name": "resnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\image_only1.keras",
+  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\image_only1.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
@@ -38,8 +35,8 @@
   "checkpoints": "n",
   "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\images_features_checkpoint2.keras",
 
-  "save_model_file": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\image_only1.keras",
-  "save_history_file": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\image_only1_history",
+  "save_model_file": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\image_only1.keras",
+  "save_history_file": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\image_only1_history",
 
   "set_mask": "y"
 }

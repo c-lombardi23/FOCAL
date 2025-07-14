@@ -301,6 +301,8 @@ class TestMLPConfig(BaseConfig):
 
 # Define configuration for testing an image-only classification model.
 class TestImageOnlyConfig(BaseConfig):
+    angle_threshold: float
+    diameter_threshold: float
     # Path to the trained image-only model file.
     model_path: Optional[str] = None
     # Path to the saved label encoder.

@@ -81,14 +81,14 @@ class TestMLP(BaseCommand):
             angle_threshold=config.angle_threshold,
             diameter_threshold=config.diameter_threshold
         )
-        
+
         predictor.predict()
 
 
 class TestImageOnly(BaseCommand):
     """Test CNN model performance on only images."""
 
-    def execute(self, config) -> None:
+    def _execute_command(self, config) -> None:
         tester = TestPredictions(
             model_path=config.model_path,
             csv_path=config.csv_path,
@@ -98,8 +98,10 @@ class TestImageOnly(BaseCommand):
             backbone=config.backbone,
             encoder_path=config.encoder_path,
             classification_type=config.classification_type,
+            angle_threshold=config.angle_threshold,
+            diameter_threshold=config.diameter_threshold
         )
-        true_labels, pred_labels = tester.gather_predictions()
+        true_labels, pred_labels, predictions = tester.gather_predictions()
 
         if true_labels is not None:
             tester.display_confusion_matrix(
