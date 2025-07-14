@@ -23,7 +23,11 @@ from .hyperparameter_tuning import (BuildHyperModel, BuildMLPHyperModel,
                                     MLPHyperparameterTuning)
 from .mlp_model import BuildMLPModel
 from .model_pipeline import CustomModel
-from .prediction_testing import TensionPredictor, TestPredictions
+from .prediction_testing import (
+    TensionPredictor,
+    TestPredictions
+)
+from .xgboost_pipeline import XGBoostModel, XGBoostPredictor
 
 __all__ = [
     "Config",
