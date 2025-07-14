@@ -407,7 +407,7 @@ class TensionPredictor:
         csv_path: str,
         angle_threshold: float,
         diameter_threshold: float,
-        tension_scaler_path: Optional[str] = None
+        tension_scaler_path: Optional[str] = None,
     ):
         """Initialize TensionPredictor.
 
@@ -448,7 +448,7 @@ class TensionPredictor:
         img = tf.image.grayscale_to_rgb(img)
         # Normalize image
         return img
-    
+
     def _extract_data(self, angle_threshold: float, diameter_threshold: float):
         """Load and filter dataset for prediction (only bad cleaves).
 
@@ -514,7 +514,9 @@ class TensionPredictor:
             features = features.reshape(1, -1)
 
             pred_scaled = self.model.predict([image, features])[0]
-            delta = self.tension_scaler.inverse_transform(pred_scaled.reshape(1, -1))[0][0]
+            delta = self.tension_scaler.inverse_transform(
+                pred_scaled.reshape(1, -1)
+            )[0][0]
             predicted_deltas.append(delta)
             predictions.append(delta + tensions.iloc[len(predictions)])
 
@@ -540,7 +542,6 @@ class TensionPredictor:
 
         return tensions, true_delta, predicted_deltas, pred_ts
 
-    
     def plot_metric(
         self,
         title: str,

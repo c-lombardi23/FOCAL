@@ -11,6 +11,7 @@ import sys
 import traceback
 import warnings
 from typing import Optional
+
 import mlflow
 
 # Suppress TensorFlow warnings
@@ -36,7 +37,8 @@ except ImportError:
     traceback.print_exc()
     tf = None
 
-#mlflow.set_tracking_uri("http://localhost:5000")
+# mlflow.set_tracking_uri("http://localhost:5000")
+
 
 def main(args: Optional[list] = None) -> int:
     """Main entry point for the CLI application.

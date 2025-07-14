@@ -1,15 +1,11 @@
 """This module define the logic for testing each model."""
 
-from cleave_app.prediction_testing import (
-    TestPredictions,
-    TestTensionPredictions,
-    TensionPredictor,
-)
-from cleave_app.mlflow_utils import (
-    log_classifier_test_results,
-    log_regressor_test_results
-)
+from cleave_app.mlflow_utils import (log_classifier_test_results,
+                                     log_regressor_test_results)
+from cleave_app.prediction_testing import (TensionPredictor, TestPredictions,
+                                           TestTensionPredictions)
 from cleave_app.xgboost_pipeline import XGBoostPredictor
+
 from .base_command import BaseCommand
 
 
@@ -75,17 +71,19 @@ class TestMLP(BaseCommand):
     """Test MLP model performance."""
 
     def _execute_command(self, config) -> None:
-        
+
         predictor = TensionPredictor(
             model_path=config.model_path,
             image_folder=config.img_folder,
             tension_scaler_path=config.label_scaler_path,
             csv_path=config.csv_path,
             angle_threshold=config.angle_threshold,
-            diameter_threshold=config.diameter_threshold
+            diameter_threshold=config.diameter_threshold,
         )
 
-        tensions, true_delta, predicted_deltas, predictions =  predictor.predict()
+        tensions, true_delta, predicted_deltas, predictions = (
+            predictor.predict()
+        )
 
         log_regressor_test_results(
             model_path=config.model_path,
@@ -95,7 +93,7 @@ class TestMLP(BaseCommand):
             tensions=tensions,
             predicted_delta=predicted_deltas,
             predictions=predictions,
-            true_delta=true_delta
+            true_delta=true_delta,
         )
 
 
@@ -113,7 +111,7 @@ class TestImageOnly(BaseCommand):
             encoder_path=config.encoder_path,
             classification_type=config.classification_type,
             angle_threshold=config.angle_threshold,
-            diameter_threshold=config.diameter_threshold
+            diameter_threshold=config.diameter_threshold,
         )
         true_labels, pred_labels, predictions = tester.gather_predictions()
 
@@ -143,8 +141,7 @@ class TestImageOnly(BaseCommand):
                 true_labels=true_labels,
                 pred_labels=pred_labels,
                 predictions=predictions,
-                image_only=True
-                
+                image_only=True,
             )
 
         else:
@@ -165,7 +162,9 @@ class TestXGBoost(BaseCommand):
         )
 
         xgb_predicter.load()
-        tensions, predicted_deltas, predictions, true_delta = xgb_predicter.predict()
+        tensions, predicted_deltas, predictions, true_delta = (
+            xgb_predicter.predict()
+        )
 
         log_regressor_test_results(
             model_path=config.xgb_path,
@@ -175,5 +174,5 @@ class TestXGBoost(BaseCommand):
             tensions=tensions,
             predicted_delta=predicted_deltas,
             predictions=predictions,
-            true_delta=true_delta
+            true_delta=true_delta,
         )

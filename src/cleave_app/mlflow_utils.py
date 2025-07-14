@@ -6,10 +6,9 @@ import mlflow.tensorflow
 import mlflow.xgboost
 import numpy as np
 import pandas as pd
+from mlflow.exceptions import MlflowException
 from mlflow.models.signature import infer_signature
 from tensorflow.keras.models import Model
-from mlflow.exceptions import MlflowException
-
 
 
 def log_cnn_training_run(
@@ -314,8 +313,8 @@ def log_classifier_test_results(
         stem, _ = os.path.splitext(basename)
         if image_only:
             predictions_path = os.path.join(
-            model_dir, f"{stem}_image_only_predictions.csv"
-        )
+                model_dir, f"{stem}_image_only_predictions.csv"
+            )
         else:
             predictions_path = os.path.join(
                 model_dir, f"{stem}_cnn_predictions.csv"
@@ -331,6 +330,7 @@ def log_classifier_test_results(
             )
         )
 
+
 def log_regressor_test_results(
     model_path: str,
     run_name: str,
@@ -339,18 +339,20 @@ def log_regressor_test_results(
     tensions: List[float],
     predicted_delta: List[float],
     predictions: List[float],
-    true_delta: List[float]
-    ) -> None:
+    true_delta: List[float],
+) -> None:
 
     try:
         experiment_id = mlflow.create_experiment(experiment_name)
     except MlflowException as e:
         experiment = mlflow.get_experiment_by_name(experiment_name)
         if experiment is None:
-            raise Exception(f"Failed to get or create experiment '{experiment_name}'")
+            raise Exception(
+                f"Failed to get or create experiment '{experiment_name}'"
+            )
 
         experiment_id = experiment.experiment_id
-    with mlflow.start_run(run_name=run_name, experiment_id=experiment_id):      
+    with mlflow.start_run(run_name=run_name, experiment_id=experiment_id):
         mlflow.log_artifact(dataset_path, artifact_path="dataset")
 
         df = pd.DataFrame(
@@ -358,17 +360,16 @@ def log_regressor_test_results(
                 "current_tension": tensions,
                 "true_delta": true_delta,
                 "pred_delta": predicted_delta,
-                "pred_t": predictions
+                "pred_t": predictions,
             }
         )
-        df = df.round(4) 
+        df = df.round(4)
         model_dir = os.path.dirname(model_path)
         basename = os.path.basename(model_path)
         stem, _ = os.path.splitext(basename)
 
         predictions_path = os.path.join(
-                model_dir, f"{stem}_xgb_predictions.csv"
-            )
+            model_dir, f"{stem}_xgb_predictions.csv"
+        )
         df.to_csv(predictions_path, index=False)
         mlflow.log_artifact(predictions_path, artifact_path="Predictions")
-

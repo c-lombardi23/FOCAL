@@ -195,7 +195,9 @@ class BuildMLPModel(CustomModel):
         ):
             print(f"\n=== Training MLP fold {fold + 1} ===")
 
-            custom_model = BuildMLPModel(cnn_model_path, train_ds, test_ds, num_classes)
+            custom_model = BuildMLPModel(
+                cnn_model_path, train_ds, test_ds, num_classes
+            )
             model = custom_model.compile_model(
                 param_shape=param_shape,
                 learning_rate=learning_rate,

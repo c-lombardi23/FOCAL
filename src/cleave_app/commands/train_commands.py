@@ -264,7 +264,7 @@ class TrainXGBoost(BaseCommand):
         xgb_model.save(config.xgb_path)
 
         X_train, y_train = xgb_model._extract_features_and_labels(train_ds)
-        
+
         log_xgb_training_run(
             config=config,
             model=xgb_model.get_model(),
@@ -429,7 +429,7 @@ class KFoldCNN(BaseCommand):
             contrast=config.contrast,
             height=config.height,
             width=config.width,
-            rotation=config.rotation
+            rotation=config.rotation,
         )
 
         CustomModel.get_averages_from_kfold(kfold_histories)
@@ -440,9 +440,11 @@ class KFoldMLP(BaseCommand):
 
     def _execute_command(self, config) -> None:
         data = MLPDataCollector(
-            config.csv_path, config.img_folder, backbone=None,
+            config.csv_path,
+            config.img_folder,
+            backbone=None,
             angle_threshold=config.angle_threshold,
-            diameter_threshold=config.diameter_threshold
+            diameter_threshold=config.diameter_threshold,
         )
         images, features, labels = data.extract_data()
         datasets, scaler = data.create_kfold_datasets(
@@ -459,7 +461,7 @@ class KFoldMLP(BaseCommand):
             config.feature_shape,
             config.learning_rate or 0.001,
             dense1=config.dense1,
-            dense2 = config.dense2,
+            dense2=config.dense2,
             dropout1=config.dropout1,
             dropout2=config.dropout2,
             dropout3=config.dropout3,
