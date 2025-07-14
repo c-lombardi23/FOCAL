@@ -37,6 +37,7 @@ class TestPredictions(DataCollector):
         image_only: bool = False,
         backbone: str = "mobilenet",
         classification_type: str = "binary",
+        threshold: Optional[float] = 0.5
     ):
         """Initialize TestPredictions.
 
@@ -68,6 +69,7 @@ class TestPredictions(DataCollector):
         self.ohe = None
         if not self.image_only and self.scalar_path:
             self.feature_scaler = joblib.load(self.scalar_path)
+        self.threshold = threshold
 
     def _clean_data(self) -> "pd.DataFrame | None":
         """Read CSV file into DataFrame and add column for cleave quality and
@@ -166,7 +168,7 @@ class TestPredictions(DataCollector):
         pred_labels = [np.argmax(pred[0]) for pred in predictions]
         if self.classification_type == "binary":
             pred_labels = [
-                (pred[0, 0] > 0.4).astype(int) for pred in predictions
+                (pred[0, 0] > self.threshold).astype(int) for pred in predictions
             ]
         elif self.classification_type == "multiclass":
             pred_labels = [np.argmax(pred[0]) for pred in predictions]

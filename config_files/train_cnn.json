@@ -1,24 +1,21 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_1.csv",
+  "csv_path": "C:\\Thorlabs\\400LA_2.csv",
   "img_folder": "C:\\Thorlabs\\400LA\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\model2_feature_scaler.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\label_scaler2.pkl",
-  "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
-  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
+  "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5_feature_scaler.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\label_scaler4.pkl",
+  
 
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
-  "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
-  "angle_threshold": 0.48,
+  "angle_threshold": 0.49,
   "diameter_threshold": 55.0,
 
   "mode": "train_cnn",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
   "backbone_name": "resnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\image_features1.keras",
-  "project_name": "Binary4",
+  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model4.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
@@ -26,34 +23,32 @@
   "learning_rate": 0.01,
   "batch_size": 16,
   "buffer_size": 40,
-  "test_size": 0.20,
-  "max_epochs": 2,
+  "test_size": 0.25,
+  "max_epochs": 40,
   "objective": "val_accuracy",
-  "tension_threshold": 190,
 
   "brightness": 0.0,
   "height": 0.0,
   "width": 0.0,
   "contrast": 0.0,
-  "rotation": 0.00,
+  "rotation": 0.05,
 
-  "dropout1": 0.1,
+  "dropout1": 0.0,
   "dropout2": 0.8,
   "dropout3": 0.2,
   "dense1": 32,
   "dense2": 32,
   
 
-  "early_stopping": "y",
-  "patience": 8,
+  "early_stopping": "n",
+  "patience": 5,
   "monitor": "val_accuracy",
   "method": "max",
   "checkpoints": "y",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\model2_checkpoint.keras",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5_checkpoint.keras",
 
-  "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
-  "save_model_file": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\model2.keras",
-  "save_history_file": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\model2_history",
+  "save_model_file": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
+  "save_history_file": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5_history",
 
   "set_mask": "y"
 }

@@ -13,11 +13,12 @@
   "cnn_mode": "good_bad",
   "backbone": "efficientnet",
   "backbone_name": "resnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_checkpoint.keras",
+  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
   "project_name": "Binary4",
   "num_classes": 1,
   "classification_type": "binary",
 
+  "classification_threshold": 0.93,
   "angle_threshold": 0.49,
   "diameter_threshold": 55.0,
   "learning_rate": 0.01,

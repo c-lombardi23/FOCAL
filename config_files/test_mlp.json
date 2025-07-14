@@ -1,5 +1,5 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_1.csv",
+  "csv_path": "C:\\Thorlabs\\400LA_2.csv",
   "img_folder": "C:\\Thorlabs\\400LA\\",
   "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlptension_scaler1.pkl",
 

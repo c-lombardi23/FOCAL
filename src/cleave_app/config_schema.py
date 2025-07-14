@@ -235,6 +235,7 @@ class TrainMLPConfig(ModelConfig):
 
 # Define configuration specific to testing the hybrid CNN+MLP model.
 class TestCNNConfig(BaseConfig):
+    classification_threshold: Optional[float] = 0.5
     # Specifies the mode within CNN testing.
     cnn_mode: str
     # The tension threshold for classification logic.

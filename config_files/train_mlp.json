@@ -1,5 +1,5 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_1.csv",
+  "csv_path": "C:\\Thorlabs\\400LA_2.csv",
   "img_folder": "C:\\Thorlabs\\400LA\\",
   "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlpfeature_scaler1.pkl",
   "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlptension_scaler1.pkl",
@@ -12,7 +12,7 @@
   "mode": "train_mlp",
   "backbone": "efficientnet",
   "backbone_name": "resnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_checkpoint.keras",
+  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
@@ -22,7 +22,7 @@
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 2,
+  "max_epochs": 20,
   "objective": "val_accuracy",
 
   "dropout1": 0.1,

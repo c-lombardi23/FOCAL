@@ -1,8 +1,8 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_1.csv",
+  "csv_path": "C:\\Thorlabs\\400LA_2.csv",
   "img_folder": "C:\\Thorlabs\\400LA\\",
   "feature_scaler_path": "",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\tension_scaler1.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\xgb1_scaler.pkl",
   
 
   "image_shape": [224, 224, 3],
@@ -12,7 +12,7 @@
   "mode": "test_xgboost",
   "backbone": "efficientnet",
   "backbone_name": "efficientnetb0",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_checkpoint.keras",
+  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
   "project_name": "Binary4",
   "num_classes": 1,
   "classification_type": "binary",
@@ -41,7 +41,7 @@
   "checkpoints": "n",
   "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\tensions_checkpoint2.keras",
 
-  "xgb_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\xgb1.pkl",
+  "xgb_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\xgb1.pkl",
   "save_history_file": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\xgb_history4",
 
   "set_mask": "y"
