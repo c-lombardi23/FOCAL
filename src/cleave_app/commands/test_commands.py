@@ -5,7 +5,10 @@ from cleave_app.prediction_testing import (
     TestTensionPredictions,
     TensionPredictor,
 )
-from cleave_app.mlflow_utils import log_classifier_test_results
+from cleave_app.mlflow_utils import (
+    log_classifier_test_results,
+    log_xgb_test_results
+)
 from cleave_app.xgboost_pipeline import XGBoostPredictor
 from .base_command import BaseCommand
 
@@ -150,5 +153,16 @@ class TestXGBoost(BaseCommand):
             scaler_path=config.label_scaler_path,
             cnn_model_path=config.model_path,
         )
+
         xgb_predicter.load()
-        xgb_predicter.predict()
+        tensions, predicted_deltas, predictions, true_delta = xgb_predicter.predict()
+
+        log_xgb_test_results(
+            model_path=config.xgb_path,
+            run_name="xgb_results",
+            dataset_path=config.csv_path,
+            tensions=tensions,
+            predicted_delta=predicted_deltas,
+            predictions=predictions,
+            true_delta=true_delta
+        )

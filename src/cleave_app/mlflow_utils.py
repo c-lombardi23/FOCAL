@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 from mlflow.models.signature import infer_signature
 from tensorflow.keras.models import Model
+from mlflow.exceptions import MlflowException
+
 
 
 def log_cnn_training_run(
@@ -328,3 +330,45 @@ def log_classifier_test_results(
                 df, source=dataset_path, name=str(dataset_path)
             )
         )
+
+def log_xgb_test_results(
+    model_path: str,
+    run_name: str,
+    dataset_path: str,
+    tensions: List[float],
+    predicted_delta: List[float],
+    predictions: List[float],
+    true_delta: List[float]
+    ) -> None:
+
+    experiment_name = "xgb_results"
+    try:
+        experiment_id = mlflow.create_experiment(experiment_name)
+    except MlflowException as e:
+        experiment = mlflow.get_experiment_by_name(experiment_name)
+        if experiment is None:
+            raise Exception(f"Failed to get or create experiment '{experiment_name}'")
+
+        experiment_id = experiment.experiment_id
+    with mlflow.start_run(run_name=run_name, experiment_id=experiment_id):      
+        mlflow.log_artifact(dataset_path, artifact_path="dataset")
+
+        df = pd.DataFrame(
+            {
+                "current_tension": tensions,
+                "true_delta": true_delta,
+                "pred_delta": predicted_delta,
+                "pred_t": predictions
+            }
+        )
+        df = df.round(4) 
+        model_dir = os.path.dirname(model_path)
+        basename = os.path.basename(model_path)
+        stem, _ = os.path.splitext(basename)
+
+        predictions_path = os.path.join(
+                model_dir, f"{stem}_xgb_predictions.csv"
+            )
+        df.to_csv(predictions_path, index=False)
+        mlflow.log_artifact(predictions_path, artifact_path="Predictions")
+

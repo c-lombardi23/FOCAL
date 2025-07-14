@@ -275,6 +275,7 @@ class XGBoostPredictor:
 
         predictions = []
         predicted_deltas = []
+        pred_ts = []
 
         for img_path in image_paths:
             features = self._extract_cnn_features(img_path)
@@ -287,6 +288,7 @@ class XGBoostPredictor:
             true_delta, predicted_deltas, tensions
         ):
             pred_t = current_t + delta_pred
+            pred_ts.append(pred_t)
             print(
                 f"Current: {current_t:.2f} | True delta: {true_t:.2f} | Pred delta: {delta_pred:.2f} | Pred T: {pred_t:.2f} | Target T: {mean:.2f}"
             )
@@ -300,6 +302,7 @@ class XGBoostPredictor:
             }
         )
         basepath = self.xgb_path.strip(".pkl")
-        df.to_csv(f"{basepath}_performance.csv", index=False)
+        csv_path = f"{basepath}_performance.csv"
+        df.to_csv(csv_path, index=False)
 
-        return predictions
+        return tensions, predicted_deltas, predictions, true_delta

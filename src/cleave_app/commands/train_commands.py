@@ -264,6 +264,7 @@ class TrainXGBoost(BaseCommand):
         xgb_model.save(config.xgb_path)
 
         X_train, y_train = xgb_model._extract_features_and_labels(train_ds)
+        
         log_xgb_training_run(
             config=config,
             model=xgb_model.get_model(),
