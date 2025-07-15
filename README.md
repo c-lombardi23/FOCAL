@@ -349,7 +349,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you encounter any issues or have questions:
 
-1. Check the [Issues](https://github.com/c-lombardi23/ImageProcessing/issues) page
+1. Check the [Issues](https://github.com/c-lombardi23/ImageProcessingClone/issues) page
 2. Create a new issue with detailed information
 3. Contact: clombardi23245@gmail.com
 
