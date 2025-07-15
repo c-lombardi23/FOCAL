@@ -29,6 +29,7 @@ setup(
         "opencv-python>=4.8.0",
         "typer>=0.16.0",
         "click>=8.2.0",
+        "xgboost>=3.0.0"
     ],
     extras_require={
         "dev": [
