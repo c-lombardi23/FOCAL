@@ -39,6 +39,7 @@ setup(
             "jupyter>=1.0.0",
             "ipykernel>=6.29.0",
             "ipython>=8.37.0",
+            "pytest-mock>=3.10.0"
         ]
     },
     classifiers=[
