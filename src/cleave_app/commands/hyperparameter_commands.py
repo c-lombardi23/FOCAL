@@ -7,12 +7,16 @@ from cleave_app.hyperparameter_tuning import (HyperParameterTuning,
 
 from .base_command import BaseCommand
 from .utils import _run_search_helper
+import mlflow.keras
 
 
 class CNNHyperparameterSearch(BaseCommand):
     """Perform hyperparameter search for CNN model."""
-
+    
     def _execute_command(self, config) -> None:
+        mlflow.set_experiment(config.project_name)
+        mlflow.keras.autolog()
+
         data = DataCollector(
             config.csv_path,
             config.img_folder,
@@ -50,7 +54,12 @@ class MLPHyperparameterSearch(BaseCommand):
     """Perform hyperparameter search for MLP model."""
 
     def _execute_command(self, config) -> None:
-        data = MLPDataCollector(config.csv_path, config.img_folder)
+        mlflow.set_experiment
+        mlflow.keras.autolog(config.project_name)
+
+        data = MLPDataCollector(config.csv_path, config.img_folder,
+                                angle_threshold=config.angle_threshold,
+                                diameter_threshold=config.diameter_threshold)
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images,
@@ -59,8 +68,8 @@ class MLPHyperparameterSearch(BaseCommand):
             config.test_size,
             config.buffer_size,
             config.batch_size,
-            feature_scaler_path=config.feature_scaler_path,
-            tension_scaler_path=config.label_scaler_path,
+            feature_scaler_path=None,
+            tension_scaler_path=None,
         )
 
         max_epochs = config.max_epochs or 20
@@ -77,7 +86,11 @@ class MLPHyperparameterSearch(BaseCommand):
 class ImageHyperparameterSearch(BaseCommand):
     """Perform hyperparameter search for image-only model."""
 
+    
     def execute(self, config) -> None:
+        mlflow.set_experiment
+        mlflow.keras.autolog(config.project_name)
+
         data = DataCollector(
             config.csv_path,
             config.img_folder,

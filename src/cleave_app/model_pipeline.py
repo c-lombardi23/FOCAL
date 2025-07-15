@@ -221,7 +221,7 @@ class CustomModel:
 
         # Numerical features section
         params_input = Input(shape=param_shape)
-        y = Dense(dense1, name="dense_param1", activation="relu")(params_input)
+        y = Dense(dense1, name="dense_1", activation="relu")(params_input)
         y = Dropout(dropout2, name="dropout_2")(
             y
         )  # Added to remove reliance on features

@@ -1,14 +1,14 @@
 {
   "csv_path": "C:\\Thorlabs\\400LA_2.csv",
   "img_folder": "C:\\Thorlabs\\400LA\\",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlptension_scaler1.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlptension_scaler3.pkl",
 
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
 
   "mode": "test_mlp",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlp_model_1.keras",
+  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlp_model_3.keras",
   "num_classes": 1,
   "classification_type": "binary",
 

@@ -1,44 +1,41 @@
 {
   "csv_path": "C:\\Thorlabs\\400LA_2.csv",
   "img_folder": "C:\\Thorlabs\\400LA\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlpfeature_scaler1.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlptension_scaler1.pkl",
+  "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlpfeature_scaler3.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlptension_scaler3.pkl",
  
-
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
-  "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
   "mode": "train_mlp",
   "backbone": "efficientnet",
-  "backbone_name": "resnet",
   "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
   "angle_threshold": 0.49,
   "diameter_threshold": 55.0,
-  "learning_rate": 0.01,
+  "learning_rate": 0.001,
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 20,
-  "objective": "val_accuracy",
+  "max_epochs": 60,
+  "objective": "val_mae",
 
   "dropout1": 0.1,
-  "dropout2": 0.8,
-  "dropout3": 0.2,
+  "dropout2": 0.6,
+  "dropout3": 0.4,
   "dense1": 32,
-  "dense2": 32,
+  "dense2": 48,
 
-  "early_stopping": "n",
+  "early_stopping": "y",
   "patience": 5,
-  "monitor": "val_loss",
+  "monitor": "val_mae",
   "method": "min",
-  "checkpoints": "n",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_6_27\\Individual_Trials\\images_features_checkpoint2.keras",
+  "checkpoints": "y",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlp_model3_checkpoint.keras",
 
-  "save_model_file": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlp_model_1.keras",
+  "save_model_file": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlp_model_3.keras",
 
   "set_mask": "y"
 }

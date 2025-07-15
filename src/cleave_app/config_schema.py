@@ -443,13 +443,25 @@ class ImageHyperparameterConfig(TrainImageOnlyConfig):
     # This class inherits all fields from TrainImageOnlyConfig.
     pass
 
+class MLPHyperparameterConfig(BaseConfig):
+    tuner_directory: str
+    project_name: str
+    model_path: str
+    backbone: str
+    angle_threshold: float
+    diameter_threshold: float
+    test_size: float
+    batch_size: int
+    buffer_size: int
+    max_epochs: int
+
 
 # A dictionary mapping the 'mode' string to its corresponding Pydantic config class.
 MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "train_cnn": TrainCNNConfig,
     "train_mlp": TrainMLPConfig,
     "cnn_hyperparameter": TrainCNNConfig,
-    "mlp_hyperparameter": TrainMLPConfig,
+    "mlp_hyperparameter": MLPHyperparameterConfig,
     "test_cnn": TestCNNConfig,
     "test_mlp": TestMLPConfig,
     "train_kfold_cnn": TrainKFoldCNNConfig,

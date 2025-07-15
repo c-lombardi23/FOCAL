@@ -311,11 +311,6 @@ class ImageOnlyHyperModel(HyperModel):
                 name="efficientnetb0",
             )
 
-        # unfreeze_from = hp.Int("unfreeze_from", min_value=0, max_value=20, step=5)
-        # if (unfreeze_from > 0):
-        # for layer in pre_trained_model.layers[-unfreeze_from:]:
-        #   layer.trainable = True
-        # else:
         pre_trained_model.trainable = False
 
         # Data augmentation pipeline
@@ -389,7 +384,7 @@ class BuildMLPHyperModel(HyperModel):
 
         self.cnn_model = tf.keras.models.load_model(model_path)
         self.image_input = self.cnn_model.input[0]
-        self.feature_output = self.cnn_model.get_layer("dropout").output
+        self.feature_output = self.cnn_model.get_layer("global_avg").output
 
     def build(self, hp):
         """Build model with hyperparameters.
@@ -400,37 +395,38 @@ class BuildMLPHyperModel(HyperModel):
         Returns:
             tf.keras.Model: Model to be trained
         """
-        x = Dense(
-            hp.Int("dense_param1", min_value=16, max_value=128, step=16),
-            activation="relu",
+        x = Dropout(hp.Float(
+            "dropout_1", 0.0, 0.4, step=0.1)
         )(self.feature_output)
-        x = Dense(
-            hp.Int("dense_param2", min_value=8, max_value=64, step=8),
-            activation="relu",
-        )(x)
+        feature_input = Input(shape=(4,), name="feature_input")
 
-        feature_input = Input(shape=(5,), name="feature_input")
         y = Dense(
-            hp.Int("dense_angle", min_value=16, max_value=128, step=16),
+            hp.Int("dense_1", min_value=16, max_value=64, step=16),
             activation="relu",
         )(feature_input)
+        y = Dropout(hp.Float(
+            "dropout_2", 0.0, 0.8, step=0.2)
+        )(y)
 
         combined = Concatenate()([x, y])
+
         z = Dense(
-            hp.Int("dense_combined", min_value=16, max_value=128, step=16),
+            hp.Int("dense_2", min_value=16, max_value=64, step=16),
             activation="relu",
         )(combined)
+        z = Dropout(hp.Float(
+            "dropout_3", 0.0, 0.4, step=0.1)
+        )(z)
         z = Dense(1)(z)
 
         mlp_hypermodel = Model(
             inputs=[self.image_input, feature_input], outputs=z
         )
-        # mlp_hypermodel.summary()
 
         mlp_hypermodel.compile(
             optimizer=tf.keras.optimizers.Adam(
                 learning_rate=hp.Choice(
-                    "learning_rate", values=[0.0005, 0.001, 0.01]
+                    "learning_rate", values=[0.0005, 0.001, 0.005, 0.01]
                 )
             ),
             loss="mse",
@@ -496,6 +492,7 @@ class MLPHyperparameterTuning(HyperParameterTuning):
         objective: str = "val_mae",
         directory: str = "./tuner_logs",
         project_name: str = "MLPTuner",
+        class_weights=None
     ):
         """Initialize MLP hyperparameter tuning.
 
@@ -508,7 +505,8 @@ class MLPHyperparameterTuning(HyperParameterTuning):
         """
         self.cnn_model = tf.keras.models.load_model(cnn_path)
         self.image_input = self.cnn_model.input[0]
-        self.feature_output = self.cnn_model.get_layer("dropout").output
+        self.feature_output = self.cnn_model.get_layer("global_avg").output
+        self.class_weights=class_weights
         hypermodel = BuildMLPHyperModel(cnn_path)
         self.tuner = Hyperband(
             hypermodel,
