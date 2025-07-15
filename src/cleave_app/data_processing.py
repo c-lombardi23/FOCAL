@@ -881,7 +881,7 @@ class MLPDataCollector(DataCollector):
         kf = KFold(n_splits=n_splits, shuffle=True, random_state=24)
         datasets = []
 
-        # Scale features and labels globally.
+        # Scale features and labels globally
         feature_scaler = MinMaxScaler()
         label_scaler = MinMaxScaler()
 
