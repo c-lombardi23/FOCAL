@@ -69,7 +69,7 @@ def test_train_ml(mocker, train_mlp_config):
 
     data_collector_instance = data_collector.return_value
     data_collector_instance.extract_data.return_value = (mock_images, mock_features, mock_labels)
-    data_collector_instance.create_datasets.return_value = (mock_train_ds, mock_test_ds, mock_class_weights)
+    data_collector_instance.create_datasets.return_value = (mock_train_ds, mock_test_ds)
 
     mock_history = MagicMock()
     mock_history.history = {
