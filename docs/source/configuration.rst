@@ -1,6 +1,3 @@
-Understood. Here is the complete and unabridged documentation in `reStructuredText` (`.rst`) format. This text is ready to be copied directly into a `.rst` file for use with Sphinx or other documentation generators.
-
-```rst
 .. _configuration:
 
 Configuration Reference
@@ -9,13 +6,8 @@ Configuration Reference
 The CLI is driven by a single JSON configuration file. The ``mode`` field is mandatory and determines which operation to perform and which set of parameters are available. This page documents all available modes and their specific configurations.
 
 .. note::
-   An asterisk (Yes\*) in the "Required?" column indicates that a parameter is conditionally required. For example, `checkpoint_filepath` is only required if `checkpoints` is set to `"y"`. The Pydantic models in ``config_schema.py`` are the ultimate source of truth for all validations.
+   An asterisk (Yes\*) in the "Required" column indicates that a parameter is conditionally required. For example, `checkpoint_filepath` is only required if `checkpoints` is set to `"y"`. The Pydantic models in ``config_schema.py`` are the ultimate source of truth for all validations.
 
-.. contents::
-   :local:
-   :depth: 2
-
----
 
 Example Configuration
 ---------------------
@@ -50,7 +42,8 @@ Here is an example of a ``config.json`` for the ``train_cnn`` mode:
 Common Parameters
 -----------------
 
-### Base Parameters
+Base Parameters
+~~~~~~~~~~~~~~~
 
 These settings form the foundation for almost every mode.
 
@@ -60,7 +53,7 @@ These settings form the foundation for almost every mode.
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``mode``
@@ -94,7 +87,8 @@ These settings form the foundation for almost every mode.
      - `null`
      - Set to ``"y"`` to apply a circular background mask to the images.
 
-### Common Training Parameters
+Common Training Parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These settings are available in all training modes (e.g., ``train_cnn``, ``train_mlp``, ``train_image_only``, ``train_xgboost``).
 
@@ -104,7 +98,7 @@ These settings are available in all training modes (e.g., ``train_cnn``, ``train
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``save_model_file``
@@ -158,11 +152,13 @@ These settings are available in all training modes (e.g., ``train_cnn``, ``train
      - `0.0`
      - Parameters for image data augmentation.
 
-### Common Callback Parameters
+Common Callback Parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These settings control `keras.callbacks` and are available in all TensorFlow-based training modes.
 
-#### Early Stopping
+Early Stopping
+""""""""""""""
 
 .. list-table::
    :header-rows: 1
@@ -170,7 +166,7 @@ These settings control `keras.callbacks` and are available in all TensorFlow-bas
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``early_stopping``
@@ -194,7 +190,8 @@ These settings control `keras.callbacks` and are available in all TensorFlow-bas
      - `"max"`
      - Direction of improvement. Use ``max`` for accuracy, ``min`` for loss.
 
-#### Model Checkpointing
+Model Checkpointing
+"""""""""""""""""""""
 
 .. list-table::
    :header-rows: 1
@@ -202,7 +199,7 @@ These settings control `keras.callbacks` and are available in all TensorFlow-bas
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``checkpoints``
@@ -231,11 +228,11 @@ These settings control `keras.callbacks` and are available in all TensorFlow-bas
 Mode-Specific Parameters
 ------------------------
 
-This section details parameters unique to each primary mode.
+Training Modes
+~~~~~~~~~~~~~~
 
-### Training Modes
-
-#### train_cnn
+train_cnn
+"""""""""
 Trains a hybrid model on a combination of images and tabular features.
 
 .. list-table::
@@ -244,7 +241,7 @@ Trains a hybrid model on a combination of images and tabular features.
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``cnn_mode``
@@ -308,7 +305,8 @@ Trains a hybrid model on a combination of images and tabular features.
      - `null`
      - Epochs to wait before reducing LR.
 
-#### train_mlp
+train_mlp
+"""""""""
 Trains an MLP regression model using features extracted from a pre-trained CNN.
 
 .. list-table::
@@ -317,7 +315,7 @@ Trains an MLP regression model using features extracted from a pre-trained CNN.
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``model_path``
@@ -341,7 +339,8 @@ Trains an MLP regression model using features extracted from a pre-trained CNN.
      - -
      - Architecture parameters for the MLP model.
 
-#### train_image_only
+train_image_only
+""""""""""""""""
 Trains a classification model using only images as input.
 
 .. list-table::
@@ -350,7 +349,7 @@ Trains a classification model using only images as input.
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``backbone``
@@ -379,7 +378,8 @@ Trains a classification model using only images as input.
      - `various`
      - Architecture parameters for the model head.
 
-#### train_xgboost
+train_xgboost
+"""""""""""""
 Trains an XGBoost regression model.
 
 .. list-table::
@@ -388,7 +388,7 @@ Trains an XGBoost regression model.
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``xgb_path``
@@ -427,9 +427,11 @@ Trains an XGBoost regression model.
      - `various`
      - Regularization and subsampling parameters for XGBoost.
 
-### Testing & Evaluation Modes
+Testing & Evaluation Modes
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#### test_cnn & test_image_only
+test_cnn & test_image_only
+""""""""""""""""""""""""""
 Tests a saved image-based classifier and generates evaluation reports.
 
 .. list-table::
@@ -438,7 +440,7 @@ Tests a saved image-based classifier and generates evaluation reports.
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``model_path``
@@ -467,7 +469,8 @@ Tests a saved image-based classifier and generates evaluation reports.
      - `null`
      - Required for ``test_cnn`` if the model used scaled features.
 
-#### test_mlp & test_xgboost
+test_mlp & test_xgboost
+"""""""""""""""""""""""
 Tests a saved regression model and generates a performance report.
 
 .. list-table::
@@ -476,14 +479,14 @@ Tests a saved regression model and generates a performance report.
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``model_path``
      - string (path)
      - Yes
      - -
-     - Path to the trained regressor (`.keras` for MLP, `.pkl` for XGBoost).
+     - Path to the trained regressor (`.keras` for MLP) or feature extractor (`.keras` for XGBoost).
    * - ``xgb_path``
      - string (path)
      - Yes*
@@ -496,23 +499,31 @@ Tests a saved regression model and generates a performance report.
      - Thresholds for data processing.
    * - ``label_scaler_path``
      - string (path)
-     - Yes
+     - Yes*
      - `null`
-     - Path to the saved label scaler used during training.
-   * - For ``test_xgboost``, `model_path` refers to the CNN feature extractor.
+     - Path to the saved label scaler used during training. Required.
 
-### Advanced Modes
+.. note::
 
-#### K-Fold Cross-Validation
+   For the ``test_xgboost`` mode, the ``model_path`` parameter should point to the pre-trained **CNN feature extractor** model (`.keras`), not the XGBoost model itself.
+
+Advanced Modes
+~~~~~~~~~~~~~~
+
+K-Fold Cross-Validation
+"""""""""""""""""""""""
 The ``train_kfold_cnn`` and ``train_kfold_mlp`` modes are used for more robust model evaluation. They accept the exact same parameters as their non-k-fold counterparts (``train_cnn`` and ``train_mlp`` respectively), with the addition of `n_splits` if you want to change the number of folds.
 
-#### Hyperparameter Tuning
+Hyperparameter Tuning
+"""""""""""""""""""""
 The ``cnn_hyperparameter``, ``mlp_hyperparameter``, and ``image_hyperparameter`` modes are used to search for the best model architecture.
+
 - ``cnn_hyperparameter`` uses the same config as ``train_cnn``.
 - ``image_hyperparameter`` uses the same config as ``train_image_only``.
 - ``mlp_hyperparameter`` requires ``tuner_directory`` and ``project_name``.
 
-#### Visualization (grad_cam)
+Visualization (grad_cam)
+""""""""""""""""""""""""
 Generates a Grad-CAM heatmap to visualize which parts of an image the CNN is focusing on.
 
 .. list-table::
@@ -521,7 +532,7 @@ Generates a Grad-CAM heatmap to visualize which parts of an image the CNN is foc
 
    * - Parameter
      - Type
-     - Required?
+     - Required
      - Default
      - Description
    * - ``model_path``
@@ -554,4 +565,3 @@ Generates a Grad-CAM heatmap to visualize which parts of an image the CNN is foc
      - No
      - `null`
      - Path to save the output heatmap image.
-```
