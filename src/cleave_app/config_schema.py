@@ -443,6 +443,7 @@ class ImageHyperparameterConfig(TrainImageOnlyConfig):
     # This class inherits all fields from TrainImageOnlyConfig.
     pass
 
+
 class MLPHyperparameterConfig(BaseConfig):
     tuner_directory: str
     project_name: str

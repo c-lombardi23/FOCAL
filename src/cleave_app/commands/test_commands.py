@@ -23,7 +23,7 @@ class TestCNN(BaseCommand):
                 backbone=config.backbone,
                 angle_threshold=config.angle_threshold,
                 diameter_threshold=config.diameter_threshold,
-                threshold=config.classification_threshold
+                threshold=config.classification_threshold,
             )
         elif config.cnn_mode == "tension":
             tester = TestTensionPredictions(

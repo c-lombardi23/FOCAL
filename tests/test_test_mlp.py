@@ -1,10 +1,12 @@
 """Test file for TestMLP command."""
 
-import pytest
-import numpy as np
 from unittest.mock import MagicMock
 
+import numpy as np
+import pytest
+
 from cleave_app.commands.test_commands import TestMLP
+
 
 @pytest.fixture
 def test_mlp_config(tmp_path):
@@ -16,7 +18,7 @@ def test_mlp_config(tmp_path):
     config.image_shape = [224, 224, 3]
     config.set_mask = "y"
     config.feature_shape = [4]
-  
+
     config.angle_threshold = 0.55
     config.diameter_threshold = 56
     config.label_scaler_path = str(tmp_path / "label_scaler.pkl")
@@ -24,22 +26,26 @@ def test_mlp_config(tmp_path):
 
     return config
 
+
 def test_test_mlp(mocker, test_mlp_config):
 
     config = test_mlp_config
 
-    mock_tension_predictor = mocker.patch("cleave_app.commands.test_commands.TensionPredictor")
+    mock_tension_predictor = mocker.patch(
+        "cleave_app.commands.test_commands.TensionPredictor"
+    )
     mock_tester = mock_tension_predictor.return_value
 
     mock_tester.predict.return_value = (
-        np.array([112., 120, 145]),
+        np.array([112.0, 120, 145]),
         np.array([23.45, -32.5, 10.0]),
         np.array([200, 134, 165]),
-        np.array([10.6, -45.6, 120.34])
-
+        np.array([10.6, -45.6, 120.34]),
     )
 
-    mock_log_run = mocker.patch("cleave_app.commands.test_commands.log_regressor_test_results")
+    mock_log_run = mocker.patch(
+        "cleave_app.commands.test_commands.log_regressor_test_results"
+    )
 
     command = TestMLP()
     command._execute_command(config)
@@ -55,6 +61,3 @@ def test_test_mlp(mocker, test_mlp_config):
 
     mock_tester.predict.assert_called_once()
     mock_log_run.assert_called_once()
-
-    
-

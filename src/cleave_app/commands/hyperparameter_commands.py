@@ -1,5 +1,7 @@
 """This module defines the logic for optimizing hyperparameters for each model."""
 
+import mlflow.keras
+
 from cleave_app.data_processing import DataCollector, MLPDataCollector
 from cleave_app.hyperparameter_tuning import (HyperParameterTuning,
                                               ImageHyperparameterTuning,
@@ -7,12 +9,11 @@ from cleave_app.hyperparameter_tuning import (HyperParameterTuning,
 
 from .base_command import BaseCommand
 from .utils import _run_search_helper
-import mlflow.keras
 
 
 class CNNHyperparameterSearch(BaseCommand):
     """Perform hyperparameter search for CNN model."""
-    
+
     def _execute_command(self, config) -> None:
         mlflow.set_experiment(config.project_name)
         mlflow.keras.autolog()
@@ -57,9 +58,12 @@ class MLPHyperparameterSearch(BaseCommand):
         mlflow.set_experiment
         mlflow.keras.autolog(config.project_name)
 
-        data = MLPDataCollector(config.csv_path, config.img_folder,
-                                angle_threshold=config.angle_threshold,
-                                diameter_threshold=config.diameter_threshold)
+        data = MLPDataCollector(
+            config.csv_path,
+            config.img_folder,
+            angle_threshold=config.angle_threshold,
+            diameter_threshold=config.diameter_threshold,
+        )
         images, features, labels = data.extract_data()
         train_ds, test_ds = data.create_datasets(
             images,
@@ -86,7 +90,6 @@ class MLPHyperparameterSearch(BaseCommand):
 class ImageHyperparameterSearch(BaseCommand):
     """Perform hyperparameter search for image-only model."""
 
-    
     def execute(self, config) -> None:
         mlflow.set_experiment
         mlflow.keras.autolog(config.project_name)

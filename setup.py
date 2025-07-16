@@ -30,7 +30,7 @@ setup(
         "typer>=0.16.0",
         "click>=8.2.0",
         "xgboost>=3.0.0",
-        "mlflow>=3.1.1"
+        "mlflow>=3.1.1",
     ],
     extras_require={
         "dev": [
@@ -39,7 +39,7 @@ setup(
             "jupyter>=1.0.0",
             "ipykernel>=6.29.0",
             "ipython>=8.37.0",
-            "pytest-mock>=3.10.0"
+            "pytest-mock>=3.10.0",
         ]
     },
     classifiers=[

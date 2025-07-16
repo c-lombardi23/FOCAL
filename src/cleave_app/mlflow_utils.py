@@ -368,8 +368,6 @@ def log_regressor_test_results(
         basename = os.path.basename(model_path)
         stem, _ = os.path.splitext(basename)
 
-        predictions_path = os.path.join(
-            model_dir, f"{stem}_performance.csv"
-        )
+        predictions_path = os.path.join(model_dir, f"{stem}_performance.csv")
         df.to_csv(predictions_path, index=False)
         mlflow.log_artifact(predictions_path, artifact_path="Predictions")

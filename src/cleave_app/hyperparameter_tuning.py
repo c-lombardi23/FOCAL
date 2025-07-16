@@ -395,18 +395,16 @@ class BuildMLPHyperModel(HyperModel):
         Returns:
             tf.keras.Model: Model to be trained
         """
-        x = Dropout(hp.Float(
-            "dropout_1", 0.0, 0.4, step=0.1)
-        )(self.feature_output)
+        x = Dropout(hp.Float("dropout_1", 0.0, 0.4, step=0.1))(
+            self.feature_output
+        )
         feature_input = Input(shape=(4,), name="feature_input")
 
         y = Dense(
             hp.Int("dense_1", min_value=16, max_value=64, step=16),
             activation="relu",
         )(feature_input)
-        y = Dropout(hp.Float(
-            "dropout_2", 0.0, 0.8, step=0.2)
-        )(y)
+        y = Dropout(hp.Float("dropout_2", 0.0, 0.8, step=0.2))(y)
 
         combined = Concatenate()([x, y])
 
@@ -414,9 +412,7 @@ class BuildMLPHyperModel(HyperModel):
             hp.Int("dense_2", min_value=16, max_value=64, step=16),
             activation="relu",
         )(combined)
-        z = Dropout(hp.Float(
-            "dropout_3", 0.0, 0.4, step=0.1)
-        )(z)
+        z = Dropout(hp.Float("dropout_3", 0.0, 0.4, step=0.1))(z)
         z = Dense(1)(z)
 
         mlp_hypermodel = Model(
@@ -492,7 +488,7 @@ class MLPHyperparameterTuning(HyperParameterTuning):
         objective: str = "val_mae",
         directory: str = "./tuner_logs",
         project_name: str = "MLPTuner",
-        class_weights=None
+        class_weights=None,
     ):
         """Initialize MLP hyperparameter tuning.
 
@@ -506,7 +502,7 @@ class MLPHyperparameterTuning(HyperParameterTuning):
         self.cnn_model = tf.keras.models.load_model(cnn_path)
         self.image_input = self.cnn_model.input[0]
         self.feature_output = self.cnn_model.get_layer("global_avg").output
-        self.class_weights=class_weights
+        self.class_weights = class_weights
         hypermodel = BuildMLPHyperModel(cnn_path)
         self.tuner = Hyperband(
             hypermodel,
