@@ -13,12 +13,12 @@ class TestCNN(BaseCommand):
     """Test CNN model performance."""
 
     def _execute_command(self, config) -> None:
-        if config.cnn_mode == "good_bad":
+        if config.cnn_mode == "bad_good":
             tester = TestPredictions(
-                config.model_path,
-                config.csv_path,
-                config.feature_scaler_path,
-                config.img_folder,
+                model_path=config.model_path,
+                csv_path=config.csv_path,
+                scalar_path=config.feature_scaler_path,
+                img_folder=config.img_folder,
                 image_only=False,
                 backbone=config.backbone,
                 angle_threshold=config.angle_threshold,

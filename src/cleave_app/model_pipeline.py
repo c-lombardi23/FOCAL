@@ -178,7 +178,7 @@ class CustomModel:
         backbone: Optional[str] = "mobilenet",
         unfreeze_from: Optional[int] = None,
     ) -> "tf.keras.Model":
-        """Build a model using pre-trained MobileNetV2 to supplement small
+        """Build a model using pre-trained EfficientNetB0 to supplement small
         dataset.
 
         Args:

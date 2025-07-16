@@ -3,14 +3,13 @@
   "img_folder": "C:\\Thorlabs\\400LA\\",
   "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_feature_scaler.pkl",
   "classification_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_classification.csv",
-  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
 
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
   "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
   "mode": "test_cnn",
-  "cnn_mode": "good_bad",
+  "cnn_mode": "bad_good",
   "backbone": "efficientnet",
   "backbone_name": "resnet",
   "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
