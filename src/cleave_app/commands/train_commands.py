@@ -322,7 +322,7 @@ class TrainImageOnly(BaseCommand):
             trainable_model = CustomModel(
                 train_ds,
                 test_ds,
-                classification_type=data.classification_type,
+                classification_type=config.classification_type,
                 num_classes=config.num_classes,
             )
             if config.continue_train == "y":
