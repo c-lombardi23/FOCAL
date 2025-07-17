@@ -741,11 +741,14 @@ class MLPDataCollector(DataCollector):
                 "No data available. Check if CSV file was loaded correctly."
             )
         filtered_df = self.df.loc[self.df["CleaveCategory"] == 1]
-        mean_tension = np.mean(filtered_df["CleaveTension"])
+        #mean_tension = np.mean(filtered_df["CleaveTension"])
+        mean_tension = filtered_df.groupby('FiberType')['CleaveTension'].mean().to_dict()
+
+        self.df['MeanTension'] = self.df['FiberType'].map(mean_tension)
         delta = np.where(
             self.df["CleaveCategory"] == 1,
             0.0,
-            mean_tension - self.df["CleaveTension"],
+            self.df['MeanTension'] - self.df["CleaveTension"],
         ).astype(np.float32)
 
         images = self.df["ImagePath"].values
