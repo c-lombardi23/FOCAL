@@ -12,8 +12,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import (ConfusionMatrixDisplay, classification_report,
-                             confusion_matrix, roc_auc_score, roc_curve)
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    classification_report,
+    confusion_matrix,
+    roc_auc_score,
+    roc_curve,
+)
 
 from .data_processing import BadCleaveTensionClassifier, DataCollector
 

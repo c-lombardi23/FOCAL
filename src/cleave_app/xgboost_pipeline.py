@@ -229,7 +229,8 @@ class XGBoostPredictor:
             lambda row: (
                 1
                 if row["CleaveAngle"] <= angle_threshold
-                and row["ScribeDiameter"] < diameter_threshold * row['Diameter']
+                and row["ScribeDiameter"]
+                < diameter_threshold * row["Diameter"]
                 and not row["Hackle"]
                 and not row["Misting"]
                 else 0
@@ -237,15 +238,23 @@ class XGBoostPredictor:
             axis=1,
         )
         # Compute mean tension from good cleaves
-        #good_mean = df[df["CleaveCategory"] == 1]["CleaveTension"].mean()
+        # good_mean = df[df["CleaveCategory"] == 1]["CleaveTension"].mean()
         good_cleaves_df = df[df["CleaveCategory"] == 1]
-        mean_tension_per_type = good_cleaves_df.groupby('FiberType')['CleaveTension'].mean().to_dict()
+        mean_tension_per_type = (
+            good_cleaves_df.groupby("FiberType")["CleaveTension"]
+            .mean()
+            .to_dict()
+        )
         # Keep only bad cleaves
         bad_df = df[df["CleaveCategory"] == 0].copy()
-        bad_df['FiberTypeMeanTension'] = bad_df['FiberType'].map(mean_tension_per_type)
+        bad_df["FiberTypeMeanTension"] = bad_df["FiberType"].map(
+            mean_tension_per_type
+        )
 
         # Compute true delta (label) = good_mean - current
-        bad_df["TrueDelta"] = bad_df["FiberTypeMeanTension"]- bad_df["CleaveTension"]
+        bad_df["TrueDelta"] = (
+            bad_df["FiberTypeMeanTension"] - bad_df["CleaveTension"]
+        )
 
         return bad_df, mean_tension_per_type
 
@@ -274,7 +283,7 @@ class XGBoostPredictor:
         image_paths = df["ImagePath"]
         tensions = df["CleaveTension"]
         true_delta = df["TrueDelta"]
-        fiber_type = df['FiberType']
+        fiber_type = df["FiberType"]
 
         predictions = []
         predicted_deltas = []

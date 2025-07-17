@@ -17,16 +17,22 @@ warnings.filterwarnings("ignore")
 
 try:
     import tensorflow as tf
-    from sklearn.model_selection import (KFold, StratifiedKFold,
-                                         train_test_split)
+    from sklearn.model_selection import (
+        KFold,
+        StratifiedKFold,
+        train_test_split,
+    )
     from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
     from sklearn.utils.class_weight import compute_class_weight
-    from tensorflow.keras.applications.efficientnet import \
-        preprocess_input as _efficientnet_preprocess
-    from tensorflow.keras.applications.mobilenet_v2 import \
-        preprocess_input as _mobilenet_preprocess
-    from tensorflow.keras.applications.resnet50 import \
-        preprocess_input as _resnet_preprocess
+    from tensorflow.keras.applications.efficientnet import (
+        preprocess_input as _efficientnet_preprocess,
+    )
+    from tensorflow.keras.applications.mobilenet_v2 import (
+        preprocess_input as _mobilenet_preprocess,
+    )
+    from tensorflow.keras.applications.resnet50 import (
+        preprocess_input as _resnet_preprocess,
+    )
 except ImportError as e:
     print(f"Warning: Required ML libraries not found: {e}")
     print("Please install tensorflow>=2.19.0 and scikit-learn>=1.7.0")
@@ -134,7 +140,9 @@ class DataCollector:
         def label(row):
             good_angle = row["CleaveAngle"] <= angle_threshold
             no_defects = not row["Hackle"] and not row["Misting"]
-            good_diameter = row["ScribeDiameter"] < diameter_threshold * row["Diameter"]
+            good_diameter = (
+                row["ScribeDiameter"] < diameter_threshold * row["Diameter"]
+            )
 
             bad_angle = not good_angle and no_defects and good_diameter
             bad_diameter = good_angle and no_defects and not good_diameter
@@ -156,7 +164,8 @@ class DataCollector:
                 lambda row: (
                     1
                     if row["CleaveAngle"] <= angle_threshold
-                    and row["ScribeDiameter"] < diameter_threshold * row["Diameter"]
+                    and row["ScribeDiameter"]
+                    < diameter_threshold * row["Diameter"]
                     and (not row["Hackle"] and not row["Misting"])
                     else 0
                 ),
@@ -741,14 +750,16 @@ class MLPDataCollector(DataCollector):
                 "No data available. Check if CSV file was loaded correctly."
             )
         filtered_df = self.df.loc[self.df["CleaveCategory"] == 1]
-        #mean_tension = np.mean(filtered_df["CleaveTension"])
-        mean_tension = filtered_df.groupby('FiberType')['CleaveTension'].mean().to_dict()
+        # mean_tension = np.mean(filtered_df["CleaveTension"])
+        mean_tension = (
+            filtered_df.groupby("FiberType")["CleaveTension"].mean().to_dict()
+        )
 
-        self.df['MeanTension'] = self.df['FiberType'].map(mean_tension)
+        self.df["MeanTension"] = self.df["FiberType"].map(mean_tension)
         delta = np.where(
             self.df["CleaveCategory"] == 1,
             0.0,
-            self.df['MeanTension'] - self.df["CleaveTension"],
+            self.df["MeanTension"] - self.df["CleaveTension"],
         ).astype(np.float32)
 
         images = self.df["ImagePath"].values

@@ -10,6 +10,7 @@ EarlyStoppingMixin, and CheckpointMixin.
 import json
 import os
 from pathlib import Path
+
 # Import typing hints for better code clarity and static analysis.
 from typing import Dict, List, Literal, Optional, Type
 
@@ -436,7 +437,8 @@ class TrainImageOnlyConfig(ModelConfig):
             raise ValueError("Image shape not compatible")
         # Return the validated model instance.
         return self
-    
+
+
 class CNNHyperparameterConfig(BaseConfig):
     tuner_directory: str
     project_name: str
@@ -449,7 +451,6 @@ class CNNHyperparameterConfig(BaseConfig):
     buffer_size: int
     max_epochs: int
     save_model_file: Optional[str]
-
 
 
 # Define a config for hyperparameter tuning the image-only model.
