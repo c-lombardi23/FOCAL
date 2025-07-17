@@ -48,14 +48,24 @@ def log_cnn_training_run(
                 "cnn_mode": config.cnn_mode,
             }
         )
-
+        best_epoch = np.argmax(history.history["val_accuracy"])
         # Log metrics
         mlflow.log_metrics(
             {
-                "final_train_accuracy": history.history["accuracy"][-1],
-                "final_val_accuracy": history.history["val_accuracy"][-1],
-                "final_train_loss": history.history["loss"][-1],
-                "final_val_loss": history.history["val_loss"][-1],
+                "best_train_accuracy": history.history["accuracy"][best_epoch],
+                "best_val_accuracy": history.history["val_accuracy"][
+                    best_epoch
+                ],
+                "best_train_precision": history.history["precision"][
+                    best_epoch
+                ],
+                "best_val_precision": history.history["val_precision"][
+                    best_epoch
+                ],
+                "best_train_recall": history.history["recall"][best_epoch],
+                "best_val_recall": history.history["val_recall"][best_epoch],
+                "best_train_loss": history.history["loss"][best_epoch],
+                "best_val_loss": history.history["val_loss"][best_epoch],
             }
         )
 
@@ -108,13 +118,14 @@ def log_mlp_training_run(
             }
         )
 
+        best_epoch = np.argmin(history.history["val_mae"])
         # Log metrics
         mlflow.log_metrics(
             {
-                "final_train_mae": history.history["mae"][-1],
-                "final_val_mae": history.history["val_mae"][-1],
-                "final_train_loss": history.history["loss"][-1],
-                "final_val_loss": history.history["val_loss"][-1],
+                "best_train_mae": history.history["mae"][best_epoch],
+                "best_val_mae": history.history["val_mae"][best_epoch],
+                "best_train_loss": history.history["loss"][best_epoch],
+                "best_val_loss": history.history["val_loss"][best_epoch],
             }
         )
         mlflow.log_artifact(dataset_path, artifact_path="dataset")
@@ -167,17 +178,25 @@ def log_image_training_run(
             }
         )
 
+        best_epoch = np.argmax(history.history["val_accuracy"])
+
         # Log metrics
         mlflow.log_metrics(
             {
-                "final_train_accuracy": history.history["accuracy"][-1],
-                "final_val_accuracy": history.history["val_accuracy"][-1],
-                "final_train_precision": history.history["precision"][-1],
-                "final_val_precision": history.history["val_precision"][-1],
-                "final_train_recall": history.history["recall"][-1],
-                "final_val_recall": history.history["val_recall"][-1],
-                "final_train_loss": history.history["loss"][-1],
-                "final_val_loss": history.history["val_loss"][-1],
+                "best_train_accuracy": history.history["accuracy"][best_epoch],
+                "best_val_accuracy": history.history["val_accuracy"][
+                    best_epoch
+                ],
+                "best_train_precision": history.history["precision"][
+                    best_epoch
+                ],
+                "best_val_precision": history.history["val_precision"][
+                    best_epoch
+                ],
+                "best_train_recall": history.history["recall"][best_epoch],
+                "best_val_recall": history.history["val_recall"][best_epoch],
+                "best_train_loss": history.history["loss"][best_epoch],
+                "best_val_loss": history.history["val_loss"][best_epoch],
             }
         )
 
@@ -371,3 +390,56 @@ def log_regressor_test_results(
         predictions_path = os.path.join(model_dir, f"{stem}_performance.csv")
         df.to_csv(predictions_path, index=False)
         mlflow.log_artifact(predictions_path, artifact_path="Predictions")
+
+
+def log_cnn_hyperparameter(
+    config, best_hp, run_name, experiment_name="cnn_hyperparameter"
+):
+
+    if not mlflow.set_experiment(experiment_name):
+        mlflow.create_experiment(experiment_name)
+
+    with mlflow.start_run(run_name=run_name):
+        mlflow.log_params(
+            {
+                "batch_size": config.batch_size,
+                "test_size": config.test_size,
+                "angle_threshold": config.angle_threshold,
+                "diameter_threshold": config.angle_threshold,
+                "dropout_1": best_hp["dropout_1"],
+                "dropout_2": best_hp["dropout_2"],
+                "dropout_3": best_hp["dropout_3"],
+                "dense_1": best_hp["dense_1"],
+                "dense_2": best_hp["dense_2"],
+                "rotation": best_hp["rot"],
+                "brightness": best_hp["bright"],
+                "contrast": best_hp["contrast"],
+                "height": best_hp["height"],
+                "width": best_hp["width"],
+                "learning_rate": best_hp["learning_rate"],
+            }
+        )
+
+
+def log_mlp_hyperparameter(
+    config, best_hp, run_name, experiment_name="mlp_hyperparameter"
+):
+
+    if not mlflow.set_experiment(experiment_name):
+        mlflow.create_experiment(experiment_name)
+
+    with mlflow.start_run(run_name=run_name):
+        mlflow.log_params(
+            {
+                "batch_size": config.batch_size,
+                "test_size": config.test_size,
+                "angle_threshold": config.angle_threshold,
+                "diameter_threshold": config.angle_threshold,
+                "dropout_1": best_hp["dropout_1"],
+                "dropout_2": best_hp["dropout_2"],
+                "dropout_3": best_hp["dropout_3"],
+                "dense_1": best_hp["dense_1"],
+                "dense_2": best_hp["dense_2"],
+                "learning_rate": best_hp["learning_rate"],
+            }
+        )

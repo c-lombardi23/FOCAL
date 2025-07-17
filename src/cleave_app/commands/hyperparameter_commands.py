@@ -8,6 +8,10 @@ from cleave_app.hyperparameter_tuning import (
     ImageHyperparameterTuning,
     MLPHyperparameterTuning,
 )
+from cleave_app.mlflow_utils import (
+    log_cnn_hyperparameter,
+    log_mlp_hyperparameter,
+)
 
 from .base_command import BaseCommand
 from .utils import _run_search_helper
@@ -17,8 +21,6 @@ class CNNHyperparameterSearch(BaseCommand):
     """Perform hyperparameter search for CNN model."""
 
     def _execute_command(self, config) -> None:
-        mlflow.set_experiment(config.project_name)
-        mlflow.keras.autolog()
 
         data = DataCollector(
             config.csv_path,
@@ -50,15 +52,19 @@ class CNNHyperparameterSearch(BaseCommand):
             class_weights=class_weights,
         )
 
-        _run_search_helper(config, tuner, train_ds, test_ds)
+        best_hp = _run_search_helper(
+            config, tuner, train_ds, test_ds, config.max_epochs
+        )
+        mlflow.set_experiment("cnn_hyperparameter")
+        mlflow.keras.autolog(log_models=False)
+
+        log_cnn_hyperparameter(config, best_hp, run_name=config.project_name)
 
 
 class MLPHyperparameterSearch(BaseCommand):
     """Perform hyperparameter search for MLP model."""
 
     def _execute_command(self, config) -> None:
-        mlflow.set_experiment
-        mlflow.keras.autolog(config.project_name)
 
         data = MLPDataCollector(
             config.csv_path,
@@ -86,7 +92,16 @@ class MLPHyperparameterSearch(BaseCommand):
             directory=config.tuner_directory,
         )
 
-        _run_search_helper(config, tuner, train_ds, test_ds)
+        best_hp = _run_search_helper(
+            config, tuner, train_ds, test_ds, max_epochs=config.max_epochs
+        )
+        if not mlflow.set_experiment("mlp_hyperparameter"):
+            mlflow.create_experiment("mlp_hyperparameter")
+
+        mlflow.set_experiment("mlp_hyperparameter")
+        mlflow.keras.autolog(log_models=False)
+
+        log_mlp_hyperparameter(config, best_hp, run_name=config.project_name)
 
 
 class ImageHyperparameterSearch(BaseCommand):

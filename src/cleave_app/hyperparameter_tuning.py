@@ -224,19 +224,23 @@ class HyperParameterTuning:
         """
 
     def run_search(
-        self, train_ds: "tf.data.Dataset", test_ds: "tf.data.Dataset"
+        self,
+        train_ds: "tf.data.Dataset",
+        test_ds: "tf.data.Dataset",
+        max_epochs: int,
     ) -> None:
         """Run hyperparameter search.
 
         Args:
             train_ds: tf.data.Dataset - Training dataset
             test_ds: tf.data.Dataset - Testing dataset
+            max_epochs: maximum number of training epochs
         """
         es = EarlyStopping(monitor="val_loss", patience=5, mode="auto")
         self.tuner.search(
             train_ds,
             validation_data=test_ds,
-            epochs=20,
+            epochs=max_epochs,
             class_weight=self.class_weights,
             callbacks=[es],
         )
@@ -359,7 +363,7 @@ class ImageOnlyHyperModel(HyperModel):
             activation = "sigmoid"
             loss = "binary_crossentropy"
         elif self.classification_type == "multiclass":
-            activation == "softmax"
+            activation = "softmax"
             loss = "categorical_crossentropy"
         output = Dense(self.num_classes, activation=activation)(x)
 

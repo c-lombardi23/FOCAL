@@ -470,6 +470,7 @@ class MLPHyperparameterConfig(BaseConfig):
     batch_size: int
     buffer_size: int
     max_epochs: int
+    save_model_file: Optional[str]
 
 
 # A dictionary mapping the 'mode' string to its corresponding Pydantic config class.

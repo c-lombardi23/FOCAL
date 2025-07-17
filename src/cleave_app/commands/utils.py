@@ -57,8 +57,8 @@ def _setup_callbacks(config, trainable_model) -> List[Callable]:
 
 
 def _run_search_helper(
-    config, tuner, train_ds, test_ds, best_params_path=None
-) -> None:
+    config, tuner, train_ds, test_ds, max_epochs, best_params_path=None
+):
     """Helper function for running hyperparameter search.
 
     Args:
@@ -68,7 +68,7 @@ def _run_search_helper(
         test_ds: Test dataset
     """
     try:
-        tuner.run_search(train_ds, test_ds)
+        tuner.run_search(train_ds, test_ds, max_epochs)
         best_hp = tuner.get_best_hyperparameters().values
         print("Best hyperparameters:", best_hp)
         if best_params_path is not None:
@@ -89,3 +89,4 @@ def _run_search_helper(
         print(f"Error during hyperparameter search: {e}")
         traceback.print_exc()
         raise
+    return best_hp
