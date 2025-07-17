@@ -1,21 +1,21 @@
 {
-  "csv_path": "C:\\Thorlabs\\FG250LA_1.csv",
-  "img_folder": "C:\\Thorlabs\\FG250LA\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\cnn3_feature_scaler.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\FG250LA\\Individual_Trials\\cnn3_label_scaler.pkl",
+  "csv_path": "C:\\Thorlabs\\combined_data.csv",
+  "img_folder": "C:\\Thorlabs\\combined_images\\",
+  "feature_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\cnn1_feature_scaler.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\cnn1_label_scaler.pkl",
   
 
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
 
   "angle_threshold": 0.49,
-  "diameter_threshold": 34.0,
+  "diameter_threshold": 0.25,
 
   "mode": "train_cnn",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
   "backbone_name": "resnet",
-  "model_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\cnn3.keras",
+  "model_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\cnn1.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
@@ -40,15 +40,15 @@
   "dense2": 64,
   
 
-  "early_stopping": "y",
+  "early_stopping": "n",
   "patience": 6,
   "monitor": "val_loss",
   "method": "min",
-  "checkpoints": "y",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\cnn3_checkpoint.keras",
+  "checkpoints": "n",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\cnn1_checkpoint.keras",
 
-  "save_model_file": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\cnn3.keras",
-  "save_history_file": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\cnn3_history",
+  "save_model_file": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\cnn1.keras",
+  "save_history_file": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\cnn1_history",
 
   "set_mask": "y"
 }

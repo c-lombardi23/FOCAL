@@ -134,7 +134,7 @@ class DataCollector:
         def label(row):
             good_angle = row["CleaveAngle"] <= angle_threshold
             no_defects = not row["Hackle"] and not row["Misting"]
-            good_diameter = row["ScribeDiameter"] < diameter_threshold
+            good_diameter = row["ScribeDiameter"] < diameter_threshold * row["Diameter"]
 
             bad_angle = not good_angle and no_defects and good_diameter
             bad_diameter = good_angle and no_defects and not good_diameter
@@ -156,7 +156,7 @@ class DataCollector:
                 lambda row: (
                     1
                     if row["CleaveAngle"] <= angle_threshold
-                    and row["ScribeDiameter"] < diameter_threshold
+                    and row["ScribeDiameter"] < diameter_threshold * row["Diameter"]
                     and (not row["Hackle"] and not row["Misting"])
                     else 0
                 ),
