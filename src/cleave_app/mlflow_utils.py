@@ -77,7 +77,8 @@ def log_cnn_training_run(
             )
         )
         # Log model
-        mlflow.tensorflow.log_model(model, name="cnn_model")
+        mlflow.tensorflow.log_model(model, name="cnn_model",
+                                    )
 
         if artifacts:
             for key, path in artifacts.items():
@@ -373,7 +374,12 @@ def log_regressor_test_results(
         experiment_id = experiment.experiment_id
     with mlflow.start_run(run_name=run_name, experiment_id=experiment_id):
         mlflow.log_artifact(dataset_path, artifact_path="dataset")
-
+        df_ds = pd.read_csv(dataset_path)
+        mlflow.log_input(
+            mlflow.data.from_pandas(
+                df_ds, source=dataset_path, name=str(dataset_path)
+            )
+        )
         df = pd.DataFrame(
             {
                 "current_tension": tensions,
@@ -406,19 +412,9 @@ def log_cnn_hyperparameter(
                 "test_size": config.test_size,
                 "angle_threshold": config.angle_threshold,
                 "diameter_threshold": config.angle_threshold,
-                "dropout_1": best_hp["dropout_1"],
-                "dropout_2": best_hp["dropout_2"],
-                "dropout_3": best_hp["dropout_3"],
-                "dense_1": best_hp["dense_1"],
-                "dense_2": best_hp["dense_2"],
-                "rotation": best_hp["rot"],
-                "brightness": best_hp["bright"],
-                "contrast": best_hp["contrast"],
-                "height": best_hp["height"],
-                "width": best_hp["width"],
-                "learning_rate": best_hp["learning_rate"],
             }
         )
+        mlflow.log_params(best_hp)
 
 
 def log_mlp_hyperparameter(
@@ -435,11 +431,6 @@ def log_mlp_hyperparameter(
                 "test_size": config.test_size,
                 "angle_threshold": config.angle_threshold,
                 "diameter_threshold": config.angle_threshold,
-                "dropout_1": best_hp["dropout_1"],
-                "dropout_2": best_hp["dropout_2"],
-                "dropout_3": best_hp["dropout_3"],
-                "dense_1": best_hp["dense_1"],
-                "dense_2": best_hp["dense_2"],
-                "learning_rate": best_hp["learning_rate"],
             }
         )
+        mlflow.log_params(best_hp)
