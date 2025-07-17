@@ -1,18 +1,18 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_2.csv",
-  "img_folder": "C:\\Thorlabs\\400LA\\",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlptension_scaler3.pkl",
+  "csv_path": "C:\\Thorlabs\\FG250LA_1.csv",
+  "img_folder": "C:\\Thorlabs\\FG250LA\\",
+  "label_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\mlptension_scaler1.pkl",
 
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
 
   "mode": "test_mlp",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlp_model_3.keras",
+  "model_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\mlp_model_1.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
   
   "angle_threshold": 0.49,
-  "diameter_threshold": 55.0
+  "diameter_threshold": 34.0
 }

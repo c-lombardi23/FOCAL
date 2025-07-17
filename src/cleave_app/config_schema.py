@@ -436,6 +436,20 @@ class TrainImageOnlyConfig(ModelConfig):
             raise ValueError("Image shape not compatible")
         # Return the validated model instance.
         return self
+    
+class CNNHyperparameterConfig(BaseConfig):
+    tuner_directory: str
+    project_name: str
+    model_path: str
+    backbone: str
+    angle_threshold: float
+    diameter_threshold: float
+    test_size: float
+    batch_size: int
+    buffer_size: int
+    max_epochs: int
+    save_model_file: Optional[str]
+
 
 
 # Define a config for hyperparameter tuning the image-only model.
@@ -461,7 +475,7 @@ class MLPHyperparameterConfig(BaseConfig):
 MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "train_cnn": TrainCNNConfig,
     "train_mlp": TrainMLPConfig,
-    "cnn_hyperparameter": TrainCNNConfig,
+    "cnn_hyperparameter": CNNHyperparameterConfig,
     "mlp_hyperparameter": MLPHyperparameterConfig,
     "test_cnn": TestCNNConfig,
     "test_mlp": TestMLPConfig,

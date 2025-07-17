@@ -12,6 +12,10 @@ from typing import Optional, Tuple
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore")
 
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="mlflow.data.tensorflow_dataset")
+
+
 try:
     import tensorflow as tf
     from keras.applications import EfficientNetB0, MobileNetV2, ResNet50

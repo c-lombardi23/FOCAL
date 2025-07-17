@@ -1,20 +1,20 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_2.csv",
-  "img_folder": "C:\\Thorlabs\\400LA\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlpfeature_scaler3.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlptension_scaler3.pkl",
+  "csv_path": "C:\\Thorlabs\\FG250LA_1.csv",
+  "img_folder": "C:\\Thorlabs\\FG250LA\\",
+  "feature_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\mlpfeature_scaler1.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\mlptension_scaler1.pkl",
  
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
 
   "mode": "train_mlp",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
+  "model_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\FG250LA_classifier.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
   "angle_threshold": 0.49,
-  "diameter_threshold": 55.0,
+  "diameter_threshold": 34.0,
   "learning_rate": 0.001,
   "batch_size": 16,
   "buffer_size": 40,
@@ -28,14 +28,14 @@
   "dense1": 32,
   "dense2": 48,
 
-  "early_stopping": "y",
+  "early_stopping": "n",
   "patience": 5,
   "monitor": "val_mae",
   "method": "min",
-  "checkpoints": "y",
+  "checkpoints": "n",
   "checkpoint_filepath": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlp_model3_checkpoint.keras",
 
-  "save_model_file": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlp_model_3.keras",
+  "save_model_file": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\mlp_model_1.keras",
 
   "set_mask": "y"
 }

@@ -1,26 +1,26 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_2.csv",
-  "img_folder": "C:\\Thorlabs\\400LA\\",
+  "csv_path": "C:\\Thorlabs\\FG250LA_1.csv",
+  "img_folder": "C:\\Thorlabs\\FG250LA\\",
   
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
 
   "mode": "mlp_hyperparameter",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
-  "project_name": "400LA_tuning3",
+  "model_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\FG250LA_classifier.keras",
+  "project_name": "FG250LA_mlp_tuning1",
 
   "angle_threshold": 0.49,
-  "diameter_threshold": 55,
+  "diameter_threshold": 34.0,
   "learning_rate": 0.01,
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 60,
+  "max_epochs": 30,
   "objective": "val_accuracy",
   "tension_threshold": 190,
 
-  "tuner_directory": "C:\\Users\\clombardi\\400LA_Train3\\HyperParameterTuning1",
+  "tuner_directory": "C:\\Users\\clombardi\\FG250LA_1\\HyperParameterTuning1",
 
   "set_mask": "y"
 }

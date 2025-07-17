@@ -1,7 +1,7 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_2.csv",
-  "img_folder": "C:\\Thorlabs\\400LA\\",
-  "label_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\label_scaler1.pkl",
+  "csv_path": "C:\\Thorlabs\\FG250LA_1.csv",
+  "img_folder": "C:\\Thorlabs\\FG250LA\\",
+  "label_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\HyperParameterTuning1\\FG250LA_tuning1\\label_scaler1.pkl",
   
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
@@ -9,42 +9,28 @@
   "mode": "cnn_hyperparameter",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\image_features1.keras",
-  "project_name": "400LA_tuning2",
+  "model_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\cnn_hyperparameter1.keras",
+  "project_name": "FG250LA_tuning1",
   "num_classes": 1,
   "classification_type": "binary",
 
   "angle_threshold": 0.49,
-  "diameter_threshold": 52,
+  "diameter_threshold": 34.0,
   "learning_rate": 0.01,
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 60,
+  "max_epochs": 30,
   "objective": "val_accuracy",
   "tension_threshold": 190,
-
-  "brightness": 0.0,
-  "height": 0.0,
-  "width": 0.0,
-  "contrast": 0.0,
-  "rotation": 0.0,
-
-  "dropout1": 0.1,
-  "dropout2": 0.6,
-  "dropout3": 0.1,
-  "dense1": 16,
-  "dense2": 48,
-  
 
   "early_stopping": "n",
   "patience": 5,
   "monitor": "val_loss",
   "method": "min",
   "checkpoints": "y",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_checkpoint.keras",
 
-  "tuner_directory": "C:\\Users\\clombardi\\400LA_Train3\\HyperParameterTuning1",
+  "tuner_directory": "C:\\Users\\clombardi\\FG250LA_1\\HyperParameterTuning1",
 
   "set_mask": "y"
 }

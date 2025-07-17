@@ -11,6 +11,7 @@ from .base_command import BaseCommand
 from .utils import _run_search_helper
 
 
+
 class CNNHyperparameterSearch(BaseCommand):
     """Perform hyperparameter search for CNN model."""
 
@@ -33,7 +34,7 @@ class CNNHyperparameterSearch(BaseCommand):
             config.test_size,
             config.buffer_size,
             config.batch_size,
-            feature_scaler_path=config.feature_scaler_path,
+            feature_scaler_path=None,
         )
 
         max_epochs = config.max_epochs or 20

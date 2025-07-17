@@ -1,50 +1,23 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_1.csv",
-  "img_folder": "C:\\Thorlabs\\400LA\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_feature_scaler.pkl",
-  "classification_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\model3_classification.csv",
+  "csv_path": "C:\\Thorlabs\\FG250LA_1.csv",
+  "img_folder": "C:\\Thorlabs\\FG250LA\\",
+  "feature_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\cnn2_feature_scaler.pkl",
+  "classification_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\classification.csv",
 
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
-  "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
   "mode": "test_cnn",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
-  "backbone_name": "resnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
-  "project_name": "Binary4",
+  "model_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\FG250LA_classifier.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
-  "classification_threshold": 0.93,
+  "classification_threshold": 0.68,
   "angle_threshold": 0.49,
-  "diameter_threshold": 55.0,
-  "learning_rate": 0.01,
-  "batch_size": 16,
-  "buffer_size": 40,
-  "test_size": 0.25,
-  "max_epochs": 15,
-  "objective": "val_accuracy",
+  "diameter_threshold": 34.0,
   "tension_threshold": 190,
-
-  "dropout1": 0.1,
-  "dropout2": 0.6,
-  "dropout3": 0.1,
-  "dense1": 16,
-  "dense2": 48,
-  
-
-  "early_stopping": "n",
-  "patience": 5,
-  "monitor": "val_loss",
-  "method": "min",
-  "checkpoints": "y",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\tensions1_checkpoint.keras",
-
-  "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
-  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\tensions1.keras",
-  "save_history_file": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\tensions1_history",
 
   "set_mask": "y"
 }

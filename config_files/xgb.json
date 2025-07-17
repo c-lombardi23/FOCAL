@@ -1,8 +1,8 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_2.csv",
-  "img_folder": "C:\\Thorlabs\\400LA\\",
+  "csv_path": "C:\\Thorlabs\\FG250LA_1.csv",
+  "img_folder": "C:\\Thorlabs\\FG250LA\\",
   "feature_scaler_path": "",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\xgb5_scaler.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\xgb1_scaler.pkl",
   
 
   "image_shape": [224, 224, 3],
@@ -10,26 +10,26 @@
 
   "mode": "test_xgboost",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\model5.keras",
+  "model_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\FG250LA_classifier.keras",
  
   "angle_threshold": 0.49,
-  "diameter_threshold": 55.0,
-  "learning_rate": 0.006,
+  "diameter_threshold": 34.0,
+  "learning_rate": 0.005,
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
   "max_epochs": 15,
 
   "error_type": "reg:squarederror",
-  "n_estimators" : 1400,
+  "n_estimators" : 800,
   "max_depth": 10,
   "random_state": 42,
   "gamma": 0.0,
   "subsample": 0.8,
   "reg_lambda": 2.0,
 
-  "xgb_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\xgb5.pkl",
-  "save_history_file": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\xgb_history5",
+  "xgb_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\xgb1.pkl",
+  "save_history_file": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\xgb_history1",
 
   "set_mask": "y"
 }

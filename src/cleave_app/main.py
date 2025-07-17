@@ -18,6 +18,10 @@ import mlflow
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore")
 
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="mlflow.data.tensorflow_dataset")
+
+
 from .commands.grad_cam_commands import GradCamDisplay
 from .commands.hyperparameter_commands import (CNNHyperparameterSearch,
                                                ImageHyperparameterSearch,
