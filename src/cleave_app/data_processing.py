@@ -85,7 +85,6 @@ class DataCollector:
         img_folder: str,
         angle_threshold: float,
         diameter_threshold: float,
-        columns: List[str],
         classification_type: Optional[str] = "binary",
         backbone: Optional[str] = "mobilenet",
         set_mask: Optional[str] = "n",
@@ -112,7 +111,6 @@ class DataCollector:
         self.img_folder = img_folder
         self.feature_scaler = None
         self.label_scaler = None
-        self.columns = columns
         self.encoder = None
         self.encoder_path = encoder_path
         self.classification_type = classification_type

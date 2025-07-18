@@ -168,6 +168,7 @@ class TestPredictions(DataCollector):
                     pred_image_paths, pred_features
                 ):
                     prediction = self.test_prediction(img_path, feature_vector)
+                    print(prediction)
                     predictions.append(prediction)
             else:
                 print("No features available for prediction.")
