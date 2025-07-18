@@ -22,6 +22,16 @@ from sklearn.metrics import (
 
 from .data_processing import BadCleaveTensionClassifier, DataCollector
 
+#====================================================
+PRED_FEATURES =[
+    "CleaveAngle",
+    "CleaveTension",
+    "ScribeDiameter",
+    "Misting",
+    "Hackle",
+    # "Tearing",
+    ]
+
 
 class TestPredictions(DataCollector):
     """This class is used to test model performance on unseen data using
@@ -142,14 +152,8 @@ class TestPredictions(DataCollector):
             pred_features = None
         else:
             pred_features = self.df[
-                [
-                    "CleaveAngle",
-                    "CleaveTension",
-                    "ScribeDiameter",
-                    "Misting",
-                    "Hackle",
-                    # "Tearing",
-                ]
+                PRED_FEATURES
+                
             ].values
             # if self.scaler is not None:
             # pred_features = self.scaler.transform(pred_features)

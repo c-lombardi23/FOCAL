@@ -38,6 +38,37 @@ except ImportError as e:
     print("Please install tensorflow>=2.19.0 and scikit-learn>=1.7.0")
     tf = None
 
+# GLobal config variables
+#==================================================================
+IMAGE_DIMS = [224, 224]
+IMAGE_SIZE = [224, 224, 3]
+TRAIN_P=0.9
+TEST_P=1.0
+REQ_COLUMNS= [
+                "CleaveAngle",
+                "CleaveTension",
+                "ScribeDiameter",
+                "Misting",
+                "Hackle",
+                # "Tearing",
+                "ImagePath",
+                ]
+FEATURES_CNN = [
+            "CleaveAngle",
+            "CleaveTension",
+            "ScribeDiameter",
+            "Misting",
+            "Hackle",
+            # "Tearing",
+        ]
+FEATURE_MLP = [
+                "CleaveAngle",
+                "ScribeDiameter",
+                "Misting",
+                "Hackle",
+                # "Tearing",
+            ]
+#==================================================================
 
 class DataCollector:
     """Class for collecting and preprocessing data from CSV files and image
@@ -54,6 +85,7 @@ class DataCollector:
         img_folder: str,
         angle_threshold: float,
         diameter_threshold: float,
+        columns: List[str],
         classification_type: Optional[str] = "binary",
         backbone: Optional[str] = "mobilenet",
         set_mask: Optional[str] = "n",
@@ -80,6 +112,7 @@ class DataCollector:
         self.img_folder = img_folder
         self.feature_scaler = None
         self.label_scaler = None
+        self.columns = columns
         self.encoder = None
         self.encoder_path = encoder_path
         self.classification_type = classification_type
@@ -88,6 +121,7 @@ class DataCollector:
         self.set_mask = set_mask
         self.angle_threshold = angle_threshold
         self.diameter_threshold = diameter_threshold
+        
 
     @property
     def df(self) -> Optional[pd.DataFrame]:
@@ -95,15 +129,7 @@ class DataCollector:
         if self._df is None:
             try:
                 df = pd.read_csv(self.csv_path)
-                required_columns = [
-                    "CleaveAngle",
-                    "CleaveTension",
-                    "ScribeDiameter",
-                    "Misting",
-                    "Hackle",
-                    # "Tearing",
-                    "ImagePath",
-                ]
+                required_columns = REQ_COLUMNS
                 missing_columns = [
                     col for col in required_columns if col not in df.columns
                 ]
@@ -318,7 +344,7 @@ class DataCollector:
 
             try:
                 img = tf.image.decode_png(img_raw, channels=1)
-                img = tf.image.resize(img, [224, 224])
+                img = tf.image.resize(img, IMAGE_DIMS)
                 img = tf.image.grayscale_to_rgb(img)
                 if self.set_mask == "y":
                     img = self._mask_background(img)
@@ -333,7 +359,7 @@ class DataCollector:
             inp=[filename],
             Tout=tf.float32,
         )
-        img.set_shape([224, 224, 3])
+        img.set_shape(IMAGE_SIZE)
         return img
 
     def create_custom_dataset(
@@ -442,14 +468,7 @@ class DataCollector:
         """
         images = self.df["ImagePath"].values
         features = self.df[
-            [
-                "CleaveAngle",
-                "CleaveTension",
-                "ScribeDiameter",
-                "Misting",
-                "Hackle",
-                # "Tearing",
-            ]
+            FEATURES_CNN
         ].values.astype(np.float32)
         labels = self.df["CleaveCategory"].values.astype(np.float32)
 
@@ -585,7 +604,7 @@ class DataCollector:
                 batch_size=batch_size,
                 buffer_size=buffer_size,
                 masking=True,
-                p=0.6,
+                p=TRAIN_P,
             )
             test_ds = self._dataset_helper(
                 test_imgs,
@@ -595,7 +614,7 @@ class DataCollector:
                 batch_size=batch_size,
                 buffer_size=buffer_size,
                 masking=True,
-                p=0.7,
+                p=TEST_P,
             )
 
             datasets.append((train_ds, test_ds))
@@ -679,7 +698,7 @@ class DataCollector:
             batch_size=batch_size,
             buffer_size=buffer_size,
             masking=True,
-            p=0.9,
+            p=TRAIN_P,
         )
         test_ds = self._dataset_helper(
             test_imgs,
@@ -689,7 +708,7 @@ class DataCollector:
             batch_size=batch_size,
             buffer_size=buffer_size,
             masking=False,
-            p=1.0,
+            p=TEST_P,
         )
 
         return train_ds, test_ds, class_weights
@@ -764,13 +783,7 @@ class MLPDataCollector(DataCollector):
 
         images = self.df["ImagePath"].values
         features = self.df[
-            [
-                "CleaveAngle",
-                "ScribeDiameter",
-                "Misting",
-                "Hackle",
-                # "Tearing",
-            ]
+            FEATURE_MLP
         ].values.astype(np.float32)
         labels = delta
 
