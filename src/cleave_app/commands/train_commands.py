@@ -4,19 +4,15 @@ import traceback
 
 import tensorflow as tf
 
-from cleave_app.data_processing import (
-    BadCleaveTensionClassifier,
-    DataCollector,
-    MLPDataCollector,
-)
-from cleave_app.mlflow_utils import (
-    log_cnn_training_run,
-    log_image_training_run,
-    log_mlp_training_run,
-    log_xgb_training_run,
-)
+from cleave_app.data_processing import (BadCleaveTensionClassifier,
+                                        DataCollector, MLPDataCollector)
+from cleave_app.mlflow_utils import (log_cnn_training_run,
+                                     log_image_training_run,
+                                     log_mlp_training_run,
+                                     log_xgb_training_run)
 from cleave_app.mlp_model import BuildMLPModel
 from cleave_app.model_pipeline import CustomModel
+from cleave_app.rl_pipeline import TestAgent, TrainAgent
 from cleave_app.xgboost_pipeline import XGBoostModel
 
 from .base_command import BaseCommand
@@ -533,3 +529,26 @@ class TrainCustomModel(BaseCommand):
             "accuracy",
             model_path=config.save_model_file,
         )
+
+
+class TrainRL(BaseCommand):
+    """Train the reinforement learning agent"""
+
+    def _execute_command(self, config) -> None:
+        rl_trainer = TrainAgent(
+            csv_path=config.csv_path,
+            cnn_path=config.cnn_path,
+            img_folder=config.img_folder,
+            threshold=config.threshold,
+            feature_shape=config.feature_shape
+        )
+        rl_trainer.train(
+            env=rl_trainer.env,
+            device="cuda",
+            buffer_size=config.buffer_size,
+            learning_rate=config.learning_rate,
+            batch_size=config.batch_size,
+            tau=config.tau,
+            timesteps=config.timesteps
+        )
+        rl_trainer.save_agent(save_path=config.agent_path)

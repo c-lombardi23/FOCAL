@@ -31,6 +31,8 @@ setup(
         "click>=8.2.0",
         "xgboost>=3.0.0",
         "mlflow>=3.1.1",
+        "gymnasium==1.1.1",
+        "stable_baselines3==2.6.0"
     ],
     extras_require={
         "dev": [

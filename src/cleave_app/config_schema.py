@@ -10,7 +10,6 @@ EarlyStoppingMixin, and CheckpointMixin.
 import json
 import os
 from pathlib import Path
-
 # Import typing hints for better code clarity and static analysis.
 from typing import Dict, List, Literal, Optional, Type
 
@@ -473,6 +472,25 @@ class MLPHyperparameterConfig(BaseConfig):
     save_model_file: Optional[str]
 
 
+class TrainRLConfig(BaseModel):
+    csv_path: str
+    cnn_path: str
+    agent_path: str
+    mode: str
+    img_folder: str
+    threshold: float
+    feature_shape: List[int]
+    buffer_size: Optional[int] = 1000000
+    batch_size: Optional[int] = 256
+    tau: Optional[float] = 0.1
+    learning_rate: Optional[float] = 0.0001
+    timesteps: Optional[int] = 5000
+
+
+class TestRLConfig(TrainRLConfig):
+    episodes: int
+
+
 # A dictionary mapping the 'mode' string to its corresponding Pydantic config class.
 MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "train_cnn": TrainCNNConfig,
@@ -490,6 +508,8 @@ MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
     "custom_model": TrainImageOnlyConfig,
     "train_xgboost": TrainXGBoostConfig,
     "test_xgboost": TestXGBoostConfig,
+    "train_rl": TrainRLConfig,
+    "test_rl": TestRLConfig,
 }
 
 

@@ -1,0 +1,13 @@
+{
+    "agent_path": "C:\\Users\\clombardi\\RL\\agent9",
+    "csv_path": "C:\\Users\\clombardi\\RL\\data.csv",
+    "cnn_path": "G:\\Intern_Project_2025\\models\\Unified_classifier.keras",
+    "img_folder": "C:\\Thorlabs\\combined_images",
+    "mode": "train_rl",
+    "buffer_size": 1000000,
+    "batch_size": 1028,
+    "learning_rate": 1e-4,
+    "tau": 0.1,
+    "feature_shape": [1,5],
+    "threshold": 0.63
+}

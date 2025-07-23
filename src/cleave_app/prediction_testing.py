@@ -12,25 +12,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import (
-    ConfusionMatrixDisplay,
-    classification_report,
-    confusion_matrix,
-    roc_auc_score,
-    roc_curve,
-)
+from sklearn.metrics import (ConfusionMatrixDisplay, classification_report,
+                             confusion_matrix, roc_auc_score, roc_curve)
 
 from .data_processing import BadCleaveTensionClassifier, DataCollector
 
-#====================================================
-PRED_FEATURES =[
+# ====================================================
+PRED_FEATURES = [
     "CleaveAngle",
     "CleaveTension",
     "ScribeDiameter",
     "Misting",
     "Hackle",
     # "Tearing",
-    ]
+]
 
 
 class TestPredictions(DataCollector):
@@ -151,10 +146,7 @@ class TestPredictions(DataCollector):
         if self.image_only:
             pred_features = None
         else:
-            pred_features = self.df[
-                PRED_FEATURES
-                
-            ].values
+            pred_features = self.df[PRED_FEATURES].values
             # if self.scaler is not None:
             # pred_features = self.scaler.transform(pred_features)
         predictions = []

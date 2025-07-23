@@ -17,58 +17,53 @@ warnings.filterwarnings("ignore")
 
 try:
     import tensorflow as tf
-    from sklearn.model_selection import (
-        KFold,
-        StratifiedKFold,
-        train_test_split,
-    )
+    from sklearn.model_selection import (KFold, StratifiedKFold,
+                                         train_test_split)
     from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
     from sklearn.utils.class_weight import compute_class_weight
-    from tensorflow.keras.applications.efficientnet import (
-        preprocess_input as _efficientnet_preprocess,
-    )
-    from tensorflow.keras.applications.mobilenet_v2 import (
-        preprocess_input as _mobilenet_preprocess,
-    )
-    from tensorflow.keras.applications.resnet50 import (
-        preprocess_input as _resnet_preprocess,
-    )
+    from tensorflow.keras.applications.efficientnet import \
+        preprocess_input as _efficientnet_preprocess
+    from tensorflow.keras.applications.mobilenet_v2 import \
+        preprocess_input as _mobilenet_preprocess
+    from tensorflow.keras.applications.resnet50 import \
+        preprocess_input as _resnet_preprocess
 except ImportError as e:
     print(f"Warning: Required ML libraries not found: {e}")
     print("Please install tensorflow>=2.19.0 and scikit-learn>=1.7.0")
     tf = None
 
 # GLobal config variables
-#==================================================================
+# ==================================================================
 IMAGE_DIMS = [224, 224]
 IMAGE_SIZE = [224, 224, 3]
-TRAIN_P=0.9
-TEST_P=1.0
-REQ_COLUMNS= [
-                "CleaveAngle",
-                "CleaveTension",
-                "ScribeDiameter",
-                "Misting",
-                "Hackle",
-                # "Tearing",
-                "ImagePath",
-                ]
+TRAIN_P = 0.9
+TEST_P = 1.0
+REQ_COLUMNS = [
+    "CleaveAngle",
+    "CleaveTension",
+    "ScribeDiameter",
+    "Misting",
+    "Hackle",
+    # "Tearing",
+    "ImagePath",
+]
 FEATURES_CNN = [
-            "CleaveAngle",
-            "CleaveTension",
-            "ScribeDiameter",
-            "Misting",
-            "Hackle",
-            # "Tearing",
-        ]
+    "CleaveAngle",
+    "CleaveTension",
+    "ScribeDiameter",
+    "Misting",
+    "Hackle",
+    # "Tearing",
+]
 FEATURE_MLP = [
-                "CleaveAngle",
-                "ScribeDiameter",
-                "Misting",
-                "Hackle",
-                # "Tearing",
-            ]
-#==================================================================
+    "CleaveAngle",
+    "ScribeDiameter",
+    "Misting",
+    "Hackle",
+    # "Tearing",
+]
+# ==================================================================
+
 
 class DataCollector:
     """Class for collecting and preprocessing data from CSV files and image
@@ -119,7 +114,6 @@ class DataCollector:
         self.set_mask = set_mask
         self.angle_threshold = angle_threshold
         self.diameter_threshold = diameter_threshold
-        
 
     @property
     def df(self) -> Optional[pd.DataFrame]:
@@ -465,9 +459,7 @@ class DataCollector:
             Tuple of (images, features, labels) arrays
         """
         images = self.df["ImagePath"].values
-        features = self.df[
-            FEATURES_CNN
-        ].values.astype(np.float32)
+        features = self.df[FEATURES_CNN].values.astype(np.float32)
         labels = self.df["CleaveCategory"].values.astype(np.float32)
 
         return images, features, labels
@@ -780,9 +772,7 @@ class MLPDataCollector(DataCollector):
         ).astype(np.float32)
 
         images = self.df["ImagePath"].values
-        features = self.df[
-            FEATURE_MLP
-        ].values.astype(np.float32)
+        features = self.df[FEATURE_MLP].values.astype(np.float32)
         labels = delta
 
         return images, features, labels

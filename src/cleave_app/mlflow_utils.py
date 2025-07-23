@@ -77,8 +77,10 @@ def log_cnn_training_run(
             )
         )
         # Log model
-        mlflow.tensorflow.log_model(model, name="cnn_model",
-                                    )
+        mlflow.tensorflow.log_model(
+            model,
+            name="cnn_model",
+        )
 
         if artifacts:
             for key, path in artifacts.items():
