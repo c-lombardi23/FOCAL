@@ -29,4 +29,5 @@ Submodules
    cleave_app.mlp_model
    cleave_app.model_pipeline
    cleave_app.prediction_testing
+   cleave_app.rl_pipeline
    cleave_app.xgboost_pipeline
