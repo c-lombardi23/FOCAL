@@ -565,3 +565,50 @@ Generates a Grad-CAM heatmap to visualize which parts of an image the CNN is foc
      - No
      - `null`
      - Path to save the output heatmap image.
+
+Reinforcement Learning
+~~~~~~~~~~~~~~~~~~~~~~
+
+train_rl & test_rl
+""""""""""""""""""
+Train or test an agent with reinforcement learning to predict optimal tension.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 15 10 15 35
+
+   * - Parameter
+     - Type
+     - Required
+     - Default
+     - Description
+   * - ``csv_path``
+     - string (path)
+     - Yes
+     - -
+     - Path to the csv dataset.
+   * - ``cnn_path``
+     - string (path)
+     - Yes
+     - -
+     - Path to the cnn classifier.
+   * - ``img_folder``
+     - string (path)
+     - Yes
+     - `null`
+     - Path to the saved images.
+   * - ``agent_path``
+     - string (path)
+     - Yes
+     - `null`
+     - Path to save (or load) trained agent.
+   * - ``learning_rate``
+     - float
+     - Yes
+     - `null`
+     - Typical learning rate for ML.
+   * - ``buffer_size``
+     - int
+     - Yes
+     - `null`
+     - Size of replay buffer.
