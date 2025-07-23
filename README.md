@@ -178,6 +178,8 @@ The application uses a JSON configuration file to specify all parameters. **Each
 | `train_kfold_cnn` | Train CNN with k-fold cross validation |
 | `train_kfold_mlp` | Train MLP with k-fold cross validation |
 | `grad_cam` | Generate GradCAM visualizations |
+| `train_rl` | Train an agent to predict optinal tension |
+| `test_rl`  | Test the RL agent on predicting tension |
 
 > **Extensibility:** To add a new mode, simply add a new config class in `config_schema.py` and update the mode-to-config mapping.
 
