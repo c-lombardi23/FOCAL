@@ -479,6 +479,7 @@ class TrainRLConfig(BaseModel):
     mode: str
     img_folder: str
     threshold: float
+    max_tension_change: float
     max_steps: Optional[int] = 15
     feature_shape: List[int]
     buffer_size: Optional[int] = 1000000

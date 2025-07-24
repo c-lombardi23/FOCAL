@@ -1,7 +1,7 @@
 {
-    "agent_path": "C:\\Users\\clombardi\\RL\\agent9",
+    "agent_path": "C:\\Users\\clombardi\\RL\\agent14",
     "csv_path": "C:\\Users\\clombardi\\RL\\data.csv",
-    "cnn_path": "G:\\Intern_Project_2025\\models\\Unified_classifier.keras",
+    "cnn_path": "C:\\Users\\clombardi\\RL\\cnn_surrogate3.pkl",
     "img_folder": "C:\\Thorlabs\\combined_images",
     "mode": "train_rl",
     "buffer_size": 1000000,
@@ -10,8 +10,10 @@
     "tau": 0.1,
     "feature_shape": [1,5],
     "threshold": 0.63,
-    "max_steps": 15,
+    "max_steps": 20,
     "low_range": 0.8,
     "high_range": 1.4,
-    "max_delta": 5.0
+    "max_delta": 10.0,
+    "max_tension_change": 15.0,
+    "timesteps":8000
 }

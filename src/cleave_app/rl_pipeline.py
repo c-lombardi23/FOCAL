@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import gymnasium as gym
 import numpy as np
 import pandas as pd
+import joblib
 import tensorflow as tf
 from gymnasium import spaces
 from stable_baselines3 import SAC
@@ -33,6 +34,7 @@ class CleaveEnv(gym.Env):
         low_range: float,
         high_range: float,
         max_delta: float,
+        max_tension_change: float,
     ) -> None:
         """
         Initialize the environment.
@@ -45,7 +47,7 @@ class CleaveEnv(gym.Env):
         # call gym init method
         super().__init__()
 
-        self.cnn_model = tf.keras.models.load_model(cnn_path)
+        self.cnn_model = joblib.load(cnn_path)
         self.img_folder = img_folder
         self.df = pd.read_csv(csv_path)
 
@@ -72,9 +74,13 @@ class CleaveEnv(gym.Env):
         self.action_space = spaces.Box(
             low=-1.0, high=1.0, shape=(1,), dtype=np.float32
         )
-        self.max_tension_change = 10.0
+        self.max_tension_change = max_tension_change
 
         fiber_types = self.df.iloc[:, -len_fibers:]
+
+        self.model_features = self.cnn_model.feature_names_in_
+        
+
         other_inputs = self.df["Diameter"]
 
         # combine fiber names and diameter
@@ -200,7 +206,7 @@ class CleaveEnv(gym.Env):
         """
         delta_tension = float(action[0] * self.max_tension_change)
         self.current_tension = self.current_tension + delta_tension
-        self.current_tension = np.clip(self.current_tension, 50, 2000)
+        self.current_tension = np.clip(self.current_tension, self.current_ideal_tension*self.low_range, self.current_ideal_tension*self.high_range)
         self.current_ideal_tension = self.ideal_tensions[
             self._get_current_fiber_type()
         ]
@@ -209,42 +215,36 @@ class CleaveEnv(gym.Env):
 
         model_inputs = self.current_context.copy()
         model_inputs["CleaveTension"] = self.current_tension
+        model_inputs = model_inputs[self.model_features]
 
-        row_index = self.current_context.index[0]
-        image_filename = self.df.iloc[row_index]["ImagePath"]
-        image_tensor = self.load_process_images(image_filename)
+    
+        tension_error = self.current_tension - self.current_ideal_tension
 
-        image_tensor = tf.expand_dims(image_tensor, axis=0)
+        cnn_pred = self.cnn_model.predict_proba(model_inputs)[0, 1]
 
-        dummy_features = np.zeros(self.feature_shape)
-        cnn_raw = self.cnn_model.predict(
-            [image_tensor, dummy_features], verbose=0
-        )
-        cnn_pred = cnn_raw[0][0]
-
+        reward = 0.0
         terminated = False
+
+        reward += 100.0 * cnn_pred
+
         if cnn_pred >= self.threshold:
-            reward = 100.0
+            reward += 50.0
             terminated = True
+        
+        if(tension_error > 0) and (action[0] > 0):
+            reward -= 5.0
+        elif (tension_error < 0) and (action[0] < 0):
+            reward -= 5.0
         else:
-            reward = 50.0 * cnn_pred - 3.0 * (1 - cnn_pred)
+            reward += 1.0
+        
+        reward -= 1.0
 
-        if abs(delta_tension) <= self.max_delta:
-            reward += 1.5
-        else:
-            reward -= 0.25 * (abs(delta_tension) - self.max_delta)
-
-        tension_error = abs(self.current_tension - self.current_ideal_tension)
-        reward += (
-            max(0, 1 - (tension_error / self.current_ideal_tension)) * 20.0
-        )
-
-        action_cost = 0.1 * abs(delta_tension)
-        reward = reward - action_cost
+        reward -= (abs(action[0]) ** 2) * 0.5
 
         truncated = self.current_step >= self.max_steps
         if truncated and not terminated:
-            reward = reward - 25.0
+            reward -= 50.0 * (1.0 - cnn_pred)
 
         if self.render_mode == "human":
             self.render(action, cnn_pred, reward)
@@ -256,7 +256,7 @@ class CleaveEnv(gym.Env):
             "current_ideal_tension": round(
                 float(self.current_ideal_tension), 3
             ),
-            "tension_error": round(float(tension_error), 3),
+            #"tension_error": round(float(tension_error), 3),
             "action": round(float(action), 3),
         }
         return observation, float(reward), terminated, truncated, info
@@ -295,7 +295,7 @@ class CleaveEnv(gym.Env):
             cnn_pred (float): The CNN's predicted cleave quality.
             reward (float): The reward received after the action.
         """
-        action_str = f"{(action[0] *10.0):+.2f}"
+        action_str = f"{(action[0] *self.max_tension_change):+.2f}"
         cnn_str = "GOOD" if cnn_pred > self.threshold else "BAD"
         print(
             f"Step {self.current_step:2d} Tension: {self.current_tension:6.1f} (Action: {action_str:6s}) -> CNN: {cnn_str:4s}| Reward: {reward:6.1f}"
@@ -316,6 +316,7 @@ class TrainAgent:
         low_range: float,
         high_range: float,
         max_delta: float,
+        max_tension_change: float,
     ) -> None:
         """
         Initialize the training environment for the RL agent.
@@ -337,6 +338,7 @@ class TrainAgent:
             low_range=low_range,
             high_range=high_range,
             max_delta=max_delta,
+            max_tension_change=max_tension_change
         )
         check_env(self.env)
 
@@ -392,6 +394,7 @@ class TestAgent:
         low_range: float,
         high_range: float,
         max_delta: float,
+        max_tension_change: float
     ) -> None:
         """
         Initialize the environment and load a trained agent.
@@ -413,6 +416,7 @@ class TestAgent:
             low_range=low_range,
             high_range=high_range,
             max_delta=max_delta,
+            max_tension_change=max_tension_change
         )
         self.env.render_mode = "human"
         self.agent = SAC.load(agent_path)

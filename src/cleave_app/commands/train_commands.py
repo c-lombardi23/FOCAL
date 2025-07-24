@@ -12,7 +12,7 @@ from cleave_app.mlflow_utils import (log_cnn_training_run,
                                      log_xgb_training_run)
 from cleave_app.mlp_model import BuildMLPModel
 from cleave_app.model_pipeline import CustomModel
-from cleave_app.rl_pipeline import TestAgent, TrainAgent
+from cleave_app.rl_pipeline import  TrainAgent
 from cleave_app.xgboost_pipeline import XGBoostModel
 
 from .base_command import BaseCommand
@@ -530,7 +530,6 @@ class TrainCustomModel(BaseCommand):
             model_path=config.save_model_file,
         )
 
-
 class TrainRL(BaseCommand):
     """Train the reinforement learning agent"""
 
@@ -545,6 +544,7 @@ class TrainRL(BaseCommand):
             low_range=config.low_range,
             high_range=config.high_range,
             max_delta=config.max_delta,
+            max_tension_change=config.max_tension_change
         )
         rl_trainer.train(
             env=rl_trainer.env,
