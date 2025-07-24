@@ -12,7 +12,7 @@ from tensorflow.keras.models import Model
 
 
 def log_cnn_training_run(
-    config,
+    config: dict,
     model: Model,
     history: Any,
     dataset_path: str,
@@ -88,7 +88,7 @@ def log_cnn_training_run(
 
 
 def log_mlp_training_run(
-    config,
+    config: dict,
     model: Model,
     history: Any,
     dataset_path: str,
@@ -150,7 +150,7 @@ def log_mlp_training_run(
 
 
 def log_image_training_run(
-    config,
+    config: dict,
     model: Model,
     history: Any,
     dataset_path: str,
@@ -223,7 +223,7 @@ def log_image_training_run(
 
 
 def log_xgb_training_run(
-    config,
+    config: dict,
     model: Model,
     X_train: Any,
     y_train: Any,
@@ -291,7 +291,7 @@ def log_xgb_training_run(
 
 
 def log_classifier_test_results(
-    tester,
+    tester: Any,
     run_name: str,
     model_path: str,
     dataset_path: str,
@@ -303,6 +303,21 @@ def log_classifier_test_results(
     predictions: List[float],
     image_only: Optional[bool] = False,
 ) -> None:
+    """Logs summary to mlflow for testing cnn.
+
+    Args:
+        tester (Any): TestCNN class instance
+        run_name (str): name of the mlflow run
+        model_path (str): path to the cnn model
+        dataset_path (str): path to the csv dataset
+        confusion_matrix_path (str): path to save confusion matrix
+        classification_path (str): path to save classification report
+        roc_path (str): path to save roc plot
+        true_labels (List[int]): true prediction labels
+        pred_labels (List[int]): prediction results
+        predictions (List[float]): float values of predictions
+        image_only (Optional[bool], optional): if you want to test on only images
+    """
 
     if image_only:
         mlflow.set_experiment("image_only_results")
@@ -363,6 +378,21 @@ def log_regressor_test_results(
     predictions: List[float],
     true_delta: List[float],
 ) -> None:
+    """Log mlp or xgb regression results to mlflow.
+
+    Args:
+        model_path (str): path to the trained model
+        run_name (str): name of mlflow run
+        dataset_path (str): path to the csv dataset
+        experiment_name (str): name of mlflow experiment
+        tensions (List[float]): list of current tensions
+        predicted_delta (List[float]): list of predicted change in tensions
+        predictions (List[float]): list of predicted absolute tensions
+        true_delta (List[float]): list of true delta in tension
+
+    Raises:
+        Exception: experiment failed to be created
+    """
 
     try:
         experiment_id = mlflow.create_experiment(experiment_name)
@@ -401,8 +431,19 @@ def log_regressor_test_results(
 
 
 def log_cnn_hyperparameter(
-    config, best_hp, run_name, experiment_name="cnn_hyperparameter"
-):
+    config:dict, 
+    best_hp: dict, 
+    run_name:str, 
+    experiment_name: Optional[str]="cnn_hyperparameter"
+) -> None:
+    """Logs cnn hyperparameter search to mlflow.
+
+    Args:
+        config (json file): configuration file with parameters
+        best_hp (Dict): best hyperparameters from search
+        run_name (str): name of mlflow run
+        experiment_name (str, optional): Defaults to "cnn_hyperparameter".
+    """
 
     if not mlflow.set_experiment(experiment_name):
         mlflow.create_experiment(experiment_name)
@@ -419,7 +460,18 @@ def log_cnn_hyperparameter(
         mlflow.log_params(best_hp)
 
 
-def log_rl_test(config, run_name, info, experiment_name="rl_testing"):
+def log_rl_test(config: dict, 
+                run_name: str, 
+                info: List[Dict[str, Any]],
+                experiment_name: Optional[str]="rl_testing") -> None:
+    """Logs reinforcement learning test to mlflow.
+
+    Args:
+        config (json file): configuration file with parameters
+        run_name (str): name of mlflow run
+        info (Dict): dictionary of saved info from training rl
+        experiment_name (str, optional): Defaults to "rl_testing".
+    """
     if not mlflow.set_experiment(experiment_name):
         mlflow.create_experiment(experiment_name)
 
@@ -443,8 +495,19 @@ def log_rl_test(config, run_name, info, experiment_name="rl_testing"):
 
 
 def log_mlp_hyperparameter(
-    config, best_hp, run_name, experiment_name="mlp_hyperparameter"
-):
+    config: dict, 
+    best_hp: dict, 
+    run_name: str, 
+    experiment_name: Optional[str]="mlp_hyperparameter"
+) -> None:
+    """Logs mlp hyperparamter results to mlflow.
+
+    Args:
+        config (Any): json config file
+        best_hp (Any): best hyperparameters from search
+        run_name (str): name of mlflow run
+        experiment_name (Optional[str], optional): Defaults to "mlp_hyperparameter".
+    """
 
     if not mlflow.set_experiment(experiment_name):
         mlflow.create_experiment(experiment_name)
