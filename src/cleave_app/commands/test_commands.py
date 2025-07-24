@@ -1,7 +1,8 @@
 """This module define the logic for testing each model."""
 
 from cleave_app.mlflow_utils import (log_classifier_test_results,
-                                     log_regressor_test_results)
+                                     log_regressor_test_results,
+                                     log_rl_test)
 from cleave_app.prediction_testing import (TensionPredictor, TestPredictions,
                                            TestTensionPredictions)
 from cleave_app.rl_pipeline import TestAgent
@@ -190,6 +191,15 @@ class TestRL(BaseCommand):
             img_folder=config.img_folder,
             agent_path=config.agent_path,
             threshold=config.threshold,
-            feature_shape=config.feature_shape
+            feature_shape=config.feature_shape,
+            max_steps=config.max_steps,
+            low_range=config.low_range,
+            high_range=config.high_range,
+            max_delta=config.max_delta
         )
-        rl_tester.test_agent(episodes=config.episodes)
+        info = rl_tester.test_agent(episodes=config.episodes)
+        log_rl_test(
+            config,
+            run_name=config.run_name,
+            info=info
+        )

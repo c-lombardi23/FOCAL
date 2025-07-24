@@ -2,7 +2,7 @@
   "csv_path": "C:\\Thorlabs\\combined_data.csv",
   "img_folder": "C:\\Thorlabs\\combined_images\\",
   "feature_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\cnn1_feature_scaler.pkl",
-  "classification_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\classification.csv",
+  "classification_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\classification_7_18.csv",
 
   "image_shape": [224, 224, 3],
   "feature_shape": [5],

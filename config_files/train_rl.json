@@ -9,5 +9,9 @@
     "learning_rate": 1e-4,
     "tau": 0.1,
     "feature_shape": [1,5],
-    "threshold": 0.63
+    "threshold": 0.63,
+    "max_steps": 15,
+    "low_range": 0.8,
+    "high_range": 1.4,
+    "max_delta": 5.0
 }

@@ -1,7 +1,7 @@
 {
   "csv_path": "C:\\Thorlabs\\combined_data.csv",
   "img_folder": "C:\\Thorlabs\\combined_images\\",
-  "label_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\xgb5_scaler.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\xgb5_scaler.pkl",
   
 
   "image_shape": [224, 224, 3],
@@ -27,8 +27,8 @@
   "subsample": 0.8,
   "reg_lambda": 2.0,
 
-  "xgb_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\xgb5.pkl",
-  "save_history_file": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\xgb_history5",
+  "xgb_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\xgb5.pkl",
+  "save_history_file": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\xgb_history5",
 
   "set_mask": "y"
 }

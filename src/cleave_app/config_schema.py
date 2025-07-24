@@ -479,16 +479,21 @@ class TrainRLConfig(BaseModel):
     mode: str
     img_folder: str
     threshold: float
+    max_steps: Optional[int] = 15
     feature_shape: List[int]
     buffer_size: Optional[int] = 1000000
     batch_size: Optional[int] = 256
     tau: Optional[float] = 0.1
     learning_rate: Optional[float] = 0.0001
     timesteps: Optional[int] = 5000
+    low_range: Optional[float] = 0.7
+    high_range: Optional[float] = 1.4
+    max_delta: Optional[float] = 5.0
 
 
 class TestRLConfig(TrainRLConfig):
     episodes: int
+    run_name: str
 
 
 # A dictionary mapping the 'mode' string to its corresponding Pydantic config class.

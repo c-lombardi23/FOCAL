@@ -540,7 +540,11 @@ class TrainRL(BaseCommand):
             cnn_path=config.cnn_path,
             img_folder=config.img_folder,
             threshold=config.threshold,
-            feature_shape=config.feature_shape
+            feature_shape=config.feature_shape,
+            max_steps=config.max_steps,
+            low_range=config.low_range,
+            high_range=config.high_range,
+            max_delta=config.max_delta
         )
         rl_trainer.train(
             env=rl_trainer.env,

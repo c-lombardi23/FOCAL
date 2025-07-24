@@ -418,7 +418,33 @@ def log_cnn_hyperparameter(
         )
         mlflow.log_params(best_hp)
 
+def log_rl_test(
+        config, run_name, info, experiment_name="rl_testing"
+):
+    if not mlflow.set_experiment(experiment_name):
+        mlflow.create_experiment(experiment_name)
 
+    with mlflow.start_run(run_name=run_name):
+        mlflow.log_params(
+            {
+                "buffer_size": config.buffer_size,
+                "batch_size": config.batch_size,
+                "learning_rate": config.learning_rate,
+                "max_delta": config.max_delta,
+                "high_range": config.high_range,
+                "low_range": config.low_range,
+                "max_steps": config.max_steps,
+                "threshold": config.threshold,
+                "tau": config.tau,
+                "timesteps": config.timesteps
+            }
+        )
+    
+        mlflow.log_dict(
+            {"episodes": info},
+            "test_episodes.json"
+        )
+        
 def log_mlp_hyperparameter(
     config, best_hp, run_name, experiment_name="mlp_hyperparameter"
 ):

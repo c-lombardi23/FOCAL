@@ -4,7 +4,9 @@ The agent adjusts tension over multiple steps to achieve optimal cleave quality,
 which is evaluated via a pre-trained CNN. Observations include fiber context and
 tension; rewards are based on CNN predictions and tension dynamics.
 """
+
 import os
+from typing import Any, Dict, List, Optional, Tuple
 
 import gymnasium as gym
 import numpy as np
@@ -13,7 +15,6 @@ import tensorflow as tf
 from gymnasium import spaces
 from stable_baselines3 import SAC
 from stable_baselines3.common.env_checker import check_env
-from typing import Dict, Any, Tuple, Optional, List
 
 
 class CleaveEnv(gym.Env):
@@ -21,13 +22,18 @@ class CleaveEnv(gym.Env):
 
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, 
-                 csv_path: str, 
-                 cnn_path: str,
-                 img_folder: str,
-                 feature_shape: List[int],
-                 threshold: float) -> None:
-        
+    def __init__(
+        self,
+        csv_path: str,
+        cnn_path: str,
+        img_folder: str,
+        feature_shape: List[int],
+        threshold: float,
+        max_steps: int,
+        low_range: float,
+        high_range: float,
+        max_delta: float,
+    ) -> None:
         """
         Initialize the environment.
 
@@ -36,7 +42,7 @@ class CleaveEnv(gym.Env):
             cnn_path (str): Path to the trained CNN model used as a surrogate.
             img_folder (str): Directory containing cleave images.
         """
-
+        # call gym init method
         super().__init__()
 
         self.cnn_model = tf.keras.models.load_model(cnn_path)
@@ -45,8 +51,12 @@ class CleaveEnv(gym.Env):
 
         self.feature_shape = feature_shape
         self.threshold = threshold
+        self.low_range = low_range
+        self.high_range = high_range
+        self.max_delta = max_delta
 
         filtered_df = self.df[self.df["CNN_Predicition"] == 1]
+        # calculate ideal tensions by fiber type
         self.ideal_tensions = dict(
             filtered_df.groupby("FiberType")["CleaveTension"]
             .mean()
@@ -54,7 +64,7 @@ class CleaveEnv(gym.Env):
         )
 
         len_fibers = len(self.df["FiberType"].unique())
-
+        # one hot encode fiber names
         self.df = pd.get_dummies(
             self.df, columns=["FiberType"], dtype=np.int32
         )
@@ -67,6 +77,7 @@ class CleaveEnv(gym.Env):
         fiber_types = self.df.iloc[:, -len_fibers:]
         other_inputs = self.df["Diameter"]
 
+        # combine fiber names and diameter
         combined_df = pd.concat([other_inputs, fiber_types], axis=1)
 
         self.context_df = combined_df
@@ -79,7 +90,7 @@ class CleaveEnv(gym.Env):
             dtype=np.float32,
         )
 
-        self.max_steps = 15
+        self.max_steps = max_steps
         self.current_step = 0
         self.current_context = None
         self.current_tension = 0
@@ -132,10 +143,9 @@ class CleaveEnv(gym.Env):
         img.set_shape([224, 224, 3])
         return img
 
-    def reset(self, 
-              seed: Optional[int] = None, 
-              options: Optional[dict] = None) -> Tuple[np.ndarray, Dict[str, Any]]:
-        
+    def reset(
+        self, seed: Optional[int] = None, options: Optional[dict] = None
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
         """
         Reset the environment to an initial state.
 
@@ -156,8 +166,8 @@ class CleaveEnv(gym.Env):
             self._get_current_fiber_type()
         ]
         self.current_tension = self.np_random.uniform(
-            low=self.current_ideal_tension * (0.8),
-            high=self.current_ideal_tension * (1.2),
+            low=self.current_ideal_tension * (self.low_range),
+            high=self.current_ideal_tension * (self.high_range),
         )
         self.current_step = 0
 
@@ -171,9 +181,10 @@ class CleaveEnv(gym.Env):
 
         return observation, {}
 
-    def step(self, 
-             action: Any,
-             ) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
+    def step(
+        self,
+        action: Any,
+    ) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
         """Take a step in the environment using the given action.
 
         Args:
@@ -204,7 +215,7 @@ class CleaveEnv(gym.Env):
         image_tensor = self.load_process_images(image_filename)
 
         image_tensor = tf.expand_dims(image_tensor, axis=0)
-        # feature_shape = (1, 5)
+
         dummy_features = np.zeros(self.feature_shape)
         cnn_raw = self.cnn_model.predict(
             [image_tensor, dummy_features], verbose=0
@@ -218,12 +229,10 @@ class CleaveEnv(gym.Env):
         else:
             reward = 50.0 * cnn_pred - 3.0 * (1 - cnn_pred)
 
-        SAFE_DELTA_THRESHOLD = 5.0
-
-        if abs(delta_tension) <= SAFE_DELTA_THRESHOLD:
+        if abs(delta_tension) <= self.max_delta:
             reward += 1.5
         else:
-            reward -= 0.25 * (abs(delta_tension) - SAFE_DELTA_THRESHOLD)
+            reward -= 0.25 * (abs(delta_tension) - self.max_delta)
 
         tension_error = abs(self.current_tension - self.current_ideal_tension)
         reward += (
@@ -240,7 +249,15 @@ class CleaveEnv(gym.Env):
         if self.render_mode == "human":
             self.render(action, cnn_pred, reward)
         observation = self._create_observation()
-        return observation, float(reward), terminated, truncated, {}
+
+        info = {
+            "cnn_pred": float(cnn_pred),
+            "current_tension": round(float(self.current_tension), 3),
+            "current_ideal_tension": round(float(self.current_ideal_tension), 3),
+            "tension_error": round(float(tension_error), 3),
+            "action": round(float(action), 3)
+        }
+        return observation, float(reward), terminated, truncated, info
 
     def _get_current_fiber_type(self) -> str:
         """Get the name of the current fiber type from the one-hot encoded context.
@@ -266,10 +283,9 @@ class CleaveEnv(gym.Env):
             [[self.current_tension], self.current_context.values[0]]
         ).astype(np.float32)
 
-    def render(self, 
-               action: np.ndarray, 
-               cnn_pred: float, 
-               reward: float) -> None:
+    def render(
+        self, action: np.ndarray, cnn_pred: float, reward: float
+    ) -> None:
         """Render the environment's current state in human-readable format.
 
         Args:
@@ -287,11 +303,18 @@ class CleaveEnv(gym.Env):
 class TrainAgent:
     """Class for training the RL agent"""
 
-    def __init__(self, csv_path: str, 
-                 cnn_path: str, 
-                 img_folder: str,
-                 threshold: float,
-                 feature_shape: List[int]) -> None:
+    def __init__(
+        self,
+        csv_path: str,
+        cnn_path: str,
+        img_folder: str,
+        threshold: float,
+        feature_shape: List[int],
+        max_steps: int,
+        low_range: float,
+        high_range: float,
+        max_delta: float,
+    ) -> None:
         """
         Initialize the training environment for the RL agent.
 
@@ -303,19 +326,28 @@ class TrainAgent:
 
         # Initialize Enviornment
         self.env = CleaveEnv(
-            csv_path=csv_path, cnn_path=cnn_path, img_folder=img_folder,
-            feature_shape=feature_shape, threshold=threshold
+            csv_path=csv_path,
+            cnn_path=cnn_path,
+            img_folder=img_folder,
+            feature_shape=feature_shape,
+            threshold=threshold,
+            max_steps=max_steps,
+            low_range=low_range,
+            high_range=high_range,
+            max_delta=max_delta,
         )
         check_env(self.env)
 
-    def train(self, 
-              env: gym.Env,
-              device: str,
-              buffer_size: int, 
-              learning_rate: float, 
-              batch_size: int, 
-              tau: float,
-              timesteps: int) -> None:
+    def train(
+        self,
+        env: gym.Env,
+        device: str,
+        buffer_size: int,
+        learning_rate: float,
+        batch_size: int,
+        tau: float,
+        timesteps: int,
+    ) -> None:
         """Train the agent using Soft Actor Critic algo.
 
         Args:
@@ -324,7 +356,7 @@ class TrainAgent:
             buffer_size (int): replay buffer size
             learning_rate (float): typicall lr for ml
             batch_size (int): number of episodes to batch together
-            tau (float): 
+            tau (float):
         """
 
         self.agent = SAC(
@@ -346,14 +378,19 @@ class TrainAgent:
 
 class TestAgent:
 
-    def __init__(self, 
-                 csv_path: str, 
-                 cnn_path: str, 
-                 img_folder: str, 
-                 agent_path: str,
-                 feature_shape: List[int],
-                 threshold: float) -> None:
-        
+    def __init__(
+        self,
+        csv_path: str,
+        cnn_path: str,
+        img_folder: str,
+        agent_path: str,
+        feature_shape: List[int],
+        threshold: float,
+        max_steps: int,
+        low_range: float,
+        high_range: float,
+        max_delta: float,
+    ) -> None:
         """
         Initialize the environment and load a trained agent.
 
@@ -365,31 +402,44 @@ class TestAgent:
         """
 
         self.env = CleaveEnv(
-            csv_path=csv_path, cnn_path=cnn_path, 
+            csv_path=csv_path,
+            cnn_path=cnn_path,
             img_folder=img_folder,
             threshold=threshold,
-            feature_shape=feature_shape
+            feature_shape=feature_shape,
+            max_steps=max_steps,
+            low_range=low_range,
+            high_range=high_range,
+            max_delta=max_delta,
         )
         self.env.render_mode = "human"
         self.agent = SAC.load(agent_path)
 
-    def test_agent(self, episodes: int) -> None:
+    def test_agent(self, episodes: int) -> Dict:
         """Test the trained RL agent on random episodes.
 
         Args:
             episodes (int): total number of episodes to test agent
         """
+        all_episode_info = []
 
         for episode in range(episodes):
             obs, info = self.env.reset()
             done = False
             episode_reward = 0
+
+            episode_info = []
+            rewards = []
+            observations = []
             while not done:
                 action, _ = self.agent.predict(obs, deterministic=True)
 
                 obs, reward, terminated, truncated, info = self.env.step(
                     action
                 )
+                episode_info.append(info)
+                rewards.append(round(reward, 3))
+                observations.append(obs)
 
                 episode_reward += reward
                 done = terminated or truncated
@@ -397,5 +447,12 @@ class TestAgent:
             print(
                 f"Episode {episode + 1} finished with a total reward of: {episode_reward:.2f}"
             )
+            metrics = {
+                "episode info": episode_info,
+                "rewards": rewards,
+                "episode reward": round(episode_reward, 3)
+            }
+            all_episode_info.append(metrics)
 
         self.env.close()
+        return all_episode_info

@@ -1,15 +1,15 @@
 {
-  "csv_path": "C:\\Thorlabs\\FG250LA_1.csv",
-  "img_folder": "C:\\Thorlabs\\FG250LA\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\mlpfeature_scaler1.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\mlptension_scaler1.pkl",
+  "csv_path": "C:\\Thorlabs\\combined_data.csv",
+  "img_folder": "C:\\Thorlabs\\combined_images\\",
+  "feature_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\mlpfeature_scaler1.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\mlptension_scaler1.pkl",
  
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
 
   "mode": "train_mlp",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\FG250LA_classifier.keras",
+  "model_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
