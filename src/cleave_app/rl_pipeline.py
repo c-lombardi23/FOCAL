@@ -253,9 +253,11 @@ class CleaveEnv(gym.Env):
         info = {
             "cnn_pred": float(cnn_pred),
             "current_tension": round(float(self.current_tension), 3),
-            "current_ideal_tension": round(float(self.current_ideal_tension), 3),
+            "current_ideal_tension": round(
+                float(self.current_ideal_tension), 3
+            ),
             "tension_error": round(float(tension_error), 3),
-            "action": round(float(action), 3)
+            "action": round(float(action), 3),
         }
         return observation, float(reward), terminated, truncated, info
 
@@ -450,7 +452,7 @@ class TestAgent:
             metrics = {
                 "episode info": episode_info,
                 "rewards": rewards,
-                "episode reward": round(episode_reward, 3)
+                "episode reward": round(episode_reward, 3),
             }
             all_episode_info.append(metrics)
 

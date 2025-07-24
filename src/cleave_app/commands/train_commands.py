@@ -544,7 +544,7 @@ class TrainRL(BaseCommand):
             max_steps=config.max_steps,
             low_range=config.low_range,
             high_range=config.high_range,
-            max_delta=config.max_delta
+            max_delta=config.max_delta,
         )
         rl_trainer.train(
             env=rl_trainer.env,
@@ -553,6 +553,6 @@ class TrainRL(BaseCommand):
             learning_rate=config.learning_rate,
             batch_size=config.batch_size,
             tau=config.tau,
-            timesteps=config.timesteps
+            timesteps=config.timesteps,
         )
         rl_trainer.save_agent(save_path=config.agent_path)
