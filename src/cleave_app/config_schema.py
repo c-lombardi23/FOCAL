@@ -365,28 +365,28 @@ class TestXGBoostConfig(TestMLPConfig):
 # Define configuration for generating Grad-CAM heatmaps.
 class GradCamConfig(BaseModel):
     mode: str
-    image_shape: List[int]
-    # Path to the trained model for which to generate the heatmap.
-    model_path: Optional[str] = None
     # Path to the input image for Grad-CAM.
-    img_path: Optional[str] = None
-    # Numerical features required if the model is multi-input.
-    test_features: Optional[List[float]] = None
+    image_path: str
+    # Path to trained model
+    model_path: str
+    # Index of classification problem
+    class_index: int
+    # Title for indivual plot
+    title: str
+    # Whether to plot multiple heatmaps or not
+    multiple_images: Optional[str] = "y"
+    # Path to save computed heatmaps
+    save_path: Optional[str]
+    # Folder containing images
+    img_folder: Optional[str]
+    # Size of heatmap plots
+    fig_size: Optional[List[int]] = (9,5)
     # The name of the backbone model (for finding layers).
-    backbone: Optional[str] = None
+    backbone: Optional[str] = "efficientnet"
     # The name of the final convolutional layer to visualize.
-    conv_layer_name: Optional[str] = None
+    conv_layer_name: Optional[str] = "top_conv"
     # Filepath to save the output heatmap image.
     heatmap_file: Optional[str] = None
-
-    # Define a post-validation check for this model.
-    @model_validator(mode="after")
-    def valid_shapes(self):
-        # Validate that the image shape is compatible.
-        if self.image_shape != [224, 224, 3]:
-            raise ValueError("Image shape not compatible")
-        # Return the validated model instance.
-        return self
 
 
 # Define configuration for training an image-only classification model.
