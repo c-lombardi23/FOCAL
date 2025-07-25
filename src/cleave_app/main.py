@@ -70,8 +70,21 @@ Examples:
         required=True,
         help="Path to JSON configuration file",
     )
+    parser.add_argument(
+        "--class_index",
+        type=int,
+        required=False,
+        help="Index to visualize for heatmap"
+    )
+    parser.add_argument(
+        "--classification_threshold",
+        type=float,
+        required=False,
+        help="Treshold for binary classifcation"
+    )
 
     parsed_args = parser.parse_args(args)
+
 
     try:
         config = load_config(parsed_args.file_path)
@@ -103,6 +116,12 @@ Examples:
                 f"Please check your configuration file. "
                 f"Available modes are: {list(command_map.keys())}"
             )
+    
+        if parsed_args.class_index is not None:
+            config.class_index = parsed_args.class_index
+
+        if parsed_args.classification_threshold is not None:
+            config.classification_threshold = parsed_args.classifcation_threshold
 
         command_instance = command_class()
         command_instance.execute(config)
