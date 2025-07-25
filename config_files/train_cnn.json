@@ -24,7 +24,7 @@
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 2,
+  "max_epochs": 20,
   "objective": "val_accuracy",
 
   "brightness": 0.0,
@@ -44,7 +44,7 @@
   "patience": 6,
   "monitor": "val_loss",
   "method": "min",
-  "checkpoints": "n",
+  "checkpoints": "y",
   "checkpoint_filepath": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2_checkpoint.keras",
 
   "save_model_file": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2.keras",

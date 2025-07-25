@@ -25,7 +25,7 @@ try:
                                             ReduceLROnPlateau, TensorBoard)
     from tensorflow.keras.layers import (Activation, BatchNormalization,
                                          Concatenate, Conv2D, Dense, Dropout,
-                                         GaussianNoise, GlobalAveragePooling2D,
+                                        GlobalAveragePooling2D, 
                                          Input, MaxPooling2D, RandomBrightness,
                                          RandomContrast, RandomRotation,
                                          RandomZoom)

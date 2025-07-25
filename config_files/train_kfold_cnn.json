@@ -8,7 +8,6 @@
 
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
-  "test_features": [1.68, 190, 12.96, 0, 0, 1],
 
   "angle_threshold": 0.48,
   "diameter_threshold": 55.0,
@@ -16,9 +15,7 @@
   "mode": "train_kfold_cnn",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
-  "backbone_name": "resnet",
   "model_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\images_features1.keras",
-  "project_name": "Binary4",
   "num_classes": 1,
   "classification_type": "binary",
 
@@ -51,7 +48,6 @@
   "checkpoints": "y",
   "checkpoint_filepath": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\model2_checkpoint.keras",
 
-  "tuner_directory": "C:\\Users\\clombardi\\Training_Runs_6_27\\HyperParameterTuning1",
   "save_model_file": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\kfold.keras",
   "save_history_file": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\model2_history",
 
