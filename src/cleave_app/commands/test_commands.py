@@ -195,6 +195,7 @@ class TestRL(BaseCommand):
             low_range=config.low_range,
             high_range=config.high_range,
             max_delta=config.max_delta,
+            max_tension_change=config.max_tension_change
         )
         info = rl_tester.test_agent(episodes=config.episodes)
         log_rl_test(config, run_name=config.run_name, info=info)

@@ -545,6 +545,7 @@ class TrainRL(BaseCommand):
             low_range=config.low_range,
             high_range=config.high_range,
             max_delta=config.max_delta,
+            max_tension_change=config.max_tension_change
         )
         rl_trainer.train(
             env=rl_trainer.env,

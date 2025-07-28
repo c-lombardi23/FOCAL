@@ -33,6 +33,7 @@ class CleaveEnv(gym.Env):
         low_range: float,
         high_range: float,
         max_delta: float,
+        max_tension_change:float
     ) -> None:
         """
         Initialize the environment.
@@ -54,6 +55,7 @@ class CleaveEnv(gym.Env):
         self.low_range = low_range
         self.high_range = high_range
         self.max_delta = max_delta
+        self.max_tension_change = max_tension_change
 
         filtered_df = self.df[self.df["CNN_Predicition"] == 1]
         # calculate ideal tensions by fiber type
@@ -72,8 +74,6 @@ class CleaveEnv(gym.Env):
         self.action_space = spaces.Box(
             low=-1.0, high=1.0, shape=(1,), dtype=np.float32
         )
-        self.max_tension_change = 10.0
-
         fiber_types = self.df.iloc[:, -len_fibers:]
         other_inputs = self.df["Diameter"]
 
@@ -178,8 +178,9 @@ class CleaveEnv(gym.Env):
             print(
                 f"New Scenario: Fiber = {self._get_current_fiber_type()} Start Tension = {self.current_tension:.0f}"
             )
+        fiber_type = self._get_current_fiber_type()
 
-        return observation, {}
+        return observation, fiber_type, {}
 
     def step(
         self,
@@ -257,7 +258,7 @@ class CleaveEnv(gym.Env):
                 float(self.current_ideal_tension), 3
             ),
             "tension_error": round(float(tension_error), 3),
-            "action": round(float(action), 3),
+            "action": round(float(action) * self.max_tension_change, 3),
         }
         return observation, float(reward), terminated, truncated, info
 
@@ -295,7 +296,7 @@ class CleaveEnv(gym.Env):
             cnn_pred (float): The CNN's predicted cleave quality.
             reward (float): The reward received after the action.
         """
-        action_str = f"{(action[0] *10.0):+.2f}"
+        action_str = f"{(action[0] *self.max_tension_change):+.2f}"
         cnn_str = "GOOD" if cnn_pred > self.threshold else "BAD"
         print(
             f"Step {self.current_step:2d} Tension: {self.current_tension:6.1f} (Action: {action_str:6s}) -> CNN: {cnn_str:4s}| Reward: {reward:6.1f}"
@@ -316,6 +317,7 @@ class TrainAgent:
         low_range: float,
         high_range: float,
         max_delta: float,
+        max_tension_change: float
     ) -> None:
         """
         Initialize the training environment for the RL agent.
@@ -337,6 +339,7 @@ class TrainAgent:
             low_range=low_range,
             high_range=high_range,
             max_delta=max_delta,
+            max_tension_change=max_tension_change
         )
         check_env(self.env)
 
@@ -392,6 +395,7 @@ class TestAgent:
         low_range: float,
         high_range: float,
         max_delta: float,
+        max_tension_change: float
     ) -> None:
         """
         Initialize the environment and load a trained agent.
@@ -413,6 +417,7 @@ class TestAgent:
             low_range=low_range,
             high_range=high_range,
             max_delta=max_delta,
+            max_tension_change=max_tension_change
         )
         self.env.render_mode = "human"
         self.agent = SAC.load(agent_path)
@@ -426,7 +431,7 @@ class TestAgent:
         all_episode_info = []
 
         for episode in range(episodes):
-            obs, info = self.env.reset()
+            obs, fiber_type, info = self.env.reset()
             done = False
             episode_reward = 0
 
@@ -450,6 +455,7 @@ class TestAgent:
                 f"Episode {episode + 1} finished with a total reward of: {episode_reward:.2f}"
             )
             metrics = {
+                "Fiber Type": fiber_type,
                 "episode info": episode_info,
                 "rewards": rewards,
                 "episode reward": round(episode_reward, 3),

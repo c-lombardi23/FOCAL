@@ -1,5 +1,5 @@
 {
-    "agent_path": "C:\\Users\\clombardi\\RL\\agent7",
+    "agent_path": "C:\\Users\\clombardi\\RL\\agent15",
     "csv_path": "C:\\Users\\clombardi\\RL\\data.csv",
     "cnn_path": "G:\\Intern_Project_2025\\models\\Unified_classifier.keras",
     "img_folder": "C:\\Thorlabs\\combined_images",
@@ -15,5 +15,5 @@
     "low_range": 0.8,
     "high_range": 1.4,
     "max_delta": 5.0,
-    "run_name": "rl_test_1"
+    "run_name": "rl_test_7_28"
 }
