@@ -87,7 +87,7 @@ class CleaveEnv(gym.Env):
         combined_df = pd.concat([other_inputs, fiber_types], axis=1)
 
         self.context_df = combined_df
-        observations_total = 1 + len(self.context_df.columns)
+        observations_total = 2 + len(self.context_df.columns)
 
         self.observation_space = spaces.Box(
             low=-np.inf,
@@ -165,6 +165,8 @@ class CleaveEnv(gym.Env):
 
         super().reset(seed=seed)
 
+        self.last_reward = 0.0
+
         self.current_context = self.context_df.sample(
             n=1, random_state=self.np_random
         )
@@ -185,7 +187,11 @@ class CleaveEnv(gym.Env):
                 f"New Scenario: Fiber = {self._get_current_fiber_type()} Start Tension = {self.current_tension:.0f}"
             )
 
-        return observation, {}
+        info = {
+            "fiber_type": self._get_current_fiber_type(),
+            "start_tension": self.current_tension
+        }
+        return observation, info
 
     def step(
         self,
@@ -206,12 +212,15 @@ class CleaveEnv(gym.Env):
         """
         delta_tension = float(action[0] * self.max_tension_change)
         self.current_tension = self.current_tension + delta_tension
-        self.current_tension = np.clip(self.current_tension, self.current_ideal_tension*self.low_range, self.current_ideal_tension*self.high_range)
+        self.current_tension = np.clip(self.current_tension, 
+                                       self.current_ideal_tension*self.low_range, 
+                                       self.current_ideal_tension*self.high_range)
+        
         self.current_ideal_tension = self.ideal_tensions[
             self._get_current_fiber_type()
         ]
 
-        self.current_step = self.current_step + 1
+        self.current_step += 1
 
         model_inputs = self.current_context.copy()
         model_inputs["CleaveTension"] = self.current_tension
@@ -232,11 +241,11 @@ class CleaveEnv(gym.Env):
             terminated = True
         
         if(tension_error > 0) and (action[0] > 0):
-            reward -= 5.0
+            reward -= 25.0
         elif (tension_error < 0) and (action[0] < 0):
-            reward -= 5.0
+            reward -= 25.0
         else:
-            reward += 1.0
+            reward += 5.0
         
         reward -= 1.0
 
@@ -257,8 +266,9 @@ class CleaveEnv(gym.Env):
                 float(self.current_ideal_tension), 3
             ),
             #"tension_error": round(float(tension_error), 3),
-            "action": round(float(action), 3),
+            "action": round(float(action) * self.max_tension_change, 3),
         }
+        self.last_reward = reward
         return observation, float(reward), terminated, truncated, info
 
     def _get_current_fiber_type(self) -> str:
@@ -282,7 +292,8 @@ class CleaveEnv(gym.Env):
             np.ndarray: Concatenation of current tension and context values.
         """
         return np.concatenate(
-            [[self.current_tension], self.current_context.values[0]]
+            [[self.current_tension], self.current_context.values[0],
+             np.array([self.last_reward])]
         ).astype(np.float32)
 
     def render(
@@ -430,7 +441,7 @@ class TestAgent:
         all_episode_info = []
 
         for episode in range(episodes):
-            obs, info = self.env.reset()
+            obs, info_reset = self.env.reset()
             done = False
             episode_reward = 0
 
@@ -454,6 +465,8 @@ class TestAgent:
                 f"Episode {episode + 1} finished with a total reward of: {episode_reward:.2f}"
             )
             metrics = {
+                "start tension": info_reset['start_tension'],
+                "fiber type": info_reset['fiber_type'],
                 "episode info": episode_info,
                 "rewards": rewards,
                 "episode reward": round(episode_reward, 3),

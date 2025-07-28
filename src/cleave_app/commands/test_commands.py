@@ -83,7 +83,7 @@ class TestMLP(BaseCommand):
             diameter_threshold=config.diameter_threshold,
         )
 
-        tensions, true_delta, predicted_deltas, predictions = (
+        tensions, true_delta, predicted_deltas, predictions, mean = (
             predictor.predict()
         )
 
@@ -96,6 +96,8 @@ class TestMLP(BaseCommand):
             predicted_delta=predicted_deltas,
             predictions=predictions,
             true_delta=true_delta,
+            mean=mean
+
         )
 
 
@@ -164,7 +166,7 @@ class TestXGBoost(BaseCommand):
         )
 
         xgb_predicter.load()
-        tensions, predicted_deltas, predictions, true_delta = (
+        tensions, predicted_deltas, predictions, true_delta, mean = (
             xgb_predicter.predict()
         )
 
@@ -177,6 +179,7 @@ class TestXGBoost(BaseCommand):
             predicted_delta=predicted_deltas,
             predictions=predictions,
             true_delta=true_delta,
+            mean=mean
         )
 
 

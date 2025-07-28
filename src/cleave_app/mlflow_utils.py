@@ -377,6 +377,7 @@ def log_regressor_test_results(
     predicted_delta: List[float],
     predictions: List[float],
     true_delta: List[float],
+    mean: float
 ) -> None:
     """Log mlp or xgb regression results to mlflow.
 
@@ -417,7 +418,7 @@ def log_regressor_test_results(
                 "current_tension": tensions,
                 "true_delta": true_delta,
                 "pred_delta": predicted_delta,
-                "pred_t": predictions,
+                "pred_t": predictions
             }
         )
         df = df.round(4)

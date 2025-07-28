@@ -473,7 +473,7 @@ class TensionPredictor:
             lambda row: (
                 1
                 if row["CleaveAngle"] <= angle_threshold
-                and row["ScribeDiameter"] < diameter_threshold
+                and row["ScribeDiameter"] < diameter_threshold * row['Diameter']
                 and not row["Hackle"]
                 and not row["Misting"]
                 else 0
@@ -538,13 +538,13 @@ class TensionPredictor:
                 "Current Tension": np.array(tensions).round(2),
                 "True Delta": np.array(true_delta).round(2),
                 "Predicted Tension": np.array(predictions).round(2),
-                "Predicted Delta": np.array(predicted_deltas).round(2),
+                "Predicted Delta": np.array(predicted_deltas).round(2)
             }
         )
         basepath = self.model_path.strip(".keras")
         df.to_csv(f"{basepath}_performance.csv", index=False)
 
-        return tensions, true_delta, predicted_deltas, pred_ts
+        return tensions, true_delta, predicted_deltas, pred_ts, mean
 
     def plot_metric(
         self,

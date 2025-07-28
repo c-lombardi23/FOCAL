@@ -1,7 +1,7 @@
 {
-  "csv_path": "C:\\Thorlabs\\combined_data.csv",
-  "img_folder": "C:\\Thorlabs\\combined_images\\",
-  "label_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\xgb5_scaler.pkl",
+  "csv_path": "C:\\Thorlabs\\400LA_1.csv",
+  "img_folder": "C:\\Thorlabs\\400LA\\",
+  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\xgb5_scaler.pkl",
   
 
   "image_shape": [224, 224, 3],
@@ -12,7 +12,7 @@
   "model_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\cnn1.keras",
  
   "angle_threshold": 0.49,
-  "diameter_threshold": 0.25,
+  "diameter_threshold": 0.34,
   "learning_rate": 0.008,
   "batch_size": 16,
   "buffer_size": 40,
@@ -27,8 +27,8 @@
   "subsample": 0.8,
   "reg_lambda": 2.0,
 
-  "xgb_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\xgb5.pkl",
-  "save_history_file": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\xgb_history5",
+  "xgb_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\xgb5.pkl",
+  "save_history_file": "C:\\Users\\clombardi\\FG250LA\\Individual_Trials\\xgb_history1",
 
   "set_mask": "y"
 }

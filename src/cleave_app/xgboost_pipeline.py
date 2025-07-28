@@ -319,4 +319,4 @@ class XGBoostPredictor:
         csv_path = f"{basepath}_performance.csv"
         # df.to_csv(csv_path, index=False)
 
-        return tensions, predicted_deltas, predictions, true_delta
+        return tensions, predicted_deltas, predictions, true_delta, mean_tensions
