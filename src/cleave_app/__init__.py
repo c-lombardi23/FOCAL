@@ -15,7 +15,7 @@ import warnings
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore")
 from .data_processing import DataCollector, MLPDataCollector
-from .grad_cam import GradCAM, compute_saliency_map, gradcam_driver
+from .grad_cam import GradCAM
 from .hyperparameter_tuning import (BuildHyperModel, BuildMLPHyperModel,
                                     HyperParameterTuning,
                                     ImageHyperparameterTuning,
@@ -41,8 +41,6 @@ __all__ = [
     "TestPredictions",
     "TensionPredictor",
     "GradCAM",
-    "gradcam_driver",
-    "compute_saliency_map",
     "XGBoostModel",
     "XGBoostPredictor",
 ]

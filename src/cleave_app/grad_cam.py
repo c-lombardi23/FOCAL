@@ -1,207 +1,192 @@
 """This module defines the logic for displaying heatmaps for an image
 to view where the CNN model is focusing on."""
 
-import cv2
+import os
+import sys
+from typing import List, Any, Optional
+
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+from matplotlib import cm
+from tensorflow.keras.applications.efficientnet import preprocess_input
+from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
+from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
+from tf_keras_vis.utils.scores import CategoricalScore
 
 
 class GradCAM:
     def __init__(
         self,
-        model_path,
-        class_index=0,
-        backbone_name=None,
-        conv_layer_name=None,
-    ):
-        self.model = tf.keras.models.load_model(model_path)
-        self.class_index = class_index
-        self.backbone_name = backbone_name
+        model_path: str,
+        image_folder: str,
+        class_index: Optional[int]=0,
+        backbone: Optional[str]=None,
+        conv_layer_name: Optional[str]=None,
+    ) -> None:
+        """Initialize class and load model.
 
-        if backbone_name is not None:
-            backbone = self.model.get_layer(backbone_name)
-            if conv_layer_name is None:
+        Args:
+            model_path: Path to classifier model
+            image_folder: Contains images to be used for heatmaps
+            class_index: Class number (0, 1) for binary classification
+            backbone: Name of the pre-trained model
+            conv_layer_name: Last convolutional layer name
+
+        Raises:
+            ValueError: No convolutional layer found
+        """
+
+        self.model = tf.keras.models.load_model(model_path)
+        self.conv_layer_name = conv_layer_name
+        self.class_index = class_index
+        self.image_folder = image_folder
+
+        if backbone is not None:
+            self.backbone_layer = self.model.get_layer(backbone)
+            if self.conv_layer_name is None:
                 # Find last Conv2D in backbone
-                for layer in reversed(backbone.layers):
+                for layer in reversed(self.backbone_layer.layers):
                     if isinstance(layer, tf.keras.layers.Conv2D):
-                        conv_layer_name = layer.name
+                        self.conv_layer_name = layer.name
                         break
-                if conv_layer_name is None:
+                if self.conv_layer_name is None:
                     raise ValueError("No Conv2D layer found in the backbone.")
-            self.target_layer = backbone.get_layer(conv_layer_name)
+            self.target_layer = self.backbone_layer.get_layer(
+                self.conv_layer_name
+            )
         else:
-            if conv_layer_name is None:
+            if self.conv_layer_name is None:
                 for layer in reversed(self.model.layers):
                     if isinstance(layer, tf.keras.layers.Conv2D):
-                        conv_layer_name = layer.name
+                        self.conv_layer_name = layer.name
                         break
-                if conv_layer_name is None:
+                if self.conv_layer_name is None:
                     raise ValueError("No Conv2D layer found in the model.")
-            self.target_layer = self.model.get_layer(conv_layer_name)
+            self.target_layer = self.model.get_layer(self.conv_layer_name)
 
-    def compute_heatmap(self, image, param_vector, eps=1e-8):
+    def plot_heatmap(
+        self, 
+        title: str, 
+        gradcam: Any,
+        img_array: np.ndarray, 
+        fig_size: List[int]
+    ) -> None:
+        """Plotting logic for individual heatmap.
+        Args:
+            title: Title of indivdual plot
+            gradcam: gradcam object
+            img_array: array of pixels
+            fig_size: size of individual plot
+        """
+
+        fig, ax = plt.subplots(figsize=fig_size)
+        ax.set_title(title)
+        heatmap = cm.jet(gradcam)[:, :, :3]
+        heatmap = np.uint8(heatmap * 255)
+        img_array = np.uint8(np.clip(img_array, 0, 255))
+        superimposed_img = np.uint8(0.8 * img_array + 0.5 * heatmap)
+        ax.imshow(superimposed_img)
+        ax.axis("off")
+        plt.show()
+
+    def compute_heatmap(
+        self, image_path: str, title: str, fig_size: List[int]
+    ) -> None:
         """
         Computes the heatmap for a given image and parameter vector.
 
         Args:
-            image (numpy.ndarray): The input image.
-            param_vector (numpy.ndarray): The parameter vector.
-            eps (float): A small constant to prevent division by zero.
-
-        Returns:
-            numpy.ndarray: The computed heatmap.
+            image (str): The input image path.
+            title: Title of the plot
+            fig_size: size of each plotted figure
         """
+        img = tf.keras.preprocessing.image.load_img(
+            image_path, target_size=(224, 224)
+        )
+        img_array = tf.keras.preprocessing.image.img_to_array(img)
+        img_array = preprocess_input(img_array)
 
-        img = np.array(image, dtype=np.float32)
-        if img.max() > 1.0:
-            img = img / 255.0
-        img_resized = cv2.resize(
-            img,
-            (
-                self.model.input[0].shape[1],
-                self.model.input[0].shape[2],
-            ),
+        replace2linear = ReplaceToLinear()
+        score = CategoricalScore(self.class_index)
+
+        gradcam = GradcamPlusPlus(
+            self.model, model_modifier=replace2linear, clone=True
+        )
+        try:
+            cam = gradcam(
+                score, img_array, penultimate_layer=self.conv_layer_name
+            )
+        except ValueError:
+            print(f"{self.conv_layer_name} not in model summary!")
+            exit
+        cam = np.squeeze(cam)
+        cam = (cam - np.min(cam)) / (np.max(cam) - np.min(cam))
+
+        self.plot_heatmap(
+            title=title, gradcam=cam, img_array=img_array, fig_size=fig_size
         )
 
-        input_image = np.expand_dims(img_resized, axis=0)
-
-        backbone = self.model.get_layer(self.backbone_name)
-        last_conv_layer = backbone.get_layer(self.target_layer.name)
-
-        grad_model = tf.keras.models.Model(
-            inputs=backbone.input, outputs=last_conv_layer.output
-        )
-
-        with tf.GradientTape() as tape:
-            inputs = tf.convert_to_tensor(input_image, dtype=tf.float32)
-            tape.watch(inputs)
-            conv_outputs = grad_model(inputs)
-            pooled_outputs = tf.reduce_mean(conv_outputs, axis=[1, 2])
-            loss = tf.reduce_sum(pooled_outputs)
-
-        grads = tape.gradient(loss, conv_outputs)
-        pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
-        conv_outputs = conv_outputs[0]
-        heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
-        heatmap = tf.squeeze(heatmap)
-        heatmap = tf.maximum(heatmap, 0)
-        heatmap = heatmap.numpy()
-        heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
-        heatmap = (heatmap - np.min(heatmap)) / (
-            np.max(heatmap) - np.min(heatmap) + eps
-        )
-        heatmap = np.uint8(255 * heatmap)
-        return heatmap
-
-    def overlay_heatmap(
-        self, heatmap, image, alpha=0.3, colormap=cv2.COLORMAP_JET
-    ):
-        """
-        Overlays the heatmap on the image.
+    def compute_all_heatmaps(self, save_path: str) -> None:
+        """Computes heatmaps for a number of images.
 
         Args:
-            heatmap (numpy.ndarray): The heatmap to overlay.
-            image (numpy.ndarray): The input image.
-            alpha (float): The transparency of the heatmap.
-            colormap (int): The colormap to use for the heatmap.
-
-        Returns:
-            numpy.ndarray: The overlaid image.
+            save_path: path to save the computed heatmap plot
         """
-        if image.max() <= 1.0:
-            image = (image * 255).astype(np.uint8)
+        replace2linear = ReplaceToLinear()
+        score = CategoricalScore(self.class_index)
+        gradcam = GradcamPlusPlus(
+            self.backbone_layer, model_modifier=replace2linear, clone=False
+        )
+
+        image_files = [
+            f
+            for f in os.listdir(self.image_folder)
+            if f.lower().endswith((".jpg", ".png", ".jpeg"))
+        ]
+        num_images = len(image_files)
+        ncols = 4
+        nrows = int(np.ceil(num_images / ncols))
+
+        fig, axs = plt.subplots(
+            nrows=nrows, ncols=ncols, figsize=(ncols * 3, nrows * 3)
+        )
+
+        for i, filename in enumerate(image_files):
+            row, col = divmod(i, ncols)
+            ax = axs[row, col] if nrows > 1 else axs[col]
+
+            image_path = os.path.join(self.image_folder, filename)
+            img = tf.keras.preprocessing.image.load_img(
+                image_path, target_size=(224, 224)
+            )
+            img_array = tf.keras.preprocessing.image.img_to_array(img)
+            processed_img = preprocess_input(np.copy(img_array))
+            try:
+                cam = gradcam(
+                    score, processed_img, penultimate_layer=self.target_layer
+                )
+            except ValueError:
+                print(f"{self.target_layer} not in model summary!")
+                sys.exit()
+            cam = np.squeeze(cam)
+            cam = (cam - cam.min()) / (cam.max() - cam.min())
+
+            heatmap = cm.jet(cam)[:, :, :3]
+            heatmap = np.uint8(heatmap * 255)
+            superimposed_img = np.uint8(0.6 * img_array + 0.4 * heatmap)
+
+            ax.imshow(superimposed_img)
+            ax.set_title(filename, fontsize=8)
+            ax.axis("off")
+
+        for j in range(i + 1, nrows * ncols):
+            row, col = divmod(j, ncols)
+            ax = axs[row, col] if nrows > 1 else axs[col]
+            ax.axis("off")
+        plt.tight_layout()
+        if save_path:
+            plt.savefig(save_path)
         else:
-            image = image.astype(np.uint8)
-        heatmap_color = cv2.applyColorMap(heatmap, colormap)
-        overlay = cv2.addWeighted(image, 1 - alpha, heatmap_color, alpha, 0)
-        return overlay
-
-
-def gradcam_driver(
-    model_path,
-    image_path,
-    param_vector,
-    class_index,
-    backbone_name=None,
-    conv_layer_name=None,
-    heatmap_file=None,
-):
-    """
-    Driver function to compute and display the GradCAM overlay.
-
-    Args:
-        model_path (str): The path to the model.
-        image_path (str): The path to the image.
-        param_vector (numpy.ndarray): The parameter vector.
-        class_index (int): The index of the class to compute the heatmap for.
-        backbone_name (str): The name of the backbone layer.
-        conv_layer_name (str): The name of the convolutional layer.
-        heatmap_file (str): The path to save the heatmap.
-
-    Raises:
-        FileNotFoundError: If the image is not found.
-    """
-
-    img = cv2.imread(image_path)
-    if img is None:
-        raise FileNotFoundError(f"Image not found: {image_path}")
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    param_vector = np.array(param_vector, dtype=np.float32)
-
-    gradcam = GradCAM(
-        model_path=model_path,
-        class_index=class_index,
-        backbone_name=backbone_name,
-        conv_layer_name=conv_layer_name,
-    )
-
-    heatmap = gradcam.compute_heatmap(img, param_vector)
-
-    overlay = gradcam.overlay_heatmap(heatmap, img)
-
-    overlay_bgr = cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)
-    cv2.imshow("GradCAM Overlay", overlay_bgr)
-    cv2.imwrite(heatmap_file, overlay_bgr)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-
-def compute_saliency_map(model, image_path, param_vector, class_index=3):
-    """
-    Computes the saliency map for a given image and parameter vector.
-
-    Args:
-        model (tensorflow.keras.Model): The model to compute the saliency map for.
-        image_path (str): The path to the image.
-        param_vector (numpy.ndarray): The parameter vector.
-        class_index (int): The index of the class to compute the saliency map for.
-
-    Returns:
-        numpy.ndarray: The computed saliency map.
-    """
-    image = cv2.imread(image_path)
-    image = cv2.resize(image, (224, 224))
-    if image.max() > 1.0:
-        image = image / 255.0
-    image = image.astype(np.float32)
-    input_image = tf.convert_to_tensor(np.expand_dims(image, axis=0))
-    param_vector = np.expand_dims(param_vector, axis=0).astype(np.float32)
-    param_tensor = tf.convert_to_tensor(param_vector)
-
-    input_image = tf.Variable(input_image)
-
-    with tf.GradientTape() as tape:
-        tape.watch(input_image)
-        preds = model([input_image, param_tensor])
-        loss = preds[:, class_index]
-
-    grads = tape.gradient(loss, input_image)[0]
-    print(grads)
-
-    saliency = tf.reduce_max(tf.abs(grads), axis=-1).numpy()
-
-    saliency -= saliency.min()
-    saliency /= saliency.max() + 1e-8
-    saliency = (saliency * 255).astype(np.uint8)
-
-    return saliency
+            print("Plots not saved")
+        plt.show()

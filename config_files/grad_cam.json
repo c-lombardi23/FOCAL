@@ -1,13 +1,15 @@
 {
-  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
+  "image_path": "C:\\Thorlabs\\400LA\\Fiber-370Plus.png",
+  "model_path": "G:\\Intern_Project_2025\\models\\Unified_classifier.keras",
 
-  "image_shape": [224, 224, 3],
-  "feature_shape": [6],
-  "test_features": [0, 0, 0, 0, 0],
 
   "mode": "grad_cam",
   "backbone": "efficientnetb0",
-  "model_path": "C:\\Users\\clombardi\\Training_Runs_7_7\\Individual_Trials\\images_features1_checkpoint.keras",
+  "title": "Bad Cleave",
+  "class_index": 0,
+  "fig_size": [10,6],
+  "img_folder": "C:\\Thorlabs\\grad_cam_test",
+  "conv_layer_name": "top_conv",
 
-  "heatmap_file": "C:\\Users\\clombardi\\heatmap1.png"
+  "save_path": "C:\\Users\\clombardi\\heatmap1.png"
 }
