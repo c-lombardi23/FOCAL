@@ -377,7 +377,7 @@ def log_regressor_test_results(
     predicted_delta: List[float],
     predictions: List[float],
     true_delta: List[float],
-    mean: float
+    mean: float,
 ) -> None:
     """Log mlp or xgb regression results to mlflow.
 
@@ -418,7 +418,7 @@ def log_regressor_test_results(
                 "current_tension": tensions,
                 "true_delta": true_delta,
                 "pred_delta": predicted_delta,
-                "pred_t": predictions
+                "pred_t": predictions,
             }
         )
         df = df.round(4)
@@ -432,10 +432,10 @@ def log_regressor_test_results(
 
 
 def log_cnn_hyperparameter(
-    config:dict, 
-    best_hp: dict, 
-    run_name:str, 
-    experiment_name: Optional[str]="cnn_hyperparameter"
+    config: dict,
+    best_hp: dict,
+    run_name: str,
+    experiment_name: Optional[str] = "cnn_hyperparameter",
 ) -> None:
     """Logs cnn hyperparameter search to mlflow.
 
@@ -461,10 +461,12 @@ def log_cnn_hyperparameter(
         mlflow.log_params(best_hp)
 
 
-def log_rl_test(config: dict, 
-                run_name: str, 
-                info: List[Dict[str, Any]],
-                experiment_name: Optional[str]="rl_testing") -> None:
+def log_rl_test(
+    config: dict,
+    run_name: str,
+    info: List[Dict[str, Any]],
+    experiment_name: Optional[str] = "rl_testing",
+) -> None:
     """Logs reinforcement learning test to mlflow.
 
     Args:
@@ -496,10 +498,10 @@ def log_rl_test(config: dict,
 
 
 def log_mlp_hyperparameter(
-    config: dict, 
-    best_hp: dict, 
-    run_name: str, 
-    experiment_name: Optional[str]="mlp_hyperparameter"
+    config: dict,
+    best_hp: dict,
+    run_name: str,
+    experiment_name: Optional[str] = "mlp_hyperparameter",
 ) -> None:
     """Logs mlp hyperparamter results to mlflow.
 

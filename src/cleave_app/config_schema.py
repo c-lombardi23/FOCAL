@@ -10,6 +10,7 @@ EarlyStoppingMixin, and CheckpointMixin.
 import json
 import os
 from pathlib import Path
+
 # Import typing hints for better code clarity and static analysis.
 from typing import Dict, List, Literal, Optional, Type
 
@@ -380,7 +381,7 @@ class GradCamConfig(BaseModel):
     # Folder containing images
     img_folder: Optional[str]
     # Size of heatmap plots
-    fig_size: Optional[List[int]] = (9,5)
+    fig_size: Optional[List[int]] = (9, 5)
     # The name of the backbone model (for finding layers).
     backbone: Optional[str] = "efficientnet"
     # The name of the final convolutional layer to visualize.

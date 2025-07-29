@@ -12,8 +12,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import (ConfusionMatrixDisplay, classification_report,
-                             confusion_matrix, roc_auc_score, roc_curve)
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    classification_report,
+    confusion_matrix,
+    roc_auc_score,
+    roc_curve,
+)
 
 from .data_processing import BadCleaveTensionClassifier, DataCollector
 
@@ -473,7 +478,8 @@ class TensionPredictor:
             lambda row: (
                 1
                 if row["CleaveAngle"] <= angle_threshold
-                and row["ScribeDiameter"] < diameter_threshold * row['Diameter']
+                and row["ScribeDiameter"]
+                < diameter_threshold * row["Diameter"]
                 and not row["Hackle"]
                 and not row["Misting"]
                 else 0
@@ -538,7 +544,7 @@ class TensionPredictor:
                 "Current Tension": np.array(tensions).round(2),
                 "True Delta": np.array(true_delta).round(2),
                 "Predicted Tension": np.array(predictions).round(2),
-                "Predicted Delta": np.array(predicted_deltas).round(2)
+                "Predicted Delta": np.array(predicted_deltas).round(2),
             }
         )
         basepath = self.model_path.strip(".keras")

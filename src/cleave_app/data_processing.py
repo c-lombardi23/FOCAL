@@ -39,33 +39,34 @@ except ImportError as e:
     tf = None
 
 # GLobal config variables
-#==================================================================
+# ==================================================================
 IMAGE_DIMS = [224, 224]
 IMAGE_SIZE = [224, 224, 3]
-TRAIN_P=0.9
-TEST_P=1.0
-REQ_COLUMNS= [
-                "CleaveAngle",
-                "CleaveTension",
-                "ScribeDiameter",
-                "Misting",
-                "Hackle",
-                "ImagePath",
-                ]
+TRAIN_P = 0.9
+TEST_P = 1.0
+REQ_COLUMNS = [
+    "CleaveAngle",
+    "CleaveTension",
+    "ScribeDiameter",
+    "Misting",
+    "Hackle",
+    "ImagePath",
+]
 FEATURES_CNN = [
-            "CleaveAngle",
-            "CleaveTension",
-            "ScribeDiameter",
-            "Misting",
-            "Hackle",
-        ]
+    "CleaveAngle",
+    "CleaveTension",
+    "ScribeDiameter",
+    "Misting",
+    "Hackle",
+]
 FEATURE_MLP = [
-                "CleaveAngle",
-                "ScribeDiameter",
-                "Misting",
-                "Hackle",
-            ]
-#==================================================================
+    "CleaveAngle",
+    "ScribeDiameter",
+    "Misting",
+    "Hackle",
+]
+# ==================================================================
+
 
 class DataCollector:
     """Class for collecting and preprocessing data from CSV files and image
@@ -116,7 +117,6 @@ class DataCollector:
         self.set_mask = set_mask
         self.angle_threshold = angle_threshold
         self.diameter_threshold = diameter_threshold
-        
 
     @property
     def df(self) -> Optional[pd.DataFrame]:
@@ -462,9 +462,7 @@ class DataCollector:
             Tuple of (images, features, labels) arrays
         """
         images = self.df["ImagePath"].values
-        features = self.df[
-            FEATURES_CNN
-        ].values.astype(np.float32)
+        features = self.df[FEATURES_CNN].values.astype(np.float32)
         labels = self.df["CleaveCategory"].values.astype(np.float32)
 
         return images, features, labels
@@ -777,9 +775,7 @@ class MLPDataCollector(DataCollector):
         ).astype(np.float32)
 
         images = self.df["ImagePath"].values
-        features = self.df[
-            FEATURE_MLP
-        ].values.astype(np.float32)
+        features = self.df[FEATURE_MLP].values.astype(np.float32)
         labels = delta
 
         return images, features, labels

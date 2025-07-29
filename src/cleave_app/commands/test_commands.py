@@ -1,9 +1,15 @@
 """This module define the logic for testing each model."""
 
-from cleave_app.mlflow_utils import (log_classifier_test_results,
-                                     log_regressor_test_results, log_rl_test)
-from cleave_app.prediction_testing import (TensionPredictor, TestPredictions,
-                                           TestTensionPredictions)
+from cleave_app.mlflow_utils import (
+    log_classifier_test_results,
+    log_regressor_test_results,
+    log_rl_test,
+)
+from cleave_app.prediction_testing import (
+    TensionPredictor,
+    TestPredictions,
+    TestTensionPredictions,
+)
 from cleave_app.rl_pipeline import TestAgent
 from cleave_app.xgboost_pipeline import XGBoostPredictor
 
@@ -96,8 +102,7 @@ class TestMLP(BaseCommand):
             predicted_delta=predicted_deltas,
             predictions=predictions,
             true_delta=true_delta,
-            mean=mean
-
+            mean=mean,
         )
 
 
@@ -179,7 +184,7 @@ class TestXGBoost(BaseCommand):
             predicted_delta=predicted_deltas,
             predictions=predictions,
             true_delta=true_delta,
-            mean=mean
+            mean=mean,
         )
 
 
@@ -198,7 +203,7 @@ class TestRL(BaseCommand):
             low_range=config.low_range,
             high_range=config.high_range,
             max_delta=config.max_delta,
-            max_tension_change=config.max_tension_change
+            max_tension_change=config.max_tension_change,
         )
         info = rl_tester.test_agent(episodes=config.episodes)
         log_rl_test(config, run_name=config.run_name, info=info)

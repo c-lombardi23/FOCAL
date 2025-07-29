@@ -3,11 +3,15 @@
 import mlflow.keras
 
 from cleave_app.data_processing import DataCollector, MLPDataCollector
-from cleave_app.hyperparameter_tuning import (HyperParameterTuning,
-                                              ImageHyperparameterTuning,
-                                              MLPHyperparameterTuning)
-from cleave_app.mlflow_utils import (log_cnn_hyperparameter,
-                                     log_mlp_hyperparameter)
+from cleave_app.hyperparameter_tuning import (
+    HyperParameterTuning,
+    ImageHyperparameterTuning,
+    MLPHyperparameterTuning,
+)
+from cleave_app.mlflow_utils import (
+    log_cnn_hyperparameter,
+    log_mlp_hyperparameter,
+)
 
 from .base_command import BaseCommand
 from .utils import _run_search_helper

@@ -20,9 +20,9 @@ class GradCAM:
         self,
         model_path: str,
         image_folder: str,
-        class_index: Optional[int]=0,
-        backbone: Optional[str]=None,
-        conv_layer_name: Optional[str]=None,
+        class_index: Optional[int] = 0,
+        backbone: Optional[str] = None,
+        conv_layer_name: Optional[str] = None,
     ) -> None:
         """Initialize class and load model.
 
@@ -66,11 +66,11 @@ class GradCAM:
             self.target_layer = self.model.get_layer(self.conv_layer_name)
 
     def plot_heatmap(
-        self, 
-        title: str, 
+        self,
+        title: str,
         gradcam: Any,
-        img_array: np.ndarray, 
-        fig_size: List[int]
+        img_array: np.ndarray,
+        fig_size: List[int],
     ) -> None:
         """Plotting logic for individual heatmap.
         Args:
