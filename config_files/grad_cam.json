@@ -6,6 +6,7 @@
   "mode": "grad_cam",
   "backbone": "efficientnetb0",
   "title": "Bad Cleave",
+
   "class_index": 0,
   "fig_size": [10,6],
   "img_folder": "C:\\Thorlabs\\grad_cam_test",

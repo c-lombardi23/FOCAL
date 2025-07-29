@@ -56,6 +56,7 @@ class CleaveEnv(gym.Env):
         self.low_range = low_range
         self.high_range = high_range
         self.max_delta = max_delta
+        self.max_tension_change = max_tension_change
 
         filtered_df = self.df[self.df["CNN_Predicition"] == 1]
         # calculate ideal tensions by fiber type
@@ -186,6 +187,7 @@ class CleaveEnv(gym.Env):
             print(
                 f"New Scenario: Fiber = {self._get_current_fiber_type()} Start Tension = {self.current_tension:.0f}"
             )
+        fiber_type = self._get_current_fiber_type()
 
         info = {
             "fiber_type": self._get_current_fiber_type(),
@@ -265,7 +267,7 @@ class CleaveEnv(gym.Env):
             "current_ideal_tension": round(
                 float(self.current_ideal_tension), 3
             ),
-            #"tension_error": round(float(tension_error), 3),
+            "tension_error": round(float(tension_error), 3),
             "action": round(float(action) * self.max_tension_change, 3),
         }
         self.last_reward = reward

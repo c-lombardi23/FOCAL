@@ -490,6 +490,7 @@ class TrainRLConfig(BaseModel):
     low_range: Optional[float] = 0.7
     high_range: Optional[float] = 1.4
     max_delta: Optional[float] = 5.0
+    max_tension_change: Optional[float] = 10.0
 
 
 class TestRLConfig(TrainRLConfig):

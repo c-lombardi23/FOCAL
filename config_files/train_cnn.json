@@ -1,7 +1,7 @@
 {
   "csv_path": "C:\\Thorlabs\\combined_data.csv",
   "img_folder": "C:\\Thorlabs\\combined_images\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2_feature_scaler.pkl",
+  "feature_scaler_path": "C:\\Users\\clombardi\\Abalation_Study\\cnn_masked_features_scaler.pkl",
   "label_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2_label_scaler.pkl",
   
 
@@ -15,7 +15,6 @@
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
   "backbone_name": "resnet",
-  "model_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
@@ -24,7 +23,7 @@
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 2,
+  "max_epochs": 20,
   "objective": "val_accuracy",
 
   "brightness": 0.0,
@@ -42,13 +41,13 @@
 
   "early_stopping": "n",
   "patience": 6,
-  "monitor": "val_loss",
-  "method": "min",
-  "checkpoints": "n",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2_checkpoint.keras",
+  "monitor": "val_accuracy",
+  "method": "max",
+  "checkpoints": "y",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\Abalation_Study\\cnn_maksed_features.keras",
 
-  "save_model_file": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2.keras",
-  "save_history_file": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2_history",
+  "save_model_file": "C:\\Users\\clombardi\\Abalation_Study\\cnn_masked_features.keras",
+  "save_history_file": "C:\\Users\\clombardi\\Abalation_Study\\cnn_maksed_features_history",
 
   "set_mask": "y"
 }

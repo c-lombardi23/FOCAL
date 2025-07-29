@@ -1,5 +1,6 @@
 {
     "agent_path": "C:\\Users\\clombardi\\RL\\agent19",
+
     "csv_path": "C:\\Users\\clombardi\\RL\\data.csv",
     "cnn_path": "C:\\Users\\clombardi\\RL\\cnn_surrogate3.pkl",
     "img_folder": "C:\\Thorlabs\\combined_images",
