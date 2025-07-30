@@ -440,15 +440,24 @@ class TrainImageOnlyConfig(ModelConfig):
 
 
 class CNNHyperparameterConfig(BaseConfig):
+    # Directory to store the current tuner
     tuner_directory: str
+    # Name of foler within tuner directory
     project_name: str
+    # Path to save model
     model_path: str
+    # Name of pre-trained backbone
     backbone: str
+    # Maximum angle threshold for good cleave
     angle_threshold: float
+    # Maximum diameter threshold for good cleave.
     diameter_threshold: float
+    # Size of test dataset split
     test_size: float
     batch_size: int
+    # Size of random buffer
     buffer_size: int
+    # Number of training epochs
     max_epochs: int
     save_model_file: Optional[str]
 
@@ -460,37 +469,63 @@ class ImageHyperparameterConfig(TrainImageOnlyConfig):
 
 
 class MLPHyperparameterConfig(BaseConfig):
+    # Directory to store the current tuner
     tuner_directory: str
+    # Name of foler within tuner directory
     project_name: str
+    # Path to save model
     model_path: str
+    # Name of pre-trained backbone
     backbone: str
+    # Maximum angle threshold for good cleave
     angle_threshold: float
+    # Maximum diameter threshold for good cleave.
     diameter_threshold: float
+    # Size of test dataset split
     test_size: float
     batch_size: int
+    # Size of random buffer
     buffer_size: int
+    # Number of training epochs
     max_epochs: int
     save_model_file: Optional[str]
 
 
 class TrainRLConfig(BaseModel):
+    # Path to csv file for dataset
     csv_path: str
+    # Path to trained CNN classifier
     cnn_path: str
+    # Path to save the agent
     agent_path: str
+    # Training mode
     mode: str
+    # Folder containing images
     img_folder: str
+    # Classification threshold
     threshold: float
+    # Max tension change in one episode
     max_tension_change: float
+    # Number of steps per episode
     max_steps: Optional[int] = 15
+    # Shape of numerical features
     feature_shape: List[int]
+    # Size of replay buffer
     buffer_size: Optional[int] = 1000000
+    # Batch size for training
     batch_size: Optional[int] = 256
     tau: Optional[float] = 0.1
+    # Size of steps to take in training
     learning_rate: Optional[float] = 0.0001
+    # Number of training rounds
     timesteps: Optional[int] = 5000
+    # Low percentage of tension
     low_range: Optional[float] = 0.7
+    # High percentage of tension
     high_range: Optional[float] = 1.4
+    # Max change per step
     max_delta: Optional[float] = 5.0
+    # Max tension change overall
     max_tension_change: Optional[float] = 10.0
 
 

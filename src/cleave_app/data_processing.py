@@ -95,6 +95,9 @@ class DataCollector:
             img_folder: Path to folder containing cleave images
             backbone: Optional pre-trained model to use as frozen layer
             classifcation_type: multiclass, multi_label, binary
+            backbone: Name of pre-trained backbone.
+            set_mask: Whether to mask the input images or not.
+            encoder_path: Path to ohe.
         """
         if csv_path is None or img_folder is None:
             raise ValueError("Must provide both csv_path and img_folder")
