@@ -1,5 +1,7 @@
 """Main module for defining MLP training logic."""
 
+from typing import Any
+
 from .model_pipeline import *
 
 
@@ -10,7 +12,22 @@ class BuildMLPModel(CustomModel):
     a CNN to predict optimal tension values for fiber cleaving.
     """
 
-    def __init__(self, cnn_model_path: str, train_ds, test_ds, num_classes):
+    def __init__(
+        self,
+        cnn_model_path: str,
+        train_ds: Any,
+        test_ds: Any,
+        num_classes: int,
+    ) -> None:
+        """Initialize MLP model class.
+
+        Args:
+            cnn_model_path (str): Path to trained CNN classifier.
+            train_ds (Any): Train split of dataset.
+            test_ds (Any): Test split of dataset.
+            num_classes (int): Number of classes to use for categories.
+        """
+        # Call parent class constructor
         super().__init__(train_ds, test_ds, num_classes=num_classes)
         # load your frozen CNN
         self.cnn_model = tf.keras.models.load_model(cnn_model_path)
@@ -30,6 +47,11 @@ class BuildMLPModel(CustomModel):
 
         Args:
             param_shape: Dimensions of numerical parameters
+            dense1: Number of neurons in first FC layer.
+            dense2: Number of neurons in second FC layer.
+            dropout1: Amount of dropout for CNN output
+            dropout2: Amount of dropout for feature input.
+            dropout3: Amount of dropout for concatenated image+features
 
         Returns:
             tf.keras.Model: Regression model for tension prediction
@@ -65,6 +87,11 @@ class BuildMLPModel(CustomModel):
         """Compile MLP model for regression.
 
         Args:
+            dense1: Number of neurons in first FC layer.
+            dense2: Number of neurons in second FC layer.
+            dropout1: Amount of dropout for CNN output
+            dropout2: Amount of dropout for feature input.
+            dropout3: Amount of dropout for concatenated image+features
             param_shape: Dimensions of numerical parameters
             learning_rate: Learning rate for optimization
             metrics: List of metrics to monitor
