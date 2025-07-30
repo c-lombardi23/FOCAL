@@ -4,7 +4,7 @@ Includes classes for training and predicting.
 """
 
 import os
-from typing import Optional
+from typing import Any, Optional, Tuple
 
 import joblib
 import matplotlib.pyplot as plt
@@ -19,7 +19,17 @@ from tensorflow.keras.models import Model
 class XGBoostModel:
     """This class provides basic logic for training the XGBoost regressor."""
 
-    def __init__(self, csv_path: str, cnn_model_path: str, train_ds, test_ds):
+    def __init__(
+        self, csv_path: str, cnn_model_path: str, train_ds: Any, test_ds: Any
+    ) -> None:
+        """Initialize the model.
+
+        Args:
+            csv_path (str): _Path to the csv dataset.
+            cnn_model_path (str): Path to the trained CNN classifier.
+            train_ds (tf.data.Dataset): Train split of dataset.
+            test_ds (tf.data.Dataset): Test split of dataset.
+        """
         self.csv_path = csv_path
         self.train_ds = train_ds
         self.test_ds = test_ds
@@ -39,7 +49,9 @@ class XGBoostModel:
     def get_model(self):
         return self.xgb_reg
 
-    def _extract_features_and_labels(self, ds):
+    def _extract_features_and_labels(
+        self, ds: Any
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Extract image features and delta tension values from the dataset
         using feature extractor.
 
@@ -74,6 +86,9 @@ class XGBoostModel:
             learning_rate: Learning rate to update weights during training
             max_depth: Maximum tree depth during training
             random_state: Controls random state of model to ensure consitency across models
+            gamma: Minimum loss reduction.
+            subsample: Fraction of observations used for each tree.
+            reg_lambda: L2 regularization of leaf nodes.
 
         Returns:
             Trained xgboost model
@@ -105,7 +120,7 @@ class XGBoostModel:
 
         return self.xgb_reg.evals_result()
 
-    def save(self, save_path: str):
+    def save(self, save_path: str) -> None:
         """Saves xgboost model.
 
         Args:
@@ -171,7 +186,17 @@ class XGBoostPredictor:
         diameter_threshold: float,
         xgb_path: Optional[str] = None,
         scaler_path: Optional[str] = None,
-    ):
+    ) -> None:
+        """Initialize predictor class.
+
+        Args:
+            csv_path (str): Path to csv file for dataset.
+            cnn_model_path (str): Path to trained CNN classifier.
+            angle_threshold (float): Maximum angle for classifying as good cleave.
+            diameter_threshold (float): Maximum diameter for classifying as good cleave.
+            xgb_path (Optional[str], optional): Path to trained XGBoost regressor.
+            scaler_path (Optional[str], optional): Path to tensions scaler.
+        """
         self.csv_path = csv_path
         self.xgb_path = xgb_path
         self.scaler_path = scaler_path
@@ -237,6 +262,7 @@ class XGBoostPredictor:
             ),
             axis=1,
         )
+
         # Compute mean tension from good cleaves
         # good_mean = df[df["CleaveCategory"] == 1]["CleaveTension"].mean()
         good_cleaves_df = df[df["CleaveCategory"] == 1]
