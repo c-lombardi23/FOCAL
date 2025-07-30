@@ -1,17 +1,18 @@
 """Custom Gym environment that simulates cleaving fibers using a surrogate CNN model.
 
 The agent adjusts tension over multiple steps to achieve optimal cleave quality,
-which is evaluated via a pre-trained CNN. Observations include fiber context and
-tension; rewards are based on CNN predictions and tension dynamics.
+which is evaluated via a CNN surrogate model. Observations include fiber context and
+tension; rewards are based on CNN predictions and a guassian reward function when predicted
+tensions is close to optimal value.
 """
 
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import gymnasium as gym
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
 import tensorflow as tf
 from gymnasium import spaces
 from stable_baselines3 import SAC
@@ -21,6 +22,7 @@ from stable_baselines3.common.env_checker import check_env
 class CleaveEnv(gym.Env):
     """Creates the simulated cleave enviornment."""
 
+    # use human readable mode
     metadata = {"render_modes": ["human"]}
 
     def __init__(
@@ -35,6 +37,9 @@ class CleaveEnv(gym.Env):
         high_range: float,
         max_delta: float,
         max_tension_change: float,
+        quality_weight=100.0,
+        proximity_weight = 50.0,
+        scale = 25.0
     ) -> None:
         """
         Initialize the environment.
@@ -43,6 +48,13 @@ class CleaveEnv(gym.Env):
             csv_path (str): Path to the CSV file with cleave data.
             cnn_path (str): Path to the trained CNN model used as a surrogate.
             img_folder (str): Directory containing cleave images.
+            feature_shape (List): Shape of the numercal features
+            threshold: (float): Classification threshold for good cleave.
+            max_steps (int): Maximum number of steps to use per episode.
+            low_range (float): Low percentage of maximum tension.
+            high_range (float): High percentage of maximum tension.
+            max_delta (float): Maximum change in tension per action
+            max_tension_change (float): Absolute maximum tension change.
         """
         # call gym init method
         super().__init__()
@@ -58,7 +70,12 @@ class CleaveEnv(gym.Env):
         self.max_delta = max_delta
         self.max_tension_change = max_tension_change
 
+        self.QUALITY_WEIGHT = quality_weight
+        self.PROXIMITY_WEIGHT = proximity_weight
+        self.SCALE = scale
+
         filtered_df = self.df[self.df["CNN_Predicition"] == 1]
+
         # calculate ideal tensions by fiber type
         self.ideal_tensions = dict(
             filtered_df.groupby("FiberType")["CleaveTension"]
@@ -67,6 +84,7 @@ class CleaveEnv(gym.Env):
         )
 
         len_fibers = len(self.df["FiberType"].unique())
+
         # one hot encode fiber names
         self.df = pd.get_dummies(
             self.df, columns=["FiberType"], dtype=np.int32
@@ -87,6 +105,8 @@ class CleaveEnv(gym.Env):
         combined_df = pd.concat([other_inputs, fiber_types], axis=1)
 
         self.context_df = combined_df
+
+        # + 3 for current tension, current reward, and last tension
         observations_total = 3 + len(self.context_df.columns)
 
         self.observation_space = spaces.Box(
@@ -102,6 +122,7 @@ class CleaveEnv(gym.Env):
         self.current_tension = 0
         self.render_mode = None
 
+    # For use if you decide to include full CNN in enviornment
     def load_process_images(self, filename: str) -> "tf.Tensor":
         """Load and preprocess image from file path.
 
@@ -188,8 +209,9 @@ class CleaveEnv(gym.Env):
             )
         fiber_type = self._get_current_fiber_type()
 
+        # Log info
         info = {
-            "fiber_type": self._get_current_fiber_type(),
+            "fiber_type": fiber_type,
             "start_tension": self.current_tension,
         }
         return observation, info
@@ -213,8 +235,12 @@ class CleaveEnv(gym.Env):
         """
         delta_tension = float(action[0] * self.max_tension_change)
         self.current_tension = self.current_tension + delta_tension
+
+        # Compute min and max tensions
         min_tension = self.current_ideal_tension * self.low_range
         max_tension = self.current_ideal_tension * self.high_range
+
+        # Clip tensions if outside range
         self.current_tension = np.clip(
             self.current_tension, min_tension, max_tension
         )
@@ -223,6 +249,7 @@ class CleaveEnv(gym.Env):
             self._get_current_fiber_type()
         ]
 
+        # Increment steps in episode
         self.current_step += 1
 
         model_inputs = self.current_context.copy()
@@ -231,26 +258,30 @@ class CleaveEnv(gym.Env):
 
         tension_error = self.current_tension - self.current_ideal_tension
 
+        # Get CNN surrogate prediction in range (0, 1)
         cnn_pred = self.cnn_model.predict_proba(model_inputs)[0, 1]
 
         reward = 0.0
         terminated = False
 
-        reward += 100.0 * cnn_pred
+        reward += self.QUALITY_WEIGHT * cnn_pred
 
         if cnn_pred >= self.threshold:
             reward += 50.0
             terminated = True
 
-        scale = 25.0  # Tune this value
-        proximity_reward = 50.0 * np.exp(-(tension_error**2) / (2 * scale**2))
+        scale = self.SCALE
+        # Gaussian reward for proximity to current ideal tension
+        proximity_reward = self.PROXIMITY_WEIGHT * np.exp(-(tension_error**2) / (2 * scale**2))
         reward += proximity_reward
 
+        # Decrease reward if close to max or min tension
         if np.isclose(self.current_tension, min_tension) or np.isclose(
             self.current_tension, max_tension
         ):
             reward -= 75.0
 
+        # Decrease reward if tension change is opposite to direction of ideal tension
         if (tension_error > 0) and (action[0] > 0):
             reward -= 25.0
         elif (tension_error < 0) and (action[0] < 0):
@@ -264,12 +295,13 @@ class CleaveEnv(gym.Env):
 
         truncated = self.current_step >= self.max_steps
         if truncated and not terminated:
-            reward -= 50.0 * (1.0 - cnn_pred)
+            reward -= self.PROXIMITY_WEIGHT * (1.0 - cnn_pred)
 
         if self.render_mode == "human":
             self.render(action, cnn_pred, reward)
         observation = self._create_observation()
 
+        # Log info
         info = {
             "cnn_pred": float(cnn_pred),
             "current_tension": round(float(self.current_tension), 3),
@@ -351,7 +383,14 @@ class TrainAgent:
         Args:
             csv_path (str): Path to the CSV file with cleave data.
             cnn_path (str): Path to the trained CNN model used as a surrogate.
-            img_folder (str): Directory containing the cleave images.
+            img_folder (str): Directory containing cleave images.
+            feature_shape (List): Shape of the numercal features
+            threshold: (float): Classification threshold for good cleave.
+            max_steps (int): Maximum number of steps to use per episode.
+            low_range (float): Low percentage of maximum tension.
+            high_range (float): High percentage of maximum tension.
+            max_delta (float): Maximum change in tension per action
+            max_tension_change (float): Absolute maximum tension change.
         """
 
         # Initialize Enviornment
@@ -385,9 +424,9 @@ class TrainAgent:
             env (gym.Env): simulated training enviornment
             device (str): cuda to use GPU
             buffer_size (int): replay buffer size
-            learning_rate (float): typicall lr for ml
+            learning_rate (float): typical learning rate for ml
             batch_size (int): number of episodes to batch together
-            tau (float):
+            tau (float): Soft update coefficient
         """
 
         self.agent = SAC(
@@ -396,7 +435,7 @@ class TrainAgent:
             device=device,
             verbose=0,
             buffer_size=buffer_size,
-            ent_coef=0.3,
+            ent_coef=0.3,  # Coefficient for maximum entropy
             learning_rate=learning_rate,
             batch_size=batch_size,
             tau=tau,
@@ -430,7 +469,13 @@ class TestAgent:
             csv_path (str): Path to the CSV file with cleave data.
             cnn_path (str): Path to the trained CNN model used as a surrogate.
             img_folder (str): Directory containing cleave images.
-            agent_path (str): File path of the saved agent to load.
+            feature_shape (List): Shape of the numercal features
+            threshold: (float): Classification threshold for good cleave.
+            max_steps (int): Maximum number of steps to use per episode.
+            low_range (float): Low percentage of maximum tension.
+            high_range (float): High percentage of maximum tension.
+            max_delta (float): Maximum change in tension per action
+            max_tension_change (float): Absolute maximum tension change.
         """
 
         self.env = CleaveEnv(
@@ -480,6 +525,7 @@ class TestAgent:
             print(
                 f"Episode {episode + 1} finished with a total reward of: {episode_reward:.2f}"
             )
+            # Log metrics
             metrics = {
                 "start tension": info_reset["start_tension"],
                 "fiber type": info_reset["fiber_type"],
