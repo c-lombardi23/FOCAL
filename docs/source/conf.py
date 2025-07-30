@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, os.path.abspath("../../src"))
 
 
-project = "Fiber Cleave Processing"
+project = "Fiber Cleave Image Processing"
 copyright = "2025, Christopher J. Lombardi"
 author = "Christopher J. Lombardi"
 release = "0.1.0"

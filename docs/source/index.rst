@@ -1,5 +1,5 @@
-Fiber Cleave Processing v0.1.0
-================================
+Fiber Cleave Image Processing v0.1.0
+====================================
 
 A toolkit for fiber-cleave quality classification using Convolutional Neural Networks (CNN)  
 and tension prediction using a Multi-Layer Perceptron (MLP) or XGBoost Regression Model

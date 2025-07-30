@@ -21,7 +21,7 @@ First, clone the repository and install the package in "editable" mode. This mak
 
 .. code-block:: bash
 
-   git clone http://github.com/c-lombardi23/ImageProcessing.git
+   git clone http://github.com/c-lombardi23/ImageProcessingClone.git
    cd ImageProcessingClone
    pip install -e ".[dev]"
 
