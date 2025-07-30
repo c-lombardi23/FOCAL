@@ -5,7 +5,7 @@ either the cnn model or the regression model.
 """
 
 import os
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import joblib
 import matplotlib.pyplot as plt
@@ -118,8 +118,8 @@ class TestPredictions(DataCollector):
     def test_prediction(
         self,
         image_path: str,
-        feature_vector: "np.ndarray | None" = None,
-    ) -> "np.ndarray":
+        feature_vector: np.ndarray = None,
+    ) -> np.ndarray:
         """Generate prediction for a single image (and features if not
         image_only).
 
@@ -142,7 +142,7 @@ class TestPredictions(DataCollector):
 
     def gather_predictions(
         self,
-    ) -> "tuple[np.ndarray, list, list] | tuple[None, None, None]":
+    ) -> Tuple[np.ndarray, list, list] | Tuple[None, None, None]:
         """Gather multiple predictions from test data.
 
         Returns:
