@@ -59,12 +59,13 @@ class BuildHyperModel(HyperModel):
         image_shape: Tuple[int, int, int],
         param_shape: Tuple[int, ...],
         backbone: Optional[str] = "mobilenet",
-    ):
+    ) -> None:
         """Initialize the hypermodel builder.
 
         Args:
             image_shape: Dimensions of input images (height, width, channels)
             param_shape: Dimensions of numerical parameters
+            backbone: Name of pre-trained backbone name.
         """
         if tf is None:
             raise ImportError("TensorFlow is required for BuildHyperModel")
@@ -191,6 +192,7 @@ class HyperParameterTuning:
             objective: Metric to monitor during tuning
             directory: Directory path to store hyperparameters
             project_name: Name of the tuning project
+            backbone: Name of pre-trained backbone.
         """
         if (
             tf is None
