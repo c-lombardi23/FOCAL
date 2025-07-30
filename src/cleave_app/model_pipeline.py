@@ -19,32 +19,16 @@ warnings.filterwarnings("ignore")
 
 try:
     import tensorflow as tf
-    from tensorflow.keras.applications import (
-        EfficientNetB0,
-        MobileNetV2,
-        ResNet50,
-    )
-    from tensorflow.keras.callbacks import (
-        EarlyStopping,
-        ModelCheckpoint,
-        ReduceLROnPlateau,
-        TensorBoard,
-    )
-    from tensorflow.keras.layers import (
-        Activation,
-        BatchNormalization,
-        Concatenate,
-        Conv2D,
-        Dense,
-        Dropout,
-        GlobalAveragePooling2D,
-        Input,
-        MaxPooling2D,
-        RandomBrightness,
-        RandomContrast,
-        RandomRotation,
-        RandomZoom,
-    )
+    from tensorflow.keras.applications import (EfficientNetB0, MobileNetV2,
+                                               ResNet50)
+    from tensorflow.keras.callbacks import (EarlyStopping, ModelCheckpoint,
+                                            ReduceLROnPlateau, TensorBoard)
+    from tensorflow.keras.layers import (Activation, BatchNormalization,
+                                         Concatenate, Conv2D, Dense, Dropout,
+                                         GlobalAveragePooling2D, Input,
+                                         MaxPooling2D, RandomBrightness,
+                                         RandomContrast, RandomRotation,
+                                         RandomZoom)
     from tensorflow.keras.models import Model, Sequential
     from tensorflow.keras.regularizers import l2
 except ImportError as e:
@@ -134,6 +118,18 @@ class CustomModel:
         width: float,
         contrast: float,
     ):
+        """Get data augmentation parameters for training model.
+
+        Args:
+            rotation (float): Rotation amount of image.
+            brightness (float): Brightness amount of image.
+            height (float): Height of image.
+            width (float): Widht of image.
+            contrast (float): Contrast amount of image.
+
+        Returns:
+            tf.keras.models.Model: Data augmentation model.
+        """
 
         data_augmentation = Sequential(
             [
@@ -147,7 +143,16 @@ class CustomModel:
 
     def _build_custom_model(
         self, image_shape: Tuple[int, int, int], num_classes: int = 5
-    ) -> "tf.keras.Model":
+    ) -> Model:
+        """Build custom model architecture.
+
+        Args:
+            image_shape (Tuple[int, int, int]): Shape of image pixel vector.
+            num_classes (int, optional): Num of classifcation classes. Defaults to 5.
+
+        Returns:
+            Model: Custom model.
+        """
         data_augmentation = Sequential(
             [
                 RandomRotation(factor=0.02),
@@ -284,8 +289,13 @@ class CustomModel:
             image_shape: Dimensions of input images
             backbone: Type of base model to use
             dropout1_rate: level of dropout for first layer
-            dense_units: Units for first hidden layer
+            dense1: Units for first hidden layer
             dropout2_rate: Level of dropout for second layer
+            height: Height of augmented image.
+            width: Width of augmented image.
+            brightness: Amount of brightness for augmented image.
+            contrast: Contrast amount for augmented image.
+            unfreeze_from: Layer to unfreeze backbone model from.
 
         Returns:
             tf.keras.Model: Image-only classification model
@@ -432,18 +442,29 @@ class CustomModel:
         metrics: Optional[List[str]] = None,
         unfreeze_from: Optional[int] = None,
         backbone: Optional[str] = "mobilenet",
-    ) -> "tf.keras.Model":
-        """Compile model after calling build_model function.
+    ) -> Model:
+        """Compile the custom model head on top of pre-trained backbone.
 
         Args:
-            image_shape: Dimensions of input images
-            param_shape: Dimensions of numerical parameters
-            learning_rate: Learning rate for optimization
-            metrics: List of metrics to monitor
-            unfreeze_from: Layer index from which to unfreeze weights
+            image_shape (Tuple[int, int, int]): Shape of each image.
+            param_shape (Tuple[int, ...]): Shape of feature vector.
+            dropout1 (float): Amount of dropout for image layer.
+            dense1 (int): Amount of neurons for first FC layer.
+            dropout2 (float): Amount of dropout for feature input.
+            dense2 (int): Amount of neruons for second FC layer.
+            dropout3 (float): Amount of dropout for concatenated images+features.
+            brightness (float): Brightness amount for image.
+            height (float): Height of augmented image.
+            width (float): Width of augmented image.
+            contrast (float): Contrast amount of augmented image.
+            rotation (float): Rotation amount of augmented image.
+            learning_rate (float, optional): Size of steps to take during optimization. Defaults to 0.001.
+            metrics (Optional[List[str]], optional): Saved metrics. Defaults to None.
+            unfreeze_from (Optional[int], optional): Layer to start training pre-trained backbone. Defaults to None.
+            backbone (Optional[str], optional): Name of pre-trained backbone. Defaults to "mobilenet".
 
         Returns:
-            tf.keras.Model: Compiled model ready for training
+            Model: Compiled custom head on pre-trained model backbone.
         """
         if metrics is None:
             metrics = [
