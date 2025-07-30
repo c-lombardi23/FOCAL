@@ -12,8 +12,6 @@ import traceback
 import warnings
 from typing import Optional
 
-import mlflow
-
 # Suppress TensorFlow warnings
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore")
@@ -24,29 +22,14 @@ warnings.filterwarnings(
 
 
 from .commands.grad_cam_commands import GradCamDisplay
-from .commands.hyperparameter_commands import (
-    CNNHyperparameterSearch,
-    ImageHyperparameterSearch,
-    MLPHyperparameterSearch,
-)
-from .commands.test_commands import (
-    TestCNN,
-    TestImageOnly,
-    TestMLP,
-    TestRL,
-    TestXGBoost,
-)
-from .commands.train_commands import (
-    KFoldCNN,
-    KFoldMLP,
-    TrainCNN,
-    TrainCustomModel,
-    TrainImageOnly,
-    TrainMLP,
-    TrainRL,
-    TrainXGBoost,
-)
-
+from .commands.hyperparameter_commands import (CNNHyperparameterSearch,
+                                               ImageHyperparameterSearch,
+                                               MLPHyperparameterSearch)
+from .commands.test_commands import (TestCNN, TestImageOnly, TestMLP, TestRL,
+                                     TestXGBoost)
+from .commands.train_commands import (KFoldCNN, KFoldMLP, TrainCNN,
+                                      TrainCustomModel, TrainImageOnly,
+                                      TrainMLP, TrainRL, TrainXGBoost)
 # Import application modules
 from .config_schema import load_config
 
@@ -56,8 +39,6 @@ except ImportError:
     print("Warning: TensorFlow not found. Please install tensorflow>=2.19.0")
     traceback.print_exc()
     tf = None
-
-# mlflow.set_tracking_uri("http://localhost:5000")
 
 
 def main(args: Optional[list] = None) -> int:
