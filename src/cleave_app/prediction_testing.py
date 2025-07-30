@@ -12,13 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import (
-    ConfusionMatrixDisplay,
-    classification_report,
-    confusion_matrix,
-    roc_auc_score,
-    roc_curve,
-)
+from sklearn.metrics import (ConfusionMatrixDisplay, classification_report,
+                             confusion_matrix, roc_auc_score, roc_curve)
 
 from .data_processing import BadCleaveTensionClassifier, DataCollector
 
@@ -29,7 +24,6 @@ PRED_FEATURES = [
     "ScribeDiameter",
     "Misting",
     "Hackle",
-    # "Tearing",
 ]
 
 
@@ -50,10 +44,10 @@ class TestPredictions(DataCollector):
         diameter_threshold: float,
         encoder_path: str = None,
         image_only: bool = False,
-        backbone: str = "mobilenet",
+        backbone: str = "efficientnet",
         classification_type: str = "binary",
         threshold: Optional[float] = 0.5,
-    ):
+    ) -> None:
         """Initialize TestPredictions.
 
         Args:
@@ -62,7 +56,11 @@ class TestPredictions(DataCollector):
             scalar_path (str): Path to feature scaler (ignored if image_only=True).
             img_folder (str): Path to image folder.
             image_only (bool): If True, test only with images (no features).
+            backbone (str) : Name of backbone model used.
+            classification_type (str): Multiclass or binary classification.
+            threshold (float): Threshold for classifying as good cleave.
         """
+        # Call parent class constructor
         DataCollector.__init__(
             self,
             csv_path,
@@ -77,11 +75,13 @@ class TestPredictions(DataCollector):
             self.class_names = self.encoder.categories_[0].tolist()
         elif self.classification_type == "binary":
             self.class_names = [0, 1]
+
         self.scalar_path = scalar_path
         self.model = tf.keras.models.load_model(model_path)
         self.model_path = model_path
         self.image_only = image_only
         self.ohe = None
+
         if not self.image_only and self.scalar_path:
             self.feature_scaler = joblib.load(self.scalar_path)
         self.threshold = threshold
@@ -94,10 +94,13 @@ class TestPredictions(DataCollector):
             pd.DataFrame | None: DataFrame with cleave quality and one-hot labels, or None if file not found.
         """
         try:
-            df = self._set_label(self.angle_threshold, self.diameter_threshold)
+            df = self._set_label(
+                self.angle_threshold, self.diameter_threshold
+            )
         except FileNotFoundError:
             print("CSV file not found!")
             return None
+
         # Clean image path
         df["ImagePath"] = df["ImagePath"].str.replace(
             f"{self.img_folder}\\", "", regex=False
@@ -164,7 +167,9 @@ class TestPredictions(DataCollector):
                 for img_path, feature_vector in zip(
                     pred_image_paths, pred_features
                 ):
-                    prediction = self.test_prediction(img_path, feature_vector)
+                    prediction = self.test_prediction(
+                        img_path, feature_vector
+                    )
                     predictions.append(prediction)
             else:
                 print("No features available for prediction.")
@@ -182,7 +187,12 @@ class TestPredictions(DataCollector):
 
         true_labels = (
             self.df["CleaveCategory"]
-            .map({label: idx for idx, label in enumerate(self.class_names)})
+            .map(
+                {
+                    label: idx
+                    for idx, label in enumerate(self.class_names)
+                }
+            )
             .values
         )
 
@@ -222,8 +232,8 @@ class TestPredictions(DataCollector):
 
     def display_classification_report(
         self,
-        true_labels: "np.ndarray",
-        pred_labels: "list[int]",
+        true_labels: np.ndarray,
+        pred_labels: List[int],
         classification_path: str = None,
     ) -> None:
         """Display classification report comparing true labels to predicted
@@ -263,8 +273,8 @@ class TestPredictions(DataCollector):
     def plot_roc(
         self,
         title: str,
-        true_labels: "np.ndarray",
-        pred_probabilites: "np.ndarray",
+        true_labels: np.ndarray,
+        pred_probabilites: np.ndarray,
     ) -> None:
         """Plot ROC curve for predictions.
 
@@ -274,7 +284,9 @@ class TestPredictions(DataCollector):
             pred_probabilites (np.ndarray): Array of predicted probabilities.
         """
         pred_probabilites = np.array(pred_probabilites).flatten()
-        fpr, tpr, thresholds = roc_curve(true_labels, pred_probabilites)
+        fpr, tpr, thresholds = roc_curve(
+            true_labels, pred_probabilites
+        )
         auc = roc_auc_score(true_labels, pred_probabilites)
         plt.plot(fpr, tpr, label=f"ROC Curve (AUC={auc:.2f}%)")
         plt.plot([0, 1], [0, 1], "k--")
@@ -323,7 +335,9 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
             backbone="efficientnet",
             encoder_path=None,
         )
-        self.tension_model = tf.keras.models.load_model(tension_model_path)
+        self.tension_model = tf.keras.models.load_model(
+            tension_model_path
+        )
         self.image_only = image_only
         self.tester = TestPredictions(
             model_path=cnn_model_path,
@@ -353,7 +367,9 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
         )
         direction = np.argmax(tension_pred)
         return (
-            "Bad - raise tension" if direction == 1 else "Bad - lower tension"
+            "Bad - raise tension"
+            if direction == 1
+            else "Bad - lower tension"
         )
 
     def gather_predictions(self, pred_features=None):
@@ -388,15 +404,22 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
                 for img_path, feature_vector in zip(
                     pred_image_paths, pred_features
                 ):
-                    prediction = self.predict_tension(img_path, feature_vector)
+                    prediction = self.predict_tension(
+                        img_path, feature_vector
+                    )
                     pred_labels.append(prediction)
             else:
                 for img_path in pred_image_paths:
                     feature_vector = np.zeros((6,), dtype=np.float32)
-                    prediction = self.predict_tension(img_path, feature_vector)
+                    prediction = self.predict_tension(
+                        img_path, feature_vector
+                    )
                     pred_labels.append(prediction)
 
-        if hasattr(self, "df") and "BadTensionsLabel" in self.df.columns:
+        if (
+            hasattr(self, "df")
+            and "BadTensionsLabel" in self.df.columns
+        ):
             true_labels = self.df["BadTensionsLabel"].values
         else:
             print("True labels not available in dataframe.")
@@ -458,7 +481,9 @@ class TensionPredictor:
         # Normalize image
         return img
 
-    def _extract_data(self, angle_threshold: float, diameter_threshold: float):
+    def _extract_data(
+        self, angle_threshold: float, diameter_threshold: float
+    ):
         """Load and filter dataset for prediction (only bad cleaves).
 
         Args:
@@ -487,7 +512,9 @@ class TensionPredictor:
             axis=1,
         )
         # Compute mean tension from good cleaves
-        good_mean = df[df["CleaveCategory"] == 1]["CleaveTension"].mean()
+        good_mean = df[df["CleaveCategory"] == 1][
+            "CleaveTension"
+        ].mean()
 
         # Keep only bad cleaves
         bad_df = df[df["CleaveCategory"] == 0].copy()
@@ -517,7 +544,9 @@ class TensionPredictor:
         pred_ts = []
 
         for img_path in image_paths:
-            image = self.load_and_preprocess_image(img_path, self.image_folder)
+            image = self.load_and_preprocess_image(
+                img_path, self.image_folder
+            )
             image = tf.expand_dims(image, 0)
 
             features = np.zeros((4,))
@@ -528,7 +557,9 @@ class TensionPredictor:
                 pred_scaled.reshape(1, -1)
             )[0][0]
             predicted_deltas.append(delta)
-            predictions.append(delta + tensions.iloc[len(predictions)])
+            predictions.append(
+                delta + tensions.iloc[len(predictions)]
+            )
 
         for true_t, delta_pred, current_t in zip(
             true_delta, predicted_deltas, tensions
@@ -544,7 +575,9 @@ class TensionPredictor:
                 "Current Tension": np.array(tensions).round(2),
                 "True Delta": np.array(true_delta).round(2),
                 "Predicted Tension": np.array(predictions).round(2),
-                "Predicted Delta": np.array(predicted_deltas).round(2),
+                "Predicted Delta": np.array(predicted_deltas).round(
+                    2
+                ),
             }
         )
         basepath = self.model_path.strip(".keras")
