@@ -67,10 +67,7 @@ Confusion matrix for Unified CNN results
 
 ### Regression (XGBoost Tension Prediction)
 
-| Metric                    | Value |
-| ------------------------- | ----- |
-| Mean Absolute Error (MAE) | 3.5g  |
-| R-squared (R²)            | 0.89  |
+<img align="center" width="800" height="500" src="current_vs_pred_delta_unified_all_2.png" alt="xgb_results">
 
 ## Installation
 
