@@ -310,23 +310,43 @@ For more details, see the [Configuration](#configuration) and [Usage Examples](#
 ## Project Structure
 
 ```
-ImageProcessingClone/
+FiberCleaveProcessing/
+├── .github/                 # GitHub Actions and workflow configurations
+├── config_files/            # Example JSON configuration files for different modes
+├── docs/                    # Sphinx documentation source and build files
+│   ├── build/
+│   └── source/
+├── mlruns/                  # Default output directory for MLflow experiment tracking
+├── notebooks/               # Jupyter notebooks for exploration and analysis
 ├── src/
-│   └── cleave_app/
+│   └── cleave_app/          # Main application source code package
 │       ├── __init__.py
-│       ├── main.py                 # CLI entry point
-│       ├── config_schema.py        # Configuration validation (mode-specific)
-│       ├── data_processing.py      # Data loading and preprocessing
-│       ├── model_pipeline.py       # Model building and training
-│       ├── hyperparameter_tuning.py # Hyperparameter optimization
-│       ├── prediction_testing.py   # Model evaluation
-│       └── grad_cam.py           # Model interpretability
-├── tests/                         # Unit tests
-├── notebooks/                     # Jupyter notebooks
-├── config_files/                  # Example configurations
-├── requirements.txt               # Dependencies
-├── setup.py                      # Package configuration
-└── README.md                     # This file
+│       ├── commands/            # Houses the command-line interface logic
+│       ├── constants.py         # Shared constants (e.g., column names)
+│       ├── config_schema.py     # Pydantic models for configuration validation
+│       ├── data_processing.py   # Data loading, cleaning, and dataset creation
+│       ├── main.py              # Main CLI entry point
+│       ├── mlflow_utils.py      # Utility functions for MLflow logging
+│       ├── model_pipeline.py    # Core CNN model building and training pipeline
+│       ├── mlp_model.py         # Logic specific to the MLP model
+│       ├── xgboost_pipeline.py  # Logic specific to the XGBoost model
+│       ├── rl_pipeline.py       # Logic for the Reinforcement Learning agent
+│       ├── hyperparameter_tuning.py # Keras Tuner setup and logic
+│       ├── prediction_testing.py  # Scripts for model evaluation and testing
+│       └── grad_cam.py          # Grad-CAM implementation for model explainability
+├── tests/                   # Pytest unit and integration tests
+│   ├── test_train_cnn.py
+│   ├── test_train_mlp.py
+│   ├── test_train_xgb.py
+│   ├── test_test_cnn.py
+│   ├── test_test_mlp.py
+│   └── test_test_xgb.py
+├── .gitignore               # Specifies files and directories to be ignored by Git
+├── requirements.txt         # Project dependencies for pip
+├── Makefile                 # Makefile for common development tasks
+├── make.bat                 # Windows batch script equivalent
+├── build_docs.sh            # Shell script to build Sphinx documentation
+└── cleave_example_app.gif   # Demo GIF for project overview
 ```
 
 ## Contributing
