@@ -56,18 +56,22 @@ The models use transfer learning with either MobileNetV2, ResNet, or EfficientNe
 The models were evaluated on a hold-out test set (typical 80/20 split). The multi-modal CNN demonstrates high performance in distinguishing between "good" and "bad" cleaves, while the XGBoost regression model provides accurate information on the direction to change tension value.
 
 ### Classification (Multi-Modal CNN)
-
-  <img align="center" width="700" height="500" src="results_summary_new.png" alt="results_cnn">
-
+<p align="center">
+<img align="center" width="700" height="500" src="results_summary_new.png" alt="results_cnn">
+</p>
 Comparison of metrics for individual models vs. final unified model
 
+<p align="center">
 <img align="center" width="500" height="800" src="Unified_classifier_confusion.png" alt="confusion_cnn">
-
+</p>
 Confusion matrix for Unified CNN results
 
 ### Regression (XGBoost Tension Prediction)
 
+<p align="center">
 <img align="center" width="800" height="500" src="current_vs_pred_delta_unified_all_2.png" alt="xgb_results">
+</p>
+True change in tension vs. predcited change in tension for XGBoost model
 
 ## Installation
 
