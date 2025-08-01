@@ -243,17 +243,50 @@ If your image-only model is not achieving the desired accuracy, consider the fol
 ### Example: Improved Image-Only Model Architecture
 
 ```python
-pre_trained_model = EfficientNetB0(
-    input_shape=image_shape, 
-    include_top=False, 
-    weights="imagenet", 
-    name="mobilenet"
-)
-pre_trained_model.trainable = True
-for layer in pre_trained_model.layers[:-20]:
-    layer.trainable = False
+def _build_pretrained_model(
+        self,
+        image_shape: Tuple[int, int, int],
+        param_shape: Tuple[int, ...],
+        dropout1: float,
+        dense1: int,
+        dropout2: float,
+        dense2: int,
+        dropout3: float,
+        brightness: float,
+        contrast: float,
+        height: float,
+        width: float,
+        rotation: float,
+        backbone: Optional[str] = "mobilenet",
+        unfreeze_from: Optional[int] = None,
+    ) -> "tf.keras.Model":
+        """Build a model using pre-trained EfficientNetB0 to supplement small
+        dataset.
 
- data_augmentation = self.get_data_augmentation(
+        Args:
+            image_shape: Dimensions of input images (height, width, channels)
+            param_shape: Dimensions of numerical parameters
+            unfreeze_from: Layer index from which to unfreeze weights (None = all frozen)
+            dropout1: Perentage of inputs to zero out
+            dense1: Number of neurons in first fully connected layer
+            dropout2: Percentage of inputs to zero out
+            dense2: Number of neurons in second fully connected layer
+            dropout3: Percentage of final inputs to zero out
+
+        Returns:
+            tf.keras.Model: Compiled model ready for training
+        """
+        pre_trained_model = self._get_backbone_model(
+            backbone=backbone, image_shape=image_shape
+        )
+        pre_trained_model.trainable = unfreeze_from is not None
+
+        if unfreeze_from is not None:
+            for layer in pre_trained_model.layers[:unfreeze_from]:
+                layer.trainable = False
+
+        # Data augmentation pipeline
+        data_augmentation = self.get_data_augmentation(
             rotation=rotation,
             brightness=brightness,
             height=height,
@@ -270,7 +303,7 @@ for layer in pre_trained_model.layers[:-20]:
 
         # Numerical features section
         params_input = Input(shape=param_shape)
-        y = Dense(dense1, name="dense_param1", activation="relu")(params_input)
+        y = Dense(dense1, name="dense_1", activation="relu")(params_input)
         y = Dropout(dropout2, name="dropout_2")(
             y
         )  # Added to remove reliance on features
@@ -291,6 +324,8 @@ for layer in pre_trained_model.layers[:-20]:
         )(z)
 
         model = Model(inputs=[image_input, params_input], outputs=z)
+        model.summary()
+        return model
 ```
 
 For more details, see the [Configuration](#configuration) and [Usage Examples](#usage-examples) sections above.
