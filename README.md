@@ -32,6 +32,13 @@ This project implements a comprehensive machine learning pipeline for analyzing 
 
 The models use transfer learning with either MobileNetV2, ResNet, or EfficientNetB0 as the backbone and are optimized using Keras Tuner for hyperparameter optimization.
 
+
+<a href="https://github.com/c-lombardi23/ImageProcessingClone">
+  <img align="center" width="900" height="700" src="cleave_example_app.gif" alt="Fiber Cleave Classifier Demo">
+</a>
+
+
+
 ## Key Features
 
 - **Transfer Learning**: Uses pre-trained models for robust feature extraction
