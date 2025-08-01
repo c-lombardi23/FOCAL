@@ -1,8 +1,8 @@
 {
   "csv_path": "C:\\Thorlabs\\125PM_2_Categories.csv",
   "img_folder": "C:\\Thorlabs\\125PM\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\mlpfeature_scaler1.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\mlptension_scaler1.pkl",
+  "feature_scaler_path": "C:\\Users\\clombardi\\test_files\\mlpfeature_scaler1.pkl",
+  "label_scaler_path": "C:\\Users\\clombardi\\test_files\\mlptension_scaler1.pkl",
  
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
@@ -35,7 +35,7 @@
   "checkpoints": "n",
   "checkpoint_filepath": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\mlp_model3_checkpoint.keras",
 
-  "save_model_file": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\mlp_model_1.keras",
+  "save_model_file": "C:\\Users\\clombardi\\test_files\\mlp_model_1.keras",
 
   "set_mask": "y"
 }

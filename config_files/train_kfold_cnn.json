@@ -27,6 +27,8 @@
   "max_epochs": 2,
   "objective": "val_accuracy",
   "tension_threshold": 190,
+  "train_p": 0.9,
+  "test_p": 1.0,
 
   "brightness": 0.0,
   "height": 0.0,

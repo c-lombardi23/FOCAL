@@ -23,6 +23,8 @@
   "max_epochs": 3,
   "objective": "val_accuracy",
   "tension_threshold": 190,
+  "test_p": 0.9,
+  "train_p": 1.0,
 
   "early_stopping": "n",
   "patience": 5,

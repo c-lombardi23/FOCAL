@@ -38,6 +38,8 @@ class CNNHyperparameterSearch(BaseCommand):
             config.buffer_size,
             config.batch_size,
             feature_scaler_path=None,
+            train_p=config.train_p,
+            test_p=config.test_p
         )
 
         max_epochs = config.max_epochs or 20

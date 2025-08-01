@@ -1,6 +1,6 @@
 {
 
-    "agent_path": "C:\\Users\\clombardi\\RL\\agent22",
+    "agent_path": "C:\\Users\\clombardi\\RL\\agent23",
 
     "csv_path": "C:\\Users\\clombardi\\RL\\data.csv",
     "cnn_path": "C:\\Users\\clombardi\\RL\\cnn_surrogate3.pkl",
@@ -18,6 +18,6 @@
     "high_range": 1.3,
     "max_delta": 10.0,
     "max_tension_change": 25.0,
-    "timesteps":5000
+    "timesteps":50
 
 }

@@ -442,6 +442,10 @@ class CNNHyperparameterConfig(BaseConfig):
     buffer_size: int
     # Number of training epochs
     max_epochs: int
+    # Masking for train
+    train_p: float
+    # Masking for test set
+    test_p: float
     save_model_file: Optional[str]
 
 
