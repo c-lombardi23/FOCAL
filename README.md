@@ -51,6 +51,22 @@ The models use transfer learning with either MobileNetV2, ResNet, or EfficientNe
 - **Comprehensive Logging**: Training history and model checkpoints
 - **MFlow Support**: Allows user to track training and testing runs easily
 
+## 📊 Results & Performance
+
+The models were evaluated on a hold-out test set (typical 80/20 split). The multi-modal CNN demonstrates high performance in distinguishing between "good" and "bad" cleaves, while the XGBoost regression model provides accurate information on the direction to change tension value.
+
+### Classification (Multi-Modal CNN)
+
+  <img align="center" width="700" height="500" src="results_summary.png" alt="results_cnn">
+
+
+### Regression (XGBoost Tension Prediction)
+
+| Metric                    | Value |
+| ------------------------- | ----- |
+| Mean Absolute Error (MAE) | 3.5g  |
+| R-squared (R²)            | 0.89  |
+
 ## Installation
 
 ### Prerequisites
