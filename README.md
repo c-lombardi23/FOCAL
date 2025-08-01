@@ -49,6 +49,7 @@ The models use transfer learning with either MobileNetV2, ResNet, or EfficientNe
 - **GradCAM Visualization**: Model interpretability through heatmaps
 - **Command Line Interface**: Easy-to-use CLI for training and inference
 - **Comprehensive Logging**: Training history and model checkpoints
+- **MFlow Support**: Allows user to track training and testing runs easily
 
 ## Installation
 
