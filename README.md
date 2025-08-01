@@ -61,6 +61,10 @@ The models were evaluated on a hold-out test set (typical 80/20 split). The mult
 
 Comparison of metrics for individual models vs. final unified model
 
+<img align="center" width="500" height="800" src="Unified_classifier_confusion.png" alt="confusion_cnn">
+
+Confusion matrix for Unified CNN results
+
 ### Regression (XGBoost Tension Prediction)
 
 | Metric                    | Value |
