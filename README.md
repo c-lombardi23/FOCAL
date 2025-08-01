@@ -128,7 +128,7 @@ got to https://localhost:5000/ in browser
 
 ## Configuration
 
-The application uses a JSON configuration file to specify all parameters. **Each mode uses a dedicated config class with its own required and optional fields.** The CLI automatically loads the correct config class for the selected mode.
+The application uses a JSON configuration file to specify all parameters. **Each mode uses a dedicated config class with its own required and optional fields.** The CLI automatically loads the correct config class for the selected mode. There are skeleton configuration files provided for most of the different modes in the config_files/ folder.
 
 > **Note:** Not all parameters are required for every mode. Refer to the mode-specific config class or config.schema.json file for required/optional fields. The system will validate your config and provide clear errors if required fields are missing.
 
