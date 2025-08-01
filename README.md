@@ -4,13 +4,22 @@
   <img src="thorlabs-logo.png" alt="Thorlabs Logo", width="500">
 </p>
 
+[![Documentation Status](https://readthedocs.org/projects/your-project-slug/badge/?version=latest)](https://imageprocessingclone.readthedocs.io/en/latest/)
+
+
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![TensorFlow 2.19+](https://img.shields.io/badge/tensorflow-2.19+-orange.svg)](https://tensorflow.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A machine learning package for fiber cleave quality classification and tension prediction using CNN and MLP/XGboost models.
 
-## 📋 Table of Contents
+##  Documentation
+
+For a full guide, API reference, and detailed tutorials, please see the official documentation hosted on Read the Docs:
+
+**[https://imageprocessingclone.readthedocs.io/](https://imageprocessingclone.readthedocs.io/en/latest/)**
+
+##  Table of Contents
 
 - [Project Description](#project-description)
 - [Key Features](#key-features)
