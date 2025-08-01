@@ -22,6 +22,8 @@
   "backbone": "efficientnet",
   "unfreeze_from": 0,
   "classification_type": "binary",
+  "train_p": 0.9,
+  "test_p": 1.0,
 
   "//": "--- 3. Optional File Paths ---",
   "save_model_file": "./models/trained_cnn_model.keras",

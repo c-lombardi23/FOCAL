@@ -17,6 +17,8 @@
   "backbone_name": "resnet",
   "num_classes": 1,
   "classification_type": "binary",
+  "train_p": 0.9,
+  "test_p": 1.0,
 
 
   "learning_rate": 0.005,

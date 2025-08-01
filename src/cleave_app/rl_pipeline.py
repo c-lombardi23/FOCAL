@@ -38,8 +38,8 @@ class CleaveEnv(gym.Env):
         max_delta: float,
         max_tension_change: float,
         quality_weight=100.0,
-        proximity_weight = 50.0,
-        scale = 25.0
+        proximity_weight=50.0,
+        scale=25.0,
     ) -> None:
         """
         Initialize the environment.
@@ -272,7 +272,9 @@ class CleaveEnv(gym.Env):
 
         scale = self.SCALE
         # Gaussian reward for proximity to current ideal tension
-        proximity_reward = self.PROXIMITY_WEIGHT * np.exp(-(tension_error**2) / (2 * scale**2))
+        proximity_reward = self.PROXIMITY_WEIGHT * np.exp(
+            -(tension_error**2) / (2 * scale**2)
+        )
         reward += proximity_reward
 
         # Decrease reward if close to max or min tension

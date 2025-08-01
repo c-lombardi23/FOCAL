@@ -19,16 +19,32 @@ warnings.filterwarnings("ignore")
 
 try:
     import tensorflow as tf
-    from tensorflow.keras.applications import (EfficientNetB0, MobileNetV2,
-                                               ResNet50)
-    from tensorflow.keras.callbacks import (EarlyStopping, ModelCheckpoint,
-                                            ReduceLROnPlateau, TensorBoard)
-    from tensorflow.keras.layers import (Activation, BatchNormalization,
-                                         Concatenate, Conv2D, Dense, Dropout,
-                                         GlobalAveragePooling2D, Input,
-                                         MaxPooling2D, RandomBrightness,
-                                         RandomContrast, RandomRotation,
-                                         RandomZoom)
+    from tensorflow.keras.applications import (
+        EfficientNetB0,
+        MobileNetV2,
+        ResNet50,
+    )
+    from tensorflow.keras.callbacks import (
+        EarlyStopping,
+        ModelCheckpoint,
+        ReduceLROnPlateau,
+        TensorBoard,
+    )
+    from tensorflow.keras.layers import (
+        Activation,
+        BatchNormalization,
+        Concatenate,
+        Conv2D,
+        Dense,
+        Dropout,
+        GlobalAveragePooling2D,
+        Input,
+        MaxPooling2D,
+        RandomBrightness,
+        RandomContrast,
+        RandomRotation,
+        RandomZoom,
+    )
     from tensorflow.keras.models import Model, Sequential
     from tensorflow.keras.regularizers import l2
 except ImportError as e:

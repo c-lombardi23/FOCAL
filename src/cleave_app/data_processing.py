@@ -38,34 +38,14 @@ except ImportError as e:
     print("Please install tensorflow>=2.19.0 and scikit-learn>=1.7.0")
     tf = None
 
-# GLobal config variables
-# ==================================================================
-IMAGE_DIMS = [224, 224]
-IMAGE_SIZE = [224, 224, 3]
-TRAIN_P = 0.9
-TEST_P = 1.0
-REQ_COLUMNS = [
-    "CleaveAngle",
-    "CleaveTension",
-    "ScribeDiameter",
-    "Misting",
-    "Hackle",
-    "ImagePath",
-]
-FEATURES_CNN = [
-    "CleaveAngle",
-    "CleaveTension",
-    "ScribeDiameter",
-    "Misting",
-    "Hackle",
-]
-FEATURE_MLP = [
-    "CleaveAngle",
-    "ScribeDiameter",
-    "Misting",
-    "Hackle",
-]
-# ==================================================================
+# Import constants
+from cleave_app.constants import (
+    REQ_COLUMNS,
+    IMAGE_DIMS,
+    IMAGE_SIZE,
+    FEATURES_CNN,
+    FEATURE_MLP,
+)
 
 
 class DataCollector:
@@ -93,6 +73,8 @@ class DataCollector:
         Args:
             csv_path: Path to CSV file containing cleave metadata
             img_folder: Path to folder containing cleave images
+            angle_threshold: Maximum angle for good cleave
+            diameter_threshold: Maximum diameter for good cleave.
             backbone: Optional pre-trained model to use as frozen layer
             classifcation_type: multiclass, multi_label, binary
             backbone: Name of pre-trained backbone.
@@ -553,6 +535,8 @@ class DataCollector:
         labels: np.ndarray,
         buffer_size: int,
         batch_size: int,
+        train_p: float,
+        test_p: float,
         n_splits: int = 5,
     ) -> List[Tuple[tf.data.Dataset, tf.data.Dataset]]:
         """Create datasets based on stratified k-fold cross validation.
@@ -564,6 +548,8 @@ class DataCollector:
             buffer_size: Buffer size for dataset shuffling
             batch_size: Batch size for training
             n_splits: Number of k-fold splits
+            train_p: Masking probability for training
+            test_p: Masking probabilty for testing
 
         Returns:
             List of (train_ds, test_ds) tuples for each fold
@@ -600,7 +586,7 @@ class DataCollector:
                 batch_size=batch_size,
                 buffer_size=buffer_size,
                 masking=True,
-                p=TRAIN_P,
+                p=train_p,
             )
             test_ds = self._dataset_helper(
                 test_imgs,
@@ -610,7 +596,7 @@ class DataCollector:
                 batch_size=batch_size,
                 buffer_size=buffer_size,
                 masking=True,
-                p=TEST_P,
+                p=test_p,
             )
 
             datasets.append((train_ds, test_ds))
@@ -625,6 +611,8 @@ class DataCollector:
         test_size: float,
         buffer_size: int,
         batch_size: int,
+        train_p: float,
+        test_p: float,
         feature_scaler_path: Optional[str] = None,
     ) -> Tuple[tf.data.Dataset, tf.data.Dataset, Optional[dict[int, float]]]:
         """Create train and test datasets with feature scaling.
@@ -637,7 +625,8 @@ class DataCollector:
             buffer_size: Buffer size for dataset shuffling
             batch_size: Batch size for training
             feature_scaler_path: Optional path to save feature scaler
-            encoder_path: Optional path to save one-hot-encoder
+            train_p: Masking probability for training.
+            test_p: Masking probability for testing.
 
         Returns:
             Tuple of (train_ds, test_ds)
@@ -694,7 +683,7 @@ class DataCollector:
             batch_size=batch_size,
             buffer_size=buffer_size,
             masking=True,
-            p=TRAIN_P,
+            p=train_p,
         )
         test_ds = self._dataset_helper(
             test_imgs,
@@ -704,7 +693,7 @@ class DataCollector:
             batch_size=batch_size,
             buffer_size=buffer_size,
             masking=False,
-            p=TEST_P,
+            p=test_p,
         )
 
         return train_ds, test_ds, class_weights

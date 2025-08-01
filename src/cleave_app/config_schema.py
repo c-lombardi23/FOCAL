@@ -163,6 +163,10 @@ class TrainCNNConfig(ModelConfig):
     angle_threshold: float
     # The diameter threshold used for binary classification.
     diameter_threshold: float
+    # Making probability for training
+    train_p: float
+    # Masking probabilty for testing
+    test_p: float
     # The tension threshold used for binary classification.
     tension_threshold: Optional[int] = 190
     # The name of the pre-trained backbone to use (e.g., 'efficientnet').

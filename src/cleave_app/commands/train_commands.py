@@ -58,6 +58,8 @@ class TrainCNN(BaseCommand):
             config.buffer_size,
             config.batch_size,
             feature_scaler_path=config.feature_scaler_path,
+            train_p=config.train_p,
+            test_p=config.test_p,
         )
 
         trainable_model = CustomModel(
@@ -415,6 +417,8 @@ class KFoldCNN(BaseCommand):
             labels,
             config.buffer_size,
             config.batch_size,
+            train_p=config.train_p,
+            test_p=config.test_p,
         )
 
         _, kfold_histories = CustomModel.train_kfold(
