@@ -41,6 +41,7 @@ def test_test_mlp(mocker, test_mlp_config):
         np.array([23.45, -32.5, 10.0]),
         np.array([200, 134, 165]),
         np.array([10.6, -45.6, 120.34]),
+        43.3
     )
 
     mock_log_run = mocker.patch(

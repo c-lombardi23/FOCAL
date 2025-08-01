@@ -42,6 +42,7 @@ def test_test_xgb(mocker, test_xgb_config):
         np.array([23.45, -32.5, 10.0]),
         np.array([200, 134, 165]),
         np.array([10.6, -45.6, 120.34]),
+        43.5
     )
     mock_log_run = mocker.patch(
         "cleave_app.commands.test_commands.log_regressor_test_results"
