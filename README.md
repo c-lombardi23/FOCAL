@@ -321,8 +321,7 @@ FiberCleaveProcessing/
 ├── src/
 │   └── cleave_app/          # Main application source code package
 │       ├── __init__.py
-│       ├── commands/            # Houses the command-line interface logic
-│       ├── constants.py         # Shared constants (e.g., column names)
+│       ├── commands/            # Houses the commands for each mode
 │       ├── config_schema.py     # Pydantic models for configuration validation
 │       ├── data_processing.py   # Data loading, cleaning, and dataset creation
 │       ├── main.py              # Main CLI entry point
