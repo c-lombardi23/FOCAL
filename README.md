@@ -102,7 +102,7 @@ sphinx-build docs/source docs/build
 cd docs/build
 python -m http.server 8000
 ```
-go to http://localhost:8000/ in browser 
+navigate to local host in browser with specified port number
 
 ### Displaying MLFlow Runs
 
@@ -110,7 +110,7 @@ go to http://localhost:8000/ in browser
 mlflow ui
 ```
 
-got to https://localhost:5000/ in browser
+navigate to local host in browser with specified port number
 
 
 ## Quick Start
