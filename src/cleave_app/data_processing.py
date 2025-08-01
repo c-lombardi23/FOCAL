@@ -192,6 +192,11 @@ class DataCollector:
         if not filepath.endswith(".pkl"):
             filepath = filepath + ".pkl"
 
+        dir_path = os.path.dirname(filepath)
+
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+
         if not os.path.exists(filepath):
             joblib.dump(obj, filepath)
         else:
