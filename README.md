@@ -4,7 +4,7 @@
   <img src="thorlabs-logo.png" alt="Thorlabs Logo", width="500">
 </p>
 
-[![Documentation Status](https://readthedocs.org/projects/your-project-slug/badge/?version=latest)](https://imageprocessingclone.readthedocs.io/en/latest/)
+[![Documentation Status](https://readthedocs.org/projects/your-project-slug/badge/?version=latest)](https://focal.readthedocs.io/en/latest/)
 
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -17,7 +17,7 @@ A machine learning package for fiber cleave quality classification and tension p
 
 For a full guide, API reference, and detailed tutorials, please see the official documentation hosted on Read the Docs:
 
-**[https://imageprocessingclone.readthedocs.io/](https://imageprocessingclone.readthedocs.io/en/latest/)**
+**[https://focal.readthedocs.io/](https://focal.readthedocs.io/en/latest/)**
 
 ##  Table of Contents
 
@@ -43,7 +43,7 @@ This project implements a comprehensive machine learning pipeline for analyzing 
 The models use transfer learning with either MobileNetV2, ResNet, or EfficientNetB0 as the backbone and are optimized using Keras Tuner for hyperparameter optimization.
 
 
-<a href="https://github.com/c-lombardi23/ImageProcessingClone">
+<a href="https://github.com/c-lombardi23/FOCAL">
   <img align="center" width="900" height="700" src="cleave_example_app.gif" alt="Fiber Cleave Classifier Demo">
 </a>
 
