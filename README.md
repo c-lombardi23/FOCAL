@@ -240,7 +240,7 @@ If your image-only model is not achieving the desired accuracy, consider the fol
 - **Image Preprocessing:** Ensure images are normalized to the range expected by the backbone (done in code already).
 - **Train Longer with Early Stopping:** Allow more epochs and use early stopping to avoid underfitting.
 
-### Example: Improved Image-Only Model Architecture
+### Example: Improved  Model Architecture
 
 ```python
 def _build_pretrained_model(
