@@ -26,6 +26,20 @@ Here is an example of a ``config.json`` for the ``train_cnn`` mode:
      "cnn_mode": "bad_good",
      "classification_type": "binary",
      "num_classes": 1,
+
+    "learning_rate": 0.005,
+    "batch_size": 16,
+    "buffer_size": 40,
+    "test_size": 0.25,
+    "max_epochs": 2,
+    "objective": "val_accuracy",
+
+    "brightness": 0.3,
+    "height": 0.2,
+    "width": 0.6,
+    "contrast": 0.7,
+    "rotation": 0.45,
+
      "angle_threshold": 0.5,
      "diameter_threshold": 125.0,
      "dense1": 32,
@@ -560,6 +574,11 @@ Generates a Grad-CAM heatmap to visualize which parts of an image the CNN is foc
      - Yes*
      - `null`
      - Required if the model takes numerical inputs.
+   * - ``class_index``
+     - int
+     - Yes
+     - -
+     - Index of classification problem.
    * - ``backbone``
      - string
      - No
@@ -575,6 +594,12 @@ Generates a Grad-CAM heatmap to visualize which parts of an image the CNN is foc
      - No
      - `null`
      - Path to save the output heatmap image.
+   * - ``backbone``
+     - string
+     - No
+     - `efficientnet`
+     - Name of pre-trained backbone.
+   
 
 Reinforcement Learning
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -605,20 +630,60 @@ Train or test an agent with reinforcement learning to predict optimal tension.
    * - ``img_folder``
      - string (path)
      - Yes
-     - `null`
+     - -
      - Path to the saved images.
    * - ``agent_path``
      - string (path)
      - Yes
-     - `null`
+     - -
      - Path to save (or load) trained agent.
    * - ``learning_rate``
      - float
      - Yes
-     - `null`
+     - -
      - Typical learning rate for ML.
    * - ``buffer_size``
      - int
      - Yes
-     - `null`
+     - -
      - Size of replay buffer.
+   * - ``threshold``
+     - float
+     - Yes
+     - -
+     - Classification threshold.
+   * - ``max_tension_change``
+     - float
+     - Yes
+     - -
+     - Maximum tension change per episode. 
+   * - ``batch_size``
+     - int
+     - No
+     - `256``
+     - Batch for training.
+   * - ``tau``
+     - float
+     - No
+     - `0.1`
+     - -
+   * - ``learning_rate``
+     - float
+     - No
+     - `0.0001`
+     - Size of steps to take during training.
+   * - ``timesteps``
+     - int
+     - No
+     - `5000`
+     - Number of training rounds.
+   * - ``low_range```
+     - float
+     - No
+     - `0.7`
+     - Low percentage of tension.
+   * - ``high_range``
+     - float
+     - No
+     - `1.4`
+     - High percentage of tension.  
