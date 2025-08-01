@@ -21,6 +21,7 @@ Submodules
    :maxdepth: 4
 
    cleave_app.config_schema
+   cleave_app.constants
    cleave_app.data_processing
    cleave_app.grad_cam
    cleave_app.hyperparameter_tuning

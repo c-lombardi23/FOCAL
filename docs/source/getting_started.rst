@@ -17,13 +17,7 @@ Prerequisites
 Step 1: Clone and Install
 -------------------------
 
-First, clone the repository and install the package in "editable" mode. This makes the `cleave-app` command available in your terminal.
-
-.. code-block:: bash
-
-   git clone http://github.com/c-lombardi23/ImageProcessingClone.git
-   cd ImageProcessingClone
-   pip install -e ".[dev]"
+See the :doc:`Installation <installation>` to install the package.
 
 Step 2: Prepare Your Data
 -------------------------
@@ -41,7 +35,7 @@ The application expects your data to be organized in a specific way.
        └── your_config.json
 
 - **`images/`**: A folder containing all your PNG or JPG images.
-- **`data.csv`**: A CSV file containing image filenames and their corresponding features. Must include the columns: ``CleaveAngle``, ``CleaveTension``, ``ScribeDiameter``, ``Misting``, ``Hackle``, ``Tearing``.
+- **`data.csv`**: A CSV file containing image filenames and their corresponding features. It **must** include an ``ImagePath`` column with the relative path to the image file (e.g., `image1.png`), in addition to the feature columns: ``CleaveAngle``, ``CleaveTension``, ``ScribeDiameter``, ``Misting``, ``Hackle``, ``Tearing``.
 
 Step 3: Create a Minimal Configuration
 ---------------------------------------
@@ -89,14 +83,18 @@ You are now ready to run the command-line interface. Point it to the configurati
 
 You will see training progress in the console. When it's finished, you will find `my_first_model.keras` in your project root.
 
-Step 5: Track Training and Testing on MLFlow
---------------------------------------------
+Step 5: Track Your Run with MLflow
+----------------------------------
+
+This project is integrated with MLflow for experiment tracking. After your training run completes, you will see a new `mlruns` directory in your project folder.
+
+To visualize the results, launch the MLflow UI:
 
 .. code-block:: bash
 
    mlflow ui
 
-Go to https://localhost:5000/ in browser to view and track info with mlflow gui.
+This command reads the data from the `mlruns` directory and serves a web interface. Go to `http://localhost:5000` in your browser to view your run's parameters, metrics, and saved model artifacts.
 
 
 Step 6: What's Next?

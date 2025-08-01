@@ -274,12 +274,12 @@ Trains a hybrid model on a combination of images and tabular features.
      - Yes
      - -
      - Threshold for diameter-based classification logic.
-  * - ``train_p``
+   * - ``train_p``
      - float
      - Yes
      - -
      - Masking probability for training features.
-     * - ``test_p``
+   * - ``test_p``
      - float
      - Yes
      - -

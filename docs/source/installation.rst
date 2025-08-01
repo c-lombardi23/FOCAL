@@ -11,18 +11,29 @@ Requirements
 Install from Source
 -------------------
 
-To install the latest development version::
+First, clone the repository, create and activate a virtual environment, and then install the package in "editable" mode. This makes the `cleave-app` command available in your terminal.
 
-    git clone https://github.com/yourusername/ImageProcessingClone.git
-    cd ImageProcessingClone
-    pip install -e .
+.. code-block:: bash
 
-Verify Installation
--------------------
+   git clone http://github.com/c-lombardi23/ImageProcessingClone.git
+   cd ImageProcessingClone
 
-Test that the installation worked::
+   # Create and activate a virtual environment (recommended)
+   python -m venv venv
+   source venv/bin/activate  # On Linux/macOS
+   # venv\Scripts\activate    # On Windows
 
-    python -c "import cleave_app; print('Installation successful!')"
+   # Install the package and its development dependencies
+   pip install -e ".[dev]"
+
+Verify the Installation
+-----------------------
+
+After installation, run the following command to see all available options and confirm the CLI is working:
+
+.. code-block:: bash
+    
+    cleave-app --help
 
 Dependencies
 ------------
