@@ -54,7 +54,7 @@ The models use transfer learning with either MobileNetV2, ResNet, or EfficientNe
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - TensorFlow 2.19 or higher
 - CUDA-compatible GPU (recommended for training)
 
