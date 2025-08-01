@@ -6,19 +6,15 @@ class, inheriting common fields and validators from BaseConfig,
 EarlyStoppingMixin, and CheckpointMixin.
 """
 
-# Import necessary standard library modules for JSON handling and OS path checks.
 import json
 import os
 from pathlib import Path
 
-# Import typing hints for better code clarity and static analysis.
 from typing import Dict, List, Literal, Optional, Type
 
-# Import core components from Pydantic for data validation and modeling.
 from pydantic import BaseModel, field_validator, model_validator
 
 
-# Define a Mixin class for Early Stopping parameters.
 class EarlyStoppingMixin(BaseModel):
     """Adds early-stopping configuration parameters."""
 
@@ -32,7 +28,6 @@ class EarlyStoppingMixin(BaseModel):
     method: Literal["max", "min"] = "max"
 
 
-# Define a Mixin class for Model Checkpointing parameters.
 class CheckpointMixin(BaseModel):
     """Adds model-checkpointing configuration parameters."""
 
@@ -46,7 +41,6 @@ class CheckpointMixin(BaseModel):
     method: Literal["max", "min"] = "max"
 
 
-# Define the base configuration class that all other configs inherit from.
 class BaseConfig(BaseModel):
     """Basic config for all classes."""
 
@@ -74,7 +68,6 @@ class BaseConfig(BaseModel):
         # If the path exists, return the value to be used.
         return value
 
-    # Define a Pydantic validator for the 'mode' field.
     @field_validator("mode")
     @classmethod
     def valid_modes(cls, value):
@@ -86,7 +79,6 @@ class BaseConfig(BaseModel):
         return value
 
 
-# Define a comprehensive configuration class for training models.
 class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     """
     Configuration for building, training, and evaluating a machine learning model.
@@ -150,7 +142,6 @@ class ModelConfig(BaseConfig, EarlyStoppingMixin, CheckpointMixin):
     continue_train: Optional[str] = None
 
 
-# Define configuration specific to training the hybrid CNN+MLP model.
 class TrainCNNConfig(ModelConfig):
     # Specifies the mode within CNN training.
     cnn_mode: str
@@ -185,7 +176,6 @@ class TrainCNNConfig(ModelConfig):
     # The type of classification ('binary' or 'multiclass').
     classification_type: Literal["binary", "multiclass"] = "binary"
 
-    # Define a Pydantic model validator that runs after initial field validation.
     @model_validator(mode="after")
     def valid_shapes(self):
         # Validate that the feature shape is correct for this mode.
@@ -198,7 +188,6 @@ class TrainCNNConfig(ModelConfig):
         return self
 
 
-# Define configuration specific to training the MLP-only model.
 class TrainMLPConfig(ModelConfig):
     # backbone name from CNN training
     backbone: str
@@ -234,7 +223,6 @@ class TrainMLPConfig(ModelConfig):
         return self
 
 
-# Define configuration specific to testing the hybrid CNN+MLP model.
 class TestCNNConfig(BaseConfig):
     classification_threshold: Optional[float] = 0.5
     # Specifies the mode within CNN testing.
@@ -275,7 +263,6 @@ class TestCNNConfig(BaseConfig):
         return self
 
 
-# Define configuration specific to testing the MLP-only model.
 class TestMLPConfig(BaseConfig):
     angle_threshold: float
     diameter_threshold: float
@@ -301,7 +288,6 @@ class TestMLPConfig(BaseConfig):
         return self
 
 
-# Define configuration for testing an image-only classification model.
 class TestImageOnlyConfig(BaseConfig):
     angle_threshold: float
     diameter_threshold: float
@@ -319,19 +305,16 @@ class TestImageOnlyConfig(BaseConfig):
     classification_path: Optional[str] = None
 
 
-# Define a config for K-Fold Cross-Validation on the CNN model.
 class TrainKFoldCNNConfig(TrainCNNConfig):
     # This class inherits all fields and validators from TrainCNNConfig.
     pass
 
 
-# Define a config for K-Fold Cross-Validation on the MLP model.
 class TrainKFoldMLPConfig(TrainMLPConfig):
     # This class inherits all fields and validators from TrainMLPConfig.
     pass
 
 
-# Define configuration for training an XGBoost model.
 class TrainXGBoostConfig(ModelConfig):
     # MSA or RMSE
     error_type: str
@@ -353,7 +336,6 @@ class TrainXGBoostConfig(ModelConfig):
     diameter_threshold: float
 
 
-# Define configuration for testing an XGBoost model.
 class TestXGBoostConfig(TestMLPConfig):
     # Path to the trained XGBoost model file.
     xgb_path: str
@@ -363,7 +345,6 @@ class TestXGBoostConfig(TestMLPConfig):
     diameter_threshold: float
 
 
-# Define configuration for generating Grad-CAM heatmaps.
 class GradCamConfig(BaseModel):
     mode: str
     # Path to the input image for Grad-CAM.
@@ -390,7 +371,6 @@ class GradCamConfig(BaseModel):
     heatmap_file: Optional[str] = None
 
 
-# Define configuration for training an image-only classification model.
 class TrainImageOnlyConfig(ModelConfig):
     """Configuration for training an image-only classification model."""
 
@@ -429,7 +409,6 @@ class TrainImageOnlyConfig(ModelConfig):
     # Maximum contrast adjustment factor for data augmentation.
     contrast: Optional[float] = 0.0
 
-    # Define a post-validation check for this model.
     @model_validator(mode="after")
     def valid_shapes(self):
         # Allow both 3-channel (RGB) and 1-channel (grayscale) images.
@@ -462,7 +441,6 @@ class CNNHyperparameterConfig(BaseConfig):
     save_model_file: Optional[str]
 
 
-# Define a config for hyperparameter tuning the image-only model.
 class ImageHyperparameterConfig(TrainImageOnlyConfig):
     # This class inherits all fields from TrainImageOnlyConfig.
     pass
@@ -530,7 +508,9 @@ class TrainRLConfig(BaseModel):
 
 
 class TestRLConfig(TrainRLConfig):
+    # Number of episodes to run for training
     episodes: int
+    # Name of MLFlow run
     run_name: str
 
 
@@ -556,7 +536,6 @@ MODE_TO_CONFIG: Dict[str, Type[BaseConfig]] = {
 }
 
 
-# A factory function to load the correct configuration class based on the mode.
 def load_config(filepath: str) -> BaseConfig:
     """Loads a configuration object from a JSON file based on the 'mode' field."""
 
