@@ -74,6 +74,15 @@ Confusion matrix for Unified CNN results
 </p>
 True change in tension vs. predcited change in tension for XGBoost model
 
+### Grad-CAM
+
+To ensure the CNN is learning relevant physical features, Grad-CAM visualizations were generated. The heatmaps confirm that the model is correctly focusing on the desired features.
+
+<p align="center">
+<img align="center" width="800" height="500" src="heatmap1.png" alt="heatmap">
+</p>
+
+
 ## Installation
 
 ### Prerequisites
