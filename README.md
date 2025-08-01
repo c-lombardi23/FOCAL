@@ -104,8 +104,8 @@ To ensure the CNN is learning relevant physical features, Grad-CAM visualization
 
 ```bash
 # Clone the repository
-git clone https://github.com/c-lombardi23/ImageProcessingClone.git
-cd ImageProcessing
+git clone https://github.com/c-lombardi23/FOCAL.git
+cd FOCAL
 
 
 # Create Virtual Enviornment
@@ -129,7 +129,7 @@ pip install -e ".[dev]"
 ### Verify Installation
 
 ```bash
-cleave-app --help
+focal --help
 
 ```
 ### Build Documentation
@@ -387,7 +387,7 @@ For more details, see the [Configuration](#configuration) and [Usage Examples](#
 ## Project Structure
 
 ```
-FiberCleaveProcessing/
+focal-ai/
 ├── .github/                 # GitHub Actions and workflow configurations
 ├── config_files/            # Example JSON configuration files for different modes
 ├── docs/                    # Sphinx documentation source and build files
@@ -454,7 +454,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you encounter any issues or have questions:
 
-1. Check the [Issues](https://github.com/c-lombardi23/ImageProcessingClone/issues) page
+1. Check the [Issues](https://github.com/c-lombardi23/FOCAL/issues) page
 2. Create a new issue with detailed information
 3. Contact: clombardi23245@gmail.com
 
