@@ -1,4 +1,4 @@
-"""Main CLI module for the Fiber Cleave Processing application.
+"""Main CLI module for the FOCAL.
 
 This module provides the command-line interface for training and testing
 CNN and MLP models for fiber cleave quality classification and tension
@@ -66,12 +66,12 @@ def main(args: Optional[list] = None) -> int:
         int: Exit code (0 for success, 1 for error)
     """
     parser = argparse.ArgumentParser(
-        description="Fiber Cleave Processing CLI",
+        description="FOCAL CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  cleave-app --file_path config.json
-  cleave-app --file_path /path/to/config.json
+  focal --file_path config.json
+  focal --file_path /path/to/config.json
         """,
     )
 

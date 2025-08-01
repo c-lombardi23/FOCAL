@@ -67,7 +67,7 @@ setup(
     },
     keywords="machine-learning computer-vision fiber-optics image-processing cnn mlp",
     project_urls={
-        "Documentation": "https://focal.readthedocs.io/",
+        "Documentation": "https://focal.readthedocs.io/en/latest/",
         "Bug Reports": "https://github.com/c-lombardi23/FOCAL/issues",
         "Source": "https://github.com/c-lombardi23/FOCAL",
     },
