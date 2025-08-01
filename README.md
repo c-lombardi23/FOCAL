@@ -7,7 +7,7 @@
 [![TensorFlow 2.19+](https://img.shields.io/badge/tensorflow-2.19+-orange.svg)](https://tensorflow.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A machine learning package for fiber cleave quality classification and tension prediction using CNN and MLP models.
+A machine learning package for fiber cleave quality classification and tension prediction using CNN and MLP/XGboost models.
 
 ## 📋 Table of Contents
 
