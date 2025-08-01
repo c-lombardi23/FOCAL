@@ -1,4 +1,4 @@
-# Fiber Cleave Processing
+# FOCAL (Fiber Optic Cleave Analyzer and Learner)
 
 <p align="center">
   <img src="thorlabs-logo.png" alt="Thorlabs Logo", width="500">

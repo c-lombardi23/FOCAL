@@ -8,12 +8,12 @@ building and distributing the Fiber Cleave Processing CLI/toolkit.
 from setuptools import find_packages, setup
 
 setup(
-    name="FiberCleaveProcessing",
+    name="focal-ai",
     version="0.1.0",
     description="Fiber cleave quality classifier and tension predictor using CNN + MLP models",
     author="Chris Lombardi",
     author_email="clombardi23245@gmail.com",
-    url="https://github.com/c-lombardi23/ImageProcessing",
+    url="https://github.com/c-lombardi23/FOCAL",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
@@ -62,12 +62,13 @@ setup(
     python_requires=">=3.8",
     entry_points={
         "console_scripts": [
-            "cleave-app=cleave_app.main:main",
+            "focal=cleave_app.main:main",
         ],
     },
     keywords="machine-learning computer-vision fiber-optics image-processing cnn mlp",
     project_urls={
-        "Bug Reports": "https://github.com/c-lombardi23/ImageProcessing/issues",
-        "Source": "https://github.com/c-lombardi23/ImageProcessing",
+        "Documentation": "https://focal.readthedocs.io/",
+        "Bug Reports": "https://github.com/c-lombardi23/FOCAL/issues",
+        "Source": "https://github.com/c-lombardi23/FOCAL",
     },
 )

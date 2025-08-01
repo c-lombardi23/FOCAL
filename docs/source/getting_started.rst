@@ -3,7 +3,7 @@
 Getting Started
 ===============
 
-Welcome to Fiber Cleave Processing! This guide provides a hands-on walkthrough to get you from installation to training your first classification model in just a few minutes.
+Welcome to FOCAL (Fiber Optic Cleave Analyzer and Learner)! This guide provides a hands-on walkthrough to get you from installation to training your first classification model in just a few minutes.
 
 .. note::
    This guide focuses on one common task to get you started quickly. For a full list of all configuration options and modes, please see the :doc:`Configuration <configuration>` page.

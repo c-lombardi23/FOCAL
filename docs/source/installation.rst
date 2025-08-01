@@ -32,8 +32,8 @@ Verify the Installation
 After installation, run the following command to see all available options and confirm the CLI is working:
 
 .. code-block:: bash
-    
-    cleave-app --help
+
+    focal --help
 
 Dependencies
 ------------
