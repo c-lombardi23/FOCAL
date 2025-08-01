@@ -1,7 +1,7 @@
 # Fiber Cleave Processing
 
 <p align="center">
-  <img src="thorlabs_logo.png" alt="Thorlabs Logo", width="400">
+  <img src="thorlabs-logo.png" alt="Thorlabs Logo", width="400">
 </p>
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
