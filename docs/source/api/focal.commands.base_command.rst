@@ -1,7 +1,7 @@
-cleave\_app.data\_processing module
+focal.commands.base\_command module
 ===================================
 
-.. automodule:: cleave_app.data_processing
+.. automodule:: focal.commands.base_command
    :members:
    :undoc-members:
    :show-inheritance:

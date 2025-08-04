@@ -39,7 +39,7 @@ except ImportError as e:
     tf = None
 
 # Import constants
-from cleave_app.constants import (
+from focal.constants import (
     REQ_COLUMNS,
     IMAGE_DIMS,
     IMAGE_SIZE,

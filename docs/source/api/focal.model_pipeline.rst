@@ -1,7 +1,7 @@
-cleave\_app.grad\_cam module
+focal.model\_pipeline module
 ============================
 
-.. automodule:: cleave_app.grad_cam
+.. automodule:: focal.model_pipeline
    :members:
    :undoc-members:
    :show-inheritance:

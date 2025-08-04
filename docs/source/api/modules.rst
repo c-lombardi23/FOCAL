@@ -1,7 +1,7 @@
-cleave_app
-==========
+focal
+=====
 
 .. toctree::
    :maxdepth: 4
 
-   cleave_app
+   focal

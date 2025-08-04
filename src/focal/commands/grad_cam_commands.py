@@ -1,6 +1,6 @@
 """This module enables displaying a heatmap for an image."""
 
-from cleave_app.grad_cam import GradCAM
+from focal.grad_cam import GradCAM
 
 from .base_command import BaseCommand
 

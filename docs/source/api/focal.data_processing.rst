@@ -1,7 +1,7 @@
-cleave\_app.mlp\_model module
+focal.data\_processing module
 =============================
 
-.. automodule:: cleave_app.mlp_model
+.. automodule:: focal.data_processing
    :members:
    :undoc-members:
    :show-inheritance:

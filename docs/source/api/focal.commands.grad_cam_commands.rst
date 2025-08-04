@@ -1,7 +1,7 @@
-cleave\_app.commands.base\_command module
+focal.commands.grad\_cam\_commands module
 =========================================
 
-.. automodule:: cleave_app.commands.base_command
+.. automodule:: focal.commands.grad_cam_commands
    :members:
    :undoc-members:
    :show-inheritance:

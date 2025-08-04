@@ -14,7 +14,7 @@ echo "=========================================================="
 echo " GENERATING API SOURCE FILES (.rst)"
 echo "=========================================================="
 # Use forward slashes for paths in bash
-sphinx-apidoc -f -e -M -o source/api ../src/cleave_app 
+sphinx-apidoc -f -e -M -o source/api ../src/focal
 
 echo ""
 echo "=========================================================="

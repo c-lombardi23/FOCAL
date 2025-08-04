@@ -1,7 +1,7 @@
-cleave\_app.xgboost\_pipeline module
+focal.commands.test\_commands module
 ====================================
 
-.. automodule:: cleave_app.xgboost_pipeline
+.. automodule:: focal.commands.test_commands
    :members:
    :undoc-members:
    :show-inheritance:

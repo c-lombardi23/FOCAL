@@ -1,7 +1,7 @@
-cleave\_app.main module
+focal.mlp\_model module
 =======================
 
-.. automodule:: cleave_app.main
+.. automodule:: focal.mlp_model
    :members:
    :undoc-members:
    :show-inheritance:

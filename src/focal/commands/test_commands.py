@@ -1,17 +1,17 @@
 """This module define the logic for testing each model."""
 
-from cleave_app.mlflow_utils import (
+from focal.mlflow_utils import (
     log_classifier_test_results,
     log_regressor_test_results,
     log_rl_test,
 )
-from cleave_app.prediction_testing import (
+from focal.prediction_testing import (
     TensionPredictor,
     TestPredictions,
     TestTensionPredictions,
 )
-from cleave_app.rl_pipeline import TestAgent
-from cleave_app.xgboost_pipeline import XGBoostPredictor
+from focal.rl_pipeline import TestAgent
+from focal.xgboost_pipeline import XGBoostPredictor
 
 from .base_command import BaseCommand
 

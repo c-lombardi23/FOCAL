@@ -4,21 +4,21 @@ import traceback
 
 import tensorflow as tf
 
-from cleave_app.data_processing import (
+from focal.data_processing import (
     BadCleaveTensionClassifier,
     DataCollector,
     MLPDataCollector,
 )
-from cleave_app.mlflow_utils import (
+from focal.mlflow_utils import (
     log_cnn_training_run,
     log_image_training_run,
     log_mlp_training_run,
     log_xgb_training_run,
 )
-from cleave_app.mlp_model import BuildMLPModel
-from cleave_app.model_pipeline import CustomModel
-from cleave_app.rl_pipeline import TrainAgent
-from cleave_app.xgboost_pipeline import XGBoostModel
+from focal.mlp_model import BuildMLPModel
+from focal.model_pipeline import CustomModel
+from focal.rl_pipeline import TrainAgent
+from focal.xgboost_pipeline import XGBoostModel
 
 from .base_command import BaseCommand
 from .utils import _setup_callbacks

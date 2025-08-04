@@ -2,13 +2,13 @@
 
 import mlflow.keras
 
-from cleave_app.data_processing import DataCollector, MLPDataCollector
-from cleave_app.hyperparameter_tuning import (
+from focal.data_processing import DataCollector, MLPDataCollector
+from focal.hyperparameter_tuning import (
     HyperParameterTuning,
     ImageHyperparameterTuning,
     MLPHyperparameterTuning,
 )
-from cleave_app.mlflow_utils import (
+from focal.mlflow_utils import (
     log_cnn_hyperparameter,
     log_mlp_hyperparameter,
 )
