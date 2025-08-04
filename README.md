@@ -11,7 +11,7 @@
 [![TensorFlow 2.19+](https://img.shields.io/badge/tensorflow-2.19+-orange.svg)](https://tensorflow.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A machine learning package for fiber cleave quality classification and tension prediction using CNN and MLP/XGboost models.
+A machine learning package for training and testing models geared towards fiber cleave classification and optimization.
 
 ##  Documentation
 
@@ -36,9 +36,10 @@ For a full guide, API reference, and detailed tutorials, please see the official
 
 This project implements a comprehensive machine learning pipeline for analyzing fiber cleave quality using images from the THORLABS Fiber Cleave Analyzer (FCA). The system consists of three main components:
 
-1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features alone or inclusiong of numerical features
+1. **CNN Classification Model**: Classifies cleave images as good or bad based on visual features alone or inclusion of numerical features
 2. **MLP Regression Model**: Predicts optimal tension parameters for producing good cleaves
-3. **XGBoost Regression Model**: Predicts the change in tension needed to produce a good cleave 
+3. **XGBoost Regression Model**: Predicts the change in tension needed to produce a good cleave
+4. **Reinforcement Learning**: Still in testing - Predicts absolute change in tension needed and updates FCA settings in real time 
 
 The models use transfer learning with either MobileNetV2, ResNet, or EfficientNetB0 as the backbone and are optimized using Keras Tuner for hyperparameter optimization.
 
@@ -51,25 +52,25 @@ The models use transfer learning with either MobileNetV2, ResNet, or EfficientNe
 
 ## Key Features
 
-- **Transfer Learning**: Uses pre-trained models for robust feature extraction
+- **Transfer Learning**: Uses pre-trained models for efficient feature extraction
 - **Multi-Modal Input**: Combines image features with numerical parameters
 - **Hyperparameter Optimization**: Automated tuning using Keras Tuner
 - **Flexible Architecture**: Supports both classification and regression tasks
 - **K-Fold Cross Validation**: Robust model evaluation
-- **GradCAM Visualization**: Model interpretability through heatmaps
+- **GradCAM++ Visualization**: Model interpretability through heatmaps
 - **Command Line Interface**: Easy-to-use CLI for training and inference
 - **Comprehensive Logging**: Training history and model checkpoints
 - **MFlow Support**: Allows user to track training and testing runs easily
 
 ## 📊 Results & Performance
 
-The models were evaluated on a hold-out test set (typical 80/20 split). The multi-modal CNN demonstrates high performance in distinguishing between "good" and "bad" cleaves, while the XGBoost regression model provides accurate information on the direction to change tension value.
+The models were evaluated on a hold-out test set (typical 80/20 split). The multi-modal CNN demonstrates high performance in distinguishing between successful and unsuccessful cleaves, while the XGBoost and MLP regression models provide accurate information on the direction to change tension value.
 
 ### Classification (Multi-Modal CNN)
 <p align="center">
 <img align="center" width="700" height="500" src="results_summary.png" alt="results_cnn">
 </p>
-Comparison of metrics for individual models vs. final unified model
+Comparison of metrics for individual models per fiber vs. final unified model
 
 <p align="center">
 <img align="center" width="500" height="800" src="Unified_classifier_confusion.png" alt="confusion_cnn">
@@ -158,14 +159,14 @@ navigate to local host in browser with specified port number
 ## Quick Start
 
 1. **Prepare your data**:
-   - Organize cleave images in a folder
-   - Create a CSV file with metadata (tension, angle, scribe diameter, misting, hackle, tearing)
+   - Organize cleave images in a  dedicated folder
+   - Create a CSV file with metadata (fiber type, tension, angle, scribe diameter, misting, hackle, tearing)
 
 2. **Create a configuration file** (see [Configuration](#configuration) section)
 
 3. **Train a classification model**:
    ```bash
-   cleave-app --file_path config.json
+   focal --file_path config.json
    ```
 
 ## Configuration
@@ -238,39 +239,39 @@ The application uses a JSON configuration file to specify all parameters. **Each
 
 ```bash
 # Train CNN model
-cleave-app --file_path config_cnn.json
+focal --file_path config_cnn.json
 
 # Train with hyperparameter optimization
-cleave-app --file_path config_cnn_tuner.json
+focal --file_path config_cnn_tuner.json
 ```
 
 ### Training a Regression Model
 
 ```bash
 # Train MLP model for tension prediction
-cleave-app --file_path config_mlp.json
+focal --file_path config_mlp.json
 ```
 
 ### Testing Models
 
 ```bash
 # Test classification model
-cleave-app --file_path config_test_cnn.json
+focal --file_path config_test_cnn.json
 
 # Test regression model
-cleave-app --file_path config_test_mlp.json
+focal --file_path config_test_mlp.json
 ```
 
 ### K-Fold Cross Validation
 
 ```bash
 # Train with k-fold cross validation
-cleave-app --file_path config_kfold.json
+focal --file_path config_kfold.json
 ```
 
 ## Tips for Better Accuracy
 
-If your image-only model is not achieving the desired accuracy, consider the following strategies:
+If your image-only model is not achieving the desired performance, consider the following strategies:
 
 - **Fine-tune the Pretrained Backbone:** Unfreeze the last 10–20 layers of the pre-trained and continue training with a low learning rate.
 - **Increase Model Capacity:** Add more dense layers or increase the number of units after the global average pooling layer.
@@ -281,6 +282,7 @@ If your image-only model is not achieving the desired accuracy, consider the fol
 - **Hyperparameter Tuning:** Use Keras Tuner to search for the best architecture and training parameters.
 - **Image Preprocessing:** Ensure images are normalized to the range expected by the backbone (done in code already).
 - **Train Longer with Early Stopping:** Allow more epochs and use early stopping to avoid underfitting.
+- **Increase Dataset Size** As a final solution, more data is always better. 
 
 ### Example: Improved  Model Architecture
 
