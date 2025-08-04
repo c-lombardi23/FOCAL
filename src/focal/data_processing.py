@@ -163,6 +163,7 @@ class DataCollector:
 
         if self.classification_type == "multiclass":
             df["CleaveCategory"] = df.apply(label, axis=1)
+            print(df["CleaveCategory"].value_counts())
             return df
         if self.classification_type == "binary":
 
@@ -453,7 +454,11 @@ class DataCollector:
         """
         images = self.df["ImagePath"].values
         features = self.df[FEATURES_CNN].values.astype(np.float32)
-        labels = self.df["CleaveCategory"].values.astype(np.float32)
+        if self.classification_type == "multiclass":
+            label_columns = [col for col in self.df.columns if col.startswith("Label_")]
+            labels = self.df[label_columns].values.astype(np.float32)
+        else:
+            labels = self.df["CleaveCategory"].values.astype(np.float32)
 
         return images, features, labels
 

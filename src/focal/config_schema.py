@@ -207,7 +207,9 @@ class TrainMLPConfig(ModelConfig):
     dropout3: float
     # Path to the image (used for context, not for training the MLP).
     img_path: Optional[str] = None
+    # Number of categories for classification
     num_classes: int
+    # Maximum angle threshold 
     angle_threshold: float
     diameter_threshold: float
     reduce_lr: Optional[float] = None
@@ -437,6 +439,8 @@ class CNNHyperparameterConfig(BaseConfig):
     diameter_threshold: float
     # Size of test dataset split
     test_size: float
+    classification_type: str
+    num_classes: int
     batch_size: int
     # Size of random buffer
     buffer_size: int

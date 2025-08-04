@@ -25,6 +25,7 @@ class CNNHyperparameterSearch(BaseCommand):
         data = DataCollector(
             config.csv_path,
             config.img_folder,
+            classification_type=config.classification_type,
             backbone=config.backbone,
             angle_threshold=config.angle_threshold,
             diameter_threshold=config.diameter_threshold,
@@ -47,6 +48,8 @@ class CNNHyperparameterSearch(BaseCommand):
         tuner = HyperParameterTuning(
             config.image_shape,
             config.feature_shape,
+            classification_type=config.classification_type,
+            num_classes=config.num_classes,
             max_epochs=max_epochs,
             project_name=config.project_name,
             directory=config.tuner_directory,

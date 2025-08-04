@@ -56,6 +56,8 @@ class BuildHyperModel(HyperModel):
 
     def __init__(
         self,
+        classification_type: str,
+        num_classes: int,
         image_shape: Tuple[int, int, int],
         param_shape: Tuple[int, ...],
         backbone: Optional[str] = "mobilenet",
@@ -73,6 +75,8 @@ class BuildHyperModel(HyperModel):
         self.image_shape = image_shape
         self.param_shape = param_shape
         self.backbone = backbone
+        self.classification_type = classification_type
+        self.num_classes = num_classes
 
     def build(self, hp):
         """Build hypermodel to perform hyperparameter search.
@@ -151,7 +155,10 @@ class BuildHyperModel(HyperModel):
         )(combined)
         z = BatchNormalization()(z)
         z = Dropout(hp.Float("dropout_3", 0.0, 0.3, step=0.1))(z)
-        z = Dense(1, activation="sigmoid")(z)
+        if self.classification_type == 'multiclass':
+            z = Dense(self.num_classes, activation="softmax")(z)
+        else:
+            z = Dense(1, activation="sigmoid")(z)
 
         model = Model(inputs=[image_input, param_input], outputs=z)
 
@@ -176,7 +183,9 @@ class HyperParameterTuning:
         self,
         image_shape: Tuple[int, int, int],
         feature_shape: Tuple[int, ...],
+        classification_type: str,
         max_epochs: int = 20,
+        num_classes: int = 1,
         objective: str = "val_accuracy",
         directory: str = "./tuner_logs",
         project_name: str = "Cleave_Tuner",
@@ -208,8 +217,12 @@ class HyperParameterTuning:
         self.feature_shape = feature_shape
         self.backbone = backbone
         self.class_weights = class_weights
+        self.classification_type = classification_type
+        self.num_classes = num_classes
+
         hypermodel = BuildHyperModel(
-            self.image_shape, self.feature_shape, self.backbone
+           self.classification_type,
+        self.num_classes,  self.image_shape, self.feature_shape, self.backbone
         )
         self.tuner = BayesianOptimization(
             hypermodel,
