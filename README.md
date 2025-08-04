@@ -67,7 +67,7 @@ The models were evaluated on a hold-out test set (typical 80/20 split). The mult
 
 ### Classification (Multi-Modal CNN)
 <p align="center">
-<img align="center" width="700" height="500" src="results_summary_new.png" alt="results_cnn">
+<img align="center" width="700" height="500" src="results_summary.png" alt="results_cnn">
 </p>
 Comparison of metrics for individual models vs. final unified model
 
