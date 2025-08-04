@@ -42,7 +42,7 @@ Step 3: Create a Minimal Configuration
 
 To begin, we will train a simple binary classification model. You only need to define a few essential settings; the application will use sensible defaults for the rest.
 
-Create a new file at `config_files/train_binary_cnn.json` and add the following:
+Create a new file at `config_files/train_cnn.json` and add the following:
 
 .. code-block:: json
 
@@ -79,7 +79,7 @@ You are now ready to run the command-line interface. Point it to the configurati
 
 .. code-block:: bash
 
-   cleave-app --file_path config_files/train_binary_cnn.json
+   focal --file_path config_files/train_cnn.json
 
 You will see training progress in the console. When it's finished, you will find `my_first_model.keras` in your project root.
 

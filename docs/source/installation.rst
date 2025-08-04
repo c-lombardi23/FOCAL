@@ -11,12 +11,12 @@ Requirements
 Install from Source
 -------------------
 
-First, clone the repository, create and activate a virtual environment, and then install the package in "editable" mode. This makes the `cleave-app` command available in your terminal.
+First, clone the repository, create and activate a virtual environment, and then install the package in "editable" mode. This makes the `focal` command available in your terminal.
 
 .. code-block:: bash
 
-   git clone http://github.com/c-lombardi23/ImageProcessingClone.git
-   cd ImageProcessingClone
+   git clone http://github.com/c-lombardi23/FOCAL.git
+   cd FOCAL
 
    # Create and activate a virtual environment (recommended)
    python -m venv venv

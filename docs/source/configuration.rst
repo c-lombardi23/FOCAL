@@ -362,6 +362,16 @@ Trains an MLP regression model using features extracted from a pre-trained CNN.
      - Yes
      - -
      - Architecture parameters for the MLP model.
+   * - ``reduce_lr``
+     - float
+     - No
+     - `null`
+     - Factor to reduce learning rate on plateau (e.g. `0.2`).
+   * - ``reduce_lr_patience``
+     - integer
+     - No
+     - `null`
+     - Epochs to wait before reducing LR.
 
 train_image_only
 """"""""""""""""
