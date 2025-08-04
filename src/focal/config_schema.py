@@ -551,13 +551,10 @@ def load_config(filepath: str) -> BaseConfig:
     with open(filepath, "r") as f:
         # Load the JSON data into a Python dictionary.
         data = json.load(f)
-    # Get the 'mode' value from the loaded data.
     mode = data.get("mode")
     # Look up the corresponding config class in the mapping dictionary.
     config_cls = MODE_TO_CONFIG.get(mode)
-    # Check if a valid class was found for the mode.
     if config_cls is None:
-        # If no class is found, raise an error.
         raise ValueError(f"Unknown or unimplemented mode: {mode}")
     # Instantiate the correct config class with the loaded data and return it.
     return config_cls(**data)
