@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from cleave_app.commands.train_commands import TrainXGBoost
+from focal.commands.train_commands import TrainXGBoost
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def test_train_xgb(mocker, train_xgboost_config):
     mock_class_weights = {0: 1.0}
 
     data_collector = mocker.patch(
-        "cleave_app.commands.train_commands.MLPDataCollector"
+        "focal.commands.train_commands.MLPDataCollector"
     )
 
     data_collector_instance = data_collector.return_value
@@ -83,7 +83,7 @@ def test_train_xgb(mocker, train_xgboost_config):
     data_collector_instance.image_only_dataset.side_efect = lambda ds: ds
 
     mock_xgb_class = mocker.patch(
-        "cleave_app.commands.train_commands.XGBoostModel"
+        "focal.commands.train_commands.XGBoostModel"
     )
     xgb_model_instance = mock_xgb_class.return_value
     xgb_model_instance.train.return_value = {
@@ -98,7 +98,7 @@ def test_train_xgb(mocker, train_xgboost_config):
     xgb_model_instance.get_model.return_value = "mock_model"
 
     mock_log_run = mocker.patch(
-        "cleave_app.commands.train_commands.log_xgb_training_run"
+        "focal.commands.train_commands.log_xgb_training_run"
     )
 
     command = TrainXGBoost()

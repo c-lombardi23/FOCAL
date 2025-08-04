@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from cleave_app.commands.train_commands import TrainMLP
+from focal.commands.train_commands import TrainMLP
 
 
 @pytest.fixture
@@ -73,7 +73,7 @@ def test_train_ml(mocker, train_mlp_config):
     mock_class_weights = {0: 1.0}
 
     data_collector = mocker.patch(
-        "cleave_app.commands.train_commands.MLPDataCollector"
+        "focal.commands.train_commands.MLPDataCollector"
     )
 
     data_collector_instance = data_collector.return_value
@@ -96,7 +96,7 @@ def test_train_ml(mocker, train_mlp_config):
     }
 
     mock_custom_model = mocker.patch(
-        "cleave_app.commands.train_commands.BuildMLPModel"
+        "focal.commands.train_commands.BuildMLPModel"
     )
     mock_custom_model_instance = mock_custom_model.return_value
     mock_custom_model_instance.compile_model.return_value = (
@@ -105,10 +105,10 @@ def test_train_ml(mocker, train_mlp_config):
     mock_custom_model_instance.train_model.return_value = mock_history
 
     mocker.patch(
-        "cleave_app.commands.train_commands._setup_callbacks", return_value=[]
+        "focal.commands.train_commands._setup_callbacks", return_value=[]
     )
     mock_log_run = mocker.patch(
-        "cleave_app.commands.train_commands.log_mlp_training_run"
+        "focal.commands.train_commands.log_mlp_training_run"
     )
 
     command = TrainMLP()

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from cleave_app.commands.test_commands import TestMLP
+from focal.commands.test_commands import TestMLP
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def test_test_mlp(mocker, test_mlp_config):
     config = test_mlp_config
 
     mock_tension_predictor = mocker.patch(
-        "cleave_app.commands.test_commands.TensionPredictor"
+        "focal.commands.test_commands.TensionPredictor"
     )
     mock_tester = mock_tension_predictor.return_value
 
@@ -45,7 +45,7 @@ def test_test_mlp(mocker, test_mlp_config):
     )
 
     mock_log_run = mocker.patch(
-        "cleave_app.commands.test_commands.log_regressor_test_results"
+        "focal.commands.test_commands.log_regressor_test_results"
     )
 
     command = TestMLP()

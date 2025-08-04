@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from cleave_app.commands.test_commands import TestXGBoost
+from focal.commands.test_commands import TestXGBoost
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def test_test_xgb(mocker, test_xgb_config):
     config = test_xgb_config
 
     mock_xgb_predictor = mocker.patch(
-        "cleave_app.commands.test_commands.XGBoostPredictor"
+        "focal.commands.test_commands.XGBoostPredictor"
     )
     mock_tester = mock_xgb_predictor.return_value
 
@@ -45,7 +45,7 @@ def test_test_xgb(mocker, test_xgb_config):
         43.5
     )
     mock_log_run = mocker.patch(
-        "cleave_app.commands.test_commands.log_regressor_test_results"
+        "focal.commands.test_commands.log_regressor_test_results"
     )
 
     command = TestXGBoost()

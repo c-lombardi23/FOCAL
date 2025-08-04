@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from cleave_app.commands.test_commands import TestCNN
+from focal.commands.test_commands import TestCNN
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def test_test_cnn(mocker, test_cnn_config):
 
     config = test_cnn_config
     mock_test_predictions_class = mocker.patch(
-        "cleave_app.commands.test_commands.TestPredictions"
+        "focal.commands.test_commands.TestPredictions"
     )
     mock_test_predictions_instance = mock_test_predictions_class.return_value
     mock_test_predictions_instance.gather_predictions.return_value = (
@@ -42,7 +42,7 @@ def test_test_cnn(mocker, test_cnn_config):
     )
 
     mock_log_run = mocker.patch(
-        "cleave_app.commands.test_commands.log_classifier_test_results"
+        "focal.commands.test_commands.log_classifier_test_results"
     )
     mock_test_predictions_instance.display_confusion_matrix.return_value = (
         "confusion.png"

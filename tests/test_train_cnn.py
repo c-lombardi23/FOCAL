@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from cleave_app.commands.train_commands import TrainCNN, TrainImageOnly
+from focal.commands.train_commands import TrainCNN, TrainImageOnly
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def run_training_command(mocker, config, command_class, image_only=True):
     mock_class_weights = {0: 1.0}
 
     data_collector = mocker.patch(
-        "cleave_app.commands.train_commands.DataCollector"
+        "focal.commands.train_commands.DataCollector"
     )
 
     data_collector_instance = data_collector.return_value
@@ -108,7 +108,7 @@ def run_training_command(mocker, config, command_class, image_only=True):
     }
 
     mock_custom_model = mocker.patch(
-        "cleave_app.commands.train_commands.CustomModel"
+        "focal.commands.train_commands.CustomModel"
     )
     mock_custom_model_instance = mock_custom_model.return_value
     if image_only:
@@ -122,16 +122,16 @@ def run_training_command(mocker, config, command_class, image_only=True):
     mock_custom_model_instance.train_model.return_value = mock_history
 
     mocker.patch(
-        "cleave_app.commands.train_commands._setup_callbacks", return_value=[]
+        "focal.commands.train_commands._setup_callbacks", return_value=[]
     )
 
     if image_only:
         mock_log_run = mocker.patch(
-            "cleave_app.commands.train_commands.log_image_training_run"
+            "focal.commands.train_commands.log_image_training_run"
         )
     else:
         mock_log_run = mocker.patch(
-            "cleave_app.commands.train_commands.log_cnn_training_run"
+            "focal.commands.train_commands.log_cnn_training_run"
         )
 
     command = command_class()
