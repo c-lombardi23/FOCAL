@@ -73,7 +73,7 @@ The models were evaluated on a hold-out test set (typical 80/20 split). The mult
 Comparison of metrics for individual models per fiber vs. final unified model
 
 <p align="center">
-<img align="center" width="500" height="800" src="Unified_classifier_confusion.png" alt="confusion_cnn">
+<img align="center" width="700" height="900" src="Unified_classifier_confusion.png" alt="confusion_cnn">
 </p>
 Confusion matrix for Unified CNN results
 
