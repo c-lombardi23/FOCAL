@@ -70,7 +70,7 @@ def main(args: Optional[list] = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  focal --file_path config.json
+  focal --file_path config_files/train_cnn.json
   focal --file_path /path/to/config.json
         """,
     )
