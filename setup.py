@@ -62,7 +62,7 @@ setup(
     python_requires=">=3.8",
     entry_points={
         "console_scripts": [
-            "focal=cleave_app.main:main",
+            "focal=focal.main:main",
         ],
     },
     keywords="machine-learning computer-vision fiber-optics image-processing cnn mlp",
