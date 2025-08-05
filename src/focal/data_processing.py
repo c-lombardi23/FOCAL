@@ -1,4 +1,4 @@
-"""Data processing module for the Fiber Cleave Processing application.
+"""Data processing module for the FOCAL application.
 
 This module provides classes for loading, preprocessing, and organizing
 data for training CNN and MLP models for fiber cleave analysis.
@@ -631,7 +631,7 @@ class DataCollector:
             images: Array of image paths
             features: Array of numerical features
             labels: Array of target labels
-            test_size: Fraction of data to use for testing
+            test_size: Fraction of data to use for testinggit
             buffer_size: Buffer size for dataset shuffling
             batch_size: Batch size for training
             feature_scaler_path: Optional path to save feature scaler
