@@ -10,7 +10,7 @@
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
   "model_path": "C:\\Users\\clombardi\\misting_hackle_files\\cnn_hyperparameter1.keras",
-  "project_name": "Tuner1",
+  "project_name": "Tuner2",
   "num_classes": 4,
   "classification_type": "multiclass",
 

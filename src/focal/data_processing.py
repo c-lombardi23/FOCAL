@@ -655,7 +655,12 @@ class DataCollector:
             stratify = labels
         elif self.classification_type == "multiclass":
             stratify = labels.argmax(axis=1)
-            class_weights = None
+            class_weights_array = compute_class_weight(
+                class_weight='balanced',
+                classes=np.unique(stratify),
+                y=stratify
+            )
+            class_weights= dict(enumerate(class_weights_array))
 
         (
             train_imgs,
