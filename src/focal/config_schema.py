@@ -1,4 +1,4 @@
-"""Configuration schema module for the Fiber Cleave Processing application.
+"""Configuration schema module for the FOCAL application.
 
 This module defines Pydantic models for validating and loading JSON
 configuration files for all CLI modes. Each mode has its own config

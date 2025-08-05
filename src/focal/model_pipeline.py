@@ -1,4 +1,4 @@
-"""Model pipeline module for the Fiber Cleave Processing application.
+"""Model pipeline module for the FOCAL application.
 
 This module provides classes for building, training, and managing CNN
 model for fiber cleave quality classification. It uses binary classification to place

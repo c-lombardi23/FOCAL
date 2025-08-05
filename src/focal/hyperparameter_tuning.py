@@ -1,4 +1,4 @@
-"""Hyperparameter tuning module for the Fiber Cleave Processing application.
+"""Hyperparameter tuning module for the FOCAL application.
 
 This module provides classes for hyperparameter optimization using Keras
 Tuner for both CNN and MLP models.
