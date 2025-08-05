@@ -58,7 +58,7 @@ setup(
         "Topic :: Scientific/Engineering :: Image Processing",
     ],
     include_package_data=True,
-    python_requires=">=3.10",
+    python_requires=">=3.10, <=3.12",
     entry_points={
         "console_scripts": [
             "focal=focal.main:main",
