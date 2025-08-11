@@ -194,6 +194,12 @@ The application uses a JSON configuration file to specify all parameters. **Each
   "max_epochs": 50,
   "test_size": 0.2,
 
+  "train_p": 0.8,
+  "test_p": 1.0,
+
+  "diameter_threshold": 0.20,
+  "angle_threshold": 0.46,
+
   "save_model_file": "models/cnn_classifier_v1.keras",
   "save_history_file": "reports/cnn_classifier_v1_history.csv",
 
