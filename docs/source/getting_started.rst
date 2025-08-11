@@ -12,6 +12,7 @@ Prerequisites
 -------------
 
 *   Python 3.10+
+*   At least 8GB RAM
 *   Git
 
 Step 1: Clone and Install
@@ -58,6 +59,11 @@ Create a new file at `config_files/train_cnn.json` and add the following:
        "max_epochs": 10,
        "num_classes": 1,
        "classification_type": "binary",
+       "train_p": 0.8,
+       "test_p": 1.0,
+
+       "diameter_threshold": 0.15,
+       "angle_threshold": 0.46,
 
        "image_shape": [224, 224, 3],
        "feature_shape": [6],
