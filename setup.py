@@ -34,6 +34,7 @@ setup(
         "gymnasium==1.1.1",
         "stable_baselines3==2.6.0",
         "tf-keras-vis>=0.8.7",
+        "dill"
     ],
     extras_require={
         "dev": [
