@@ -167,7 +167,7 @@ The RL agent interacts with a simulated or real-world environment where:
 .. note::
     Training the RL agent will require you to develop a CNN surrogate model to associate the numerical features from the csv dataset with the labeled cleave quality.
     This is not implemented in the code, but can be done using a simple XGBoost regression model. 
-     
+
 The RL training process can be launched using the ``train_rl.json`` configuration file, which should include:
 
 - Training hyperparameters 
@@ -184,3 +184,18 @@ and the resulting policy will be saved for future evaluation and deployment.
 
 .. note::
     RL training is computationally intensive and may require GPU acceleration or distributed training resources.
+
+Step 10 (Optional): Test Reinforcement Learning (RL) Agent
+----------------------------------------------------------
+
+For testing the RL agent, fill out to corresponding input parameters in ``test_rl.json`` and then run the following command:
+
+.. code-block:: bash
+
+    focal --file_path config_files/test_rl.json
+
+The script will output:
+
+- Start tension for specific fiber Type
+- Change in tension chosen for each step the agent takes
+- The recieved reward value 
