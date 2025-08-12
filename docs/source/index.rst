@@ -11,6 +11,7 @@ and tension prediction using a Multi-Layer Perceptron (MLP) or XGBoost Regressio
    getting_started
    installation
    configuration
+   full_guide
    API Reference <api/modules>
 
 Indices and tables

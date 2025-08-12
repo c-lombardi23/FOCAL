@@ -104,11 +104,6 @@ To ensure the CNN is learning relevant physical features, Grad-CAM visualization
 ### Install from Source
 
 ```bash
-# Clone the repository
-git clone https://github.com/c-lombardi23/FOCAL.git
-cd FOCAL
-
-
 # Create Virtual Enviornment
 python -m venv myenv
 
@@ -119,6 +114,10 @@ myenv\Scripts\activate
 
 # On Linux:
 source myenv/bin/activate
+
+# Clone the repository
+git clone https://github.com/c-lombardi23/FOCAL.git
+cd FOCAL
 
 # Install in development mode
 pip install -e .
@@ -133,21 +132,9 @@ pip install -e ".[dev]"
 focal --help
 
 ```
-### Build Documentation
-
-```bash
-sphinx-build docs/source docs/build
-```
-
-### Display Documentation
-
-```bash
-cd docs/build
-python -m http.server 8000
-```
-navigate to local host in browser with specified port number
-
 ### Displaying MLFlow Runs
+
+Run this command from the same folder wher you ran the training/testing runs:
 
 ```bash
 mlflow ui
@@ -379,6 +366,14 @@ def _build_pretrained_model(
 ```
 
 For more details, see the [Configuration](#configuration) and [Usage Examples](#usage-examples) sections above.
+
+## Updating Documentation
+
+If you make an changes to the documention files in docs/source, run the following command from the docs folder to propogate the updates:
+
+```bash
+../build_docs.sh
+```
 
 ## Tech Stack
 

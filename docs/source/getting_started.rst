@@ -94,7 +94,7 @@ Step 5: Track Your Run with MLflow
 
 This project is integrated with MLflow for experiment tracking. After your training run completes, you will see a new `mlruns` directory in your project folder.
 
-To visualize the results, launch the MLflow UI:
+To visualize the results, launch the MLflow UI from the same folder where you ran the training and testing runs:
 
 .. code-block:: bash
 

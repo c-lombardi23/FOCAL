@@ -60,15 +60,5 @@
   "rotation": 0.1,
   "height": 0.1,
   "width": 0.1,
-  "contrast": 0.2,
-
-  "//": "--- 9. Unused/Optional Fields ---",
-  "label_scaler_path": null,
-  "classification_path": null,
-  "encoder_path": null,
-  "tuner_directory": null,
-  "project_name": null,
-  "objective": null,
-  "initial_epochs": null,
-  "set_mask": null
+  "contrast": 0.2
 }
