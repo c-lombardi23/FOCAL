@@ -12,7 +12,8 @@ Step 1: Train CNN
 
 After installing the application on your local machine and doing a test run (as shown in :doc:`Getting Started <getting_started>`),  
 the next step is to fully develop the CNN classification model.  
-Use the skeleton file provided under ``config_files/train_cnn_skeleton.json`` to input the required parameters for CNN training.  
+Use the skeleton file provided under ``config_files/config_skeletons/train_cnn_skeleton.json`` to input the required parameters for CNN training. You can rename this file to suit your needs.
+I will refer to it as ``train_cnn.json`` for the remainder of the tutorial. 
 
 Most likely, you will not achieve your desired result metrics in this first run, but this serves as a foundational training run to establish a baseline.
 
@@ -29,7 +30,7 @@ Choosing optimal hyperparameters is essential for achieving valuable metrics whe
 Finding these values through brute force can be particularly frustrating and time-consuming.  
 
 Fortunately, Keras provides a class for hyperparameter tuning that makes this search much easier to implement.  
-Using the ``cnn_hyperparameter.json`` config file, fill out the required inputs as described in :doc:`Configuration <configuration>`.
+Using the ``config_files/config_skeletons/cnn_hyperparameter_skeleton.json`` config file, fill out the required inputs as described in :doc:`Configuration <configuration>`.
 
 To run the search:
 
@@ -37,8 +38,8 @@ To run the search:
 
     focal --file_path config_files/cnn_hyperparameter.json
 
-The optimal parameters will be printed to the command line and saved to MLflow tracking.  
-Record these parameters and re-enter them into the ``train_cnn.json`` file.
+The optimal parameters will be printed to the console and saved to MLflow tracking.  
+Record these parameters and re-enter them into the cnn training file.
 
 Step 3: Train CNN (With Optimal Parameters)
 -------------------------------------------
@@ -46,7 +47,8 @@ Step 3: Train CNN (With Optimal Parameters)
 Now that you have the optimal hyperparameters from the search, run the ``train_cnn.json`` file again.  
 The resulting metrics should improve significantly with the correct parameters.  
 
-You may still want to experiment with ``early_stopping``, checkpoints, and other training options to achieve the best final model.
+You may still want to experiment with ``early_stopping``, ``checkpoints``, and other training options to achieve the best final model.
+This is done experimentally. There is no established routine for always achieving the ideal model state. 
 
 Step 4: Train MLP or XGBoost Regression Model
 ---------------------------------------------
@@ -57,27 +59,28 @@ For determining the ideal change in tension, you have two options:
 2. **XGBoost Model** — A faster alternative that can save computation time (preferred choice).  
 
 In either case, you must provide the path to the trained CNN model from Step 3.  
-Also, fill out the required parameters in either ``train_mlp.json`` or ``train_xgb.json`` depending on your chosen model.
+Also, fill out the required parameters in either ``config_files/config_skeletons/train_mlp_skeleton.json`` or ``config_files/config_skeletons/train_xgb_skeleton.json`` depending on your chosen model.
+Again, you can rename this to suit your needs. 
 
-To run the MLP regression training:
+To run the MLP regression training: ( Assuming you renamed the file to ``train_mlp.json``)
 
 .. code-block:: bash
 
     focal --file_path config_files/train_mlp.json
 
-To run the XGBoost regression training:
+To run the XGBoost regression training (Assuming you renamed the file to ``train_xgb.json``):
 
 .. code-block:: bash
 
-    focal --file_path config_files/xgb.json
+    focal --file_path config_files/train_xgb.json
 
 Step 5: MLP Hyperparameter Search
 ---------------------------------
 
 Similar to the CNN model, you will likely not achieve optimal metrics from randomly chosen hyperparameters in ``train_mlp.json``.  
-Follow the same procedure from Step 2, but use the ``mlp_hyperparameter.json`` file.
+Follow the same procedure from Step 2, but use the ``config_files/config_skeletons/mlp_hyperparameter_skeleton.json`` file.
 
-To run the search:
+To run the search (Assuming you renamed the file to ``mlp_hyperparameter.json``):
 
 .. code-block:: bash
 
@@ -95,7 +98,7 @@ Step 6: Train MLP Model (With Optimal Hyperparameters)
 Update your ``train_mlp.json`` file with the optimal hyperparameters from Step 5,  
 then re-run the training.  
 
-The model should now produce improved regression performance for predicting optimal tension.
+The model should now produce improved regression performance for predicting optimal tension value.
 
 Step 7: Prediction Testing for CNN Model
 ----------------------------------------
@@ -103,7 +106,7 @@ Step 7: Prediction Testing for CNN Model
 Now that you have a fully trained CNN classification model, you can evaluate its performance on an unseen dataset.  
 This step is crucial to verify that the model generalizes well and does not overfit to the training data.
 
-Use the provided ``test_cnn.json`` configuration file to specify the following:
+Use the provided ``config_files/config_skeletons/test_cnn_skeleton.json`` configuration file to specify the following:
 
 - **Path to the trained CNN model** from Step 3 (or the latest retraining with optimal hyperparameters).  
 - **Path to the test dataset** containing images that were not used in training or validation.  
@@ -129,7 +132,7 @@ Step 8: Prediction Testing for MLP/XGBoost Models
 Once you have trained your MLP or XGBoost regression model for predicting optimal tension,  
 the next step is to evaluate its performance on an unseen test dataset.
 
-Use the provided ``test_mlp.json`` or ``test_xgb.json`` configuration file, depending on which model you trained.  
+Use the provided ``config_files/config_skeletons/test_mlp.json`` or ``config_files/config_skeletons/test_xgb.json`` configuration file, depending on which model you trained.  
 In the config file, specify:
 
 - **Path to the trained regression model** from Step 6 (MLP) or Step 4 (XGBoost).  
@@ -148,6 +151,8 @@ To run the prediction test for the XGBoost regression model:
 .. code-block:: bash
 
     focal --file_path config_files/test_xgb.json
+
+This, again, assumes you renamed the files. 
 
 The script will output a printout of predicted tension change vs. actual tension change. All metrics, plots, and evaluation artifacts will be saved to MLflow tracking for detailed analysis.
 
@@ -168,7 +173,7 @@ The RL agent interacts with a simulated or real-world environment where:
     Training the RL agent will require you to develop a CNN surrogate model to associate the numerical features from the csv dataset with the labeled cleave quality.
     This is not implemented in the code, but can be done using a simple XGBoost regression model. 
 
-The RL training process can be launched using the ``train_rl.json`` configuration file, which should include:
+The RL training process can be launched using the ``config_files/config_skeletons/train_rl.json`` configuration file, which should include:
 
 - Training hyperparameters 
 - Path to the trained CNN surrogate model.
@@ -188,7 +193,7 @@ and the resulting policy will be saved for future evaluation and deployment.
 Step 10 (Optional): Test Reinforcement Learning (RL) Agent
 ----------------------------------------------------------
 
-For testing the RL agent, fill out to corresponding input parameters in ``test_rl.json`` and then run the following command:
+For testing the RL agent, fill out to corresponding input parameters in ``config_files/config_skeletons/test_rl.json`` and then run the following command:
 
 .. code-block:: bash
 
