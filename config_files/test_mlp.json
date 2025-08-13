@@ -1,7 +1,7 @@
 {
-  "csv_path": "C:\\Thorlabs\\125PM_2_Categories.csv",
-  "img_folder": "C:\\Thorlabs\\125PM\\",
-  "label_scaler_path": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\mlptension_scaler1.pkl",
+  "csv_path": "C:\\Thorlabs\\combined_data.csv",
+  "img_folder": "C:\\Thorlabs\\combined_images\\",
+  "label_scaler_path": "G:\\Intern_Project_2025\\models\\Unified_regressor_scaler.pkl",
 
   "image_shape": [224, 224, 3],
   "feature_shape": [4],

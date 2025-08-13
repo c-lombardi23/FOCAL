@@ -1,15 +1,15 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_1.csv",
-  "img_folder": "C:\\Thorlabs\\400LA\\",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\xgb6_scaler.pkl",
+  "csv_path": "C:\\Thorlabs\\combined_data.csv",
+  "img_folder": "C:\\Thorlabs\\combined_images\\",
+  "label_scaler_path": "G:\\Intern_Project_2025\\models\\Unified_regressor_scaler.pkl",
   
 
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
 
-  "mode": "train_xgboost",
+  "mode": "test_xgboost",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials\\cnn1.keras",
+  "model_path": "g:\\Intern_Project_2025\\models\\Unified_classifier.keras",
  
   "angle_threshold": 0.49,
   "diameter_threshold": 0.34,
@@ -27,7 +27,7 @@
   "subsample": 0.8,
   "reg_lambda": 2.0,
 
-  "xgb_path": "C:\\Users\\clombardi\\400LA_Train3\\Individual_Trials\\xgb6.pkl",
+  "xgb_path": "g:\\Intern_Project_2025\\models\\Unified_regressor.pkl",
   "save_history_file": "C:\\Users\\clombardi\\FG250LA\\Individual_Trials\\xgb_history1",
 
   "set_mask": "y"
