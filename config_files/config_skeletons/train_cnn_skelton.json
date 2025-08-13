@@ -43,6 +43,7 @@
   "reduce_lr": 0.5,
   "reduce_lr_patience": 5,
 
+
   "//": "--- 6. Early Stopping Configuration ---",
   "_comment_early_stopping": "Set to 'y' to enable. Monitors 'val_accuracy' by default.",
   "early_stopping": "y",

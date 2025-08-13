@@ -1,0 +1,30 @@
+{
+  "_comment_mode": "This field MUST be 'train_rl' for Reinforcement Learning training mode.",
+  "mode": "train_rl",
+
+  "//": "--- 1. Required Dataset and Model Paths ---",
+  "csv_path": "/path/to/your/dataset.csv",
+  "cnn_path": "./models/trained_cnn_classifier.keras",
+  "agent_path": "./agents/trained_rl_agent.pkl",
+  "img_folder": "/path/to/image_folder/",
+
+  "//": "--- 2. RL Environment Settings ---",
+  "threshold": 0.5,
+  "max_tension_change": 10.0,
+  "max_steps": 15,
+  "feature_shape": [4],
+
+  "//": "--- 3. Replay Buffer and Batch Settings ---",
+  "buffer_size": 1000000,
+  "batch_size": 256,
+  "tau": 0.1,
+  "learning_rate": 0.0001,
+
+  "//": "--- 4. Training Schedule ---",
+  "timesteps": 5000,
+
+  "//": "--- 5. Tension Ranges and Limits ---",
+  "low_range": 0.7,
+  "high_range": 1.4,
+  "max_delta": 5.0
+}

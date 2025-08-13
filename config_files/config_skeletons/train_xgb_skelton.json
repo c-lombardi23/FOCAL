@@ -32,20 +32,6 @@
   "batch_size": 32,
   "buffer_size": 1000,
 
-  "//": "--- 5. Unused/Optional Fields ---",
-  "_comment_unused": "The following fields are part of the base config but are not directly used by the XGBoost training script.",
-  "feature_scaler_path": null,
-  "classification_path": null,
-  "encoder_path": null,
-  "save_model_file": null,
-  "save_history_file": null,
-  "tuner_directory": null,
-  "project_name": null,
-  "max_epochs": null,
-  "objective": null,
-  "initial_epochs": null,
-  "continue_train": null,
-  "set_mask": null,
-  "checkpoints": "n",
-  "early_stopping": "n"
+  "//": "--- 5. Optional Fields ---",
+  "set_mask": "y"
 }

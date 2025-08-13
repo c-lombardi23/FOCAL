@@ -17,12 +17,8 @@
   "//": "--- 3. Data Filtering Parameters ---",
   "_comment_filtering": "These thresholds define which data points are considered valid for the test set.",
   "angle_threshold": 2.0,
-  "diameter_threshold": 128.0,
+  "diameter_threshold": 0.35,
   
   "//": "--- 4. Unused/Optional Fields ---",
-  "_comment_unused": "The following fields are part of the base config but are not used by this test script.",
-  "feature_scaler_path": null,
-  "img_path": null,
-  "test_features": null,
-  "set_mask": null
+  "set_mask": "y"
 }

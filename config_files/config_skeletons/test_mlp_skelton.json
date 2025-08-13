@@ -9,7 +9,9 @@
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
   "angle_threshold": 0.48,
-  "diameter_threshold": 17,
+  "diameter_threshold": 0.20,
+  "num_classes": 1,
+  "classification_type": "binary",
   
   "//": "--- 2. Required Paths for Model and Scalers ---",
   "_comment_paths": "You must provide the trained MLP model and BOTH the feature and label scalers from its training.",
@@ -18,10 +20,6 @@
   
   "//": "--- 3. Required Fields for a Single Prediction Test ---",
   "_comment_single_test": "To test the MLP, provide the numerical features for which you want to predict tension.",
-  "test_features": [126.0, 1.5, 90.0, 0.5],
-  
-  "//": "--- 4. Optional Fields ---",
-  "_comment_optional": "The img_path can be provided for context but is not used in the MLP's prediction logic.",
-  "img_path": null,
-  "set_mask": null
+  "test_features": [126.0, 1.5, 90.0, 0.5]
+
 }
