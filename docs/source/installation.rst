@@ -18,7 +18,7 @@ First, clone the repository, create and activate a virtual environment, and then
    # Create and activate a virtual environment (recommended)
    python -m venv venv
    source venv/bin/activate  # On Linux/macOS
-   venv\Scripts\activate    # On Windows
+   venv\\Scripts\\activate    # On Windows
 
    # If using anaconda
    conda create --name your_env_name
