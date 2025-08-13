@@ -1,14 +1,15 @@
 {
-  "csv_path": "C:\\Thorlabs\\combined_data.csv",
-  "img_folder": "C:\\Thorlabs\\combined_images\\",
-  "label_scaler_path": "G:\\Intern_Project_2025\\models\\Unified_regressor_scaler.pkl",
+  "output_dir": "C:\\Users\\clombardi\\Focal_Test",
+  "csv_path": "combined_data.csv",
+  "img_folder": "combined_images\\",
+  "label_scaler_path": "Unified_regressor_scaler.pkl",
 
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
 
   "mode": "test_mlp",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\Training_Runs_7_2\\Individual_Trials\\mlp_model_1.keras",
+  "model_path": "mlp_model_1.keras",
   "num_classes": 1,
   "classification_type": "binary",
 

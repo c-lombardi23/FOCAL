@@ -7,6 +7,7 @@ data for training CNN and MLP models for fiber cleave analysis.
 import os
 import warnings
 from typing import List, Optional, Tuple
+from pathlib import Path
 
 import joblib
 import numpy as np
@@ -86,7 +87,6 @@ class DataCollector:
 
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"CSV file not found: {csv_path}")
-
         if not os.path.exists(img_folder):
             raise FileNotFoundError(f"Image folder not found: {img_folder}")
 
@@ -189,18 +189,12 @@ class DataCollector:
           filepath: Path to save scaler or encoder
           obj: Scaler or Encoder object
         """
-        if not filepath.endswith(".pkl"):
-            filepath = filepath + ".pkl"
+        filepath = Path(filepath)
+        if filepath.suffix != ".pkl":
+            filepath = filepath.with_suffix(".pkl")
 
-        dir_path = os.path.dirname(filepath)
-
-        if dir_path:
-            os.makedirs(dir_path, exist_ok=True)
-
-        if not os.path.exists(filepath):
-            joblib.dump(obj, filepath)
-        else:
-            raise FileExistsError("File Already exists!")
+        joblib.dump(obj, filepath)
+        print(f"Scaler/encoder saved to: {filepath}")
 
     def _clean_data(self) -> Optional[pd.DataFrame]:
         """Read CSV file and prepare data with cleave quality labels and one-
@@ -229,9 +223,7 @@ class DataCollector:
                 print(f"Encoder saved to {self.encoder_path}")
 
         # Clean image path by removing the base folder path
-        df["ImagePath"] = df["ImagePath"].str.replace(
-            f"{self.img_folder}\\", "", regex=False
-        )
+        df["ImagePath"] = df["ImagePath"].apply(lambda p: Path(p).name)
         return df
 
     def _mask_background(self, img: tf.Tensor) -> tf.Tensor:
@@ -677,7 +669,7 @@ class DataCollector:
         # Save scaler if path provided
         if feature_scaler_path:
             self.save_scaler_encoder(scaler, feature_scaler_path)
-            print(f"Feature scaler saved to: {feature_scaler_path}")
+            
 
         # Create datasets
         train_ds = self._dataset_helper(
@@ -840,11 +832,10 @@ class MLPDataCollector(DataCollector):
         # Save scalers if paths provided
         if feature_scaler_path:
             self.save_scaler_encoder(feature_scaler, feature_scaler_path)
-            print(f"Feature scaler saved to: {feature_scaler_path}")
 
         if tension_scaler_path:
             self.save_scaler_encoder(tension_scaler, tension_scaler_path)
-            print(f"Tension scaler saved to: {tension_scaler_path}")
+            
 
         # Create datasets
         train_ds = self._dataset_helper(

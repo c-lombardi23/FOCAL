@@ -1,6 +1,7 @@
 {
+  "output_dir": "C:\\Users\\clombardi\\Focal_Test",
   "image_path": "C:\\Thorlabs\\400LA\\Fiber-370Plus.png",
-  "model_path": "G:\\Intern_Project_2025\\models\\Unified_classifier.keras",
+  "model_path": "Unified_classifier.keras",
 
 
   "mode": "grad_cam",
@@ -9,8 +10,8 @@
 
   "class_index": 0,
   "fig_size": [10,6],
-  "img_folder": "C:\\Thorlabs\\grad_cam_test",
+  "img_folder": "grad_cam_test",
   "conv_layer_name": "top_conv",
 
-  "save_path": "C:\\Users\\clombardi\\heatmap1.png"
+  "save_path": "heatmap1.png"
 }

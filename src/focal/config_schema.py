@@ -43,7 +43,7 @@ class CheckpointMixin(BaseModel):
 
 class BaseConfig(BaseModel):
     """Basic config for all classes."""
-
+    output_dir: str
     # Path to the CSV file containing metadata for the images.
     csv_path: Path
     # Path to the directory containing all the image files.
@@ -57,16 +57,7 @@ class BaseConfig(BaseModel):
     # The shape of the numerical feature vector.
     feature_shape: Optional[List[int]] = None
 
-    # Define a Pydantic validator for the 'csv_path' and 'img_folder' fields.
-    @field_validator("csv_path", "img_folder", mode="before")
-    @classmethod
-    def path_exists(cls, value):
-        # Check if the provided file or directory path actually exists.
-        if not os.path.exists(value):
-            # If the path does not exist, raise a ValueError.
-            raise ValueError(f"{value} does not exist!")
-        # If the path exists, return the value to be used.
-        return value
+
 
     @field_validator("mode")
     @classmethod
@@ -350,6 +341,7 @@ class TestXGBoostConfig(TestMLPConfig):
 
 
 class GradCamConfig(BaseModel):
+    output_dir: str
     mode: str
     # Path to the input image for Grad-CAM.
     image_path: str
@@ -478,6 +470,7 @@ class MLPHyperparameterConfig(BaseConfig):
 
 
 class TrainRLConfig(BaseModel):
+    output_dir: str
     # Path to csv file for dataset
     csv_path: str
     # Path to trained CNN classifier

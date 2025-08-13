@@ -1,10 +1,10 @@
 {
-  "csv_path": "C:\\Thorlabs\\400LA_1.csv",
-  "img_folder": "C:\\Thorlabs\\400LA\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\kfold1.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\kfold2.pkl",
-  "classification_path": "C:\\Users\\clombardi\\125pm_test1.csv",
-  "img_path": "C:\\Thorlabs\\125PM\\Fiber-312Plus.png",
+  "output_dir": "C:\\Users\\clombardi\\Focal_Test",
+  "csv_path": "combined_data.csv",
+  "img_folder": "combined_images\\",
+  "feature_scaler_path": "kfold1.pkl",
+  "label_scaler_path": "kfold2.pkl",
+  "classification_path": "125pm_test1.csv",
 
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
@@ -15,7 +15,7 @@
   "mode": "train_kfold_cnn",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\400LA_Train1\\Individual_Trials\\images_features1.keras",
+  "model_path": "images_features1.keras",
   "num_classes": 1,
   "classification_type": "binary",
 
@@ -48,10 +48,10 @@
   "monitor": "val_accuracy",
   "method": "max",
   "checkpoints": "y",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\model2_checkpoint.keras",
+  "checkpoint_filepath": "model2_checkpoint.keras",
 
-  "save_model_file": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\kfold.keras",
-  "save_history_file": "C:\\Users\\clombardi\\400LA_Train2\\Individual_Trials\\model2_history",
+  "save_model_file": "kfold.keras",
+  "save_history_file": "model2_history",
 
   "set_mask": "y"
 }

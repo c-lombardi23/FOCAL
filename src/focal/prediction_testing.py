@@ -6,6 +6,7 @@ either the cnn model or the regression model.
 
 import os
 from typing import List, Optional, Tuple
+from pathlib import Path
 
 import joblib
 import matplotlib.pyplot as plt
@@ -98,9 +99,7 @@ class TestPredictions(DataCollector):
             return None
 
         # Clean image path
-        df["ImagePath"] = df["ImagePath"].str.replace(
-            f"{self.img_folder}\\", "", regex=False
-        )
+        df["ImagePath"] = df["ImagePath"].apply(lambda p: Path(p).name)
         # One-hot encode CleaveCategory
         if self.classification_type == "multiclass":
             self.ohe = joblib.load(self.encoder_path)
@@ -273,6 +272,7 @@ class TestPredictions(DataCollector):
             pred_probabilites (np.ndarray): Array of predicted probabilities.
         """
         pred_probabilites = np.array(pred_probabilites).flatten()
+        print(pred_probabilites)
         fpr, tpr, thresholds = roc_curve(true_labels, pred_probabilites)
         auc = roc_auc_score(true_labels, pred_probabilites)
         plt.plot(fpr, tpr, label=f"ROC Curve (AUC={auc:.2f}%)")
@@ -485,16 +485,25 @@ class TensionPredictor:
             ),
             axis=1,
         )
-        # Compute mean tension from good cleaves
-        good_mean = df[df["CleaveCategory"] == 1]["CleaveTension"].mean()
-
+        good_cleaves_df = df[df["CleaveCategory"] == 1]
+        mean_tension_per_type = (
+            good_cleaves_df.groupby("FiberType")["CleaveTension"]
+            .mean()
+            .to_dict()
+        )
         # Keep only bad cleaves
         bad_df = df[df["CleaveCategory"] == 0].copy()
+        bad_df["FiberTypeMeanTension"] = bad_df["FiberType"].map(
+            mean_tension_per_type
+        )
 
         # Compute true delta (label) = good_mean - current
-        bad_df["TrueDelta"] = good_mean - bad_df["CleaveTension"]
+        bad_df["TrueDelta"] = (
+            bad_df["FiberTypeMeanTension"] - bad_df["CleaveTension"]
+        )
 
-        return bad_df, good_mean
+        return bad_df, mean_tension_per_type
+
 
     def predict(self):
         """Run tension predictions on filtered cleave data."""
@@ -510,6 +519,7 @@ class TensionPredictor:
         image_paths = df["ImagePath"]
         tensions = df["CleaveTension"]
         true_delta = df["TrueDelta"]
+        fiber_type = df["FiberType"]
 
         predictions = []
         predicted_deltas = []
@@ -529,13 +539,14 @@ class TensionPredictor:
             predicted_deltas.append(delta)
             predictions.append(delta + tensions.iloc[len(predictions)])
 
-        for true_t, delta_pred, current_t in zip(
-            true_delta, predicted_deltas, tensions
+        for true_t, delta_pred, current_t, fiber in zip(
+            true_delta, predicted_deltas, tensions, fiber_type
         ):
             pred_t = current_t + delta_pred
             pred_ts.append(pred_t)
+            current_mean = mean[fiber]
             print(
-                f"Current: {current_t:.2f} | True delta: {true_t:.2f} | Pred delta: {delta_pred:.2f} | Pred T: {pred_t:.2f} | Target T: {mean:.2f}"
+                f"Current: {current_t:.2f} | True delta: {true_t:.2f} | Pred delta: {delta_pred:.2f} | Pred T: {pred_t:.2f} | Target T: {current_mean:.2f}"
             )
 
         df = pd.DataFrame(
@@ -546,8 +557,10 @@ class TensionPredictor:
                 "Predicted Delta": np.array(predicted_deltas).round(2),
             }
         )
-        basepath = self.model_path.strip(".keras")
-        df.to_csv(f"{basepath}_performance.csv", index=False)
+        model_dir = self.model_path.parent.parent
+        basename = self.model_path.name
+        save_path = model_dir / "metrics" / basename
+        df.to_csv(f"{save_path}_performance.csv", index=False)
 
         return tensions, true_delta, predicted_deltas, pred_ts, mean
 

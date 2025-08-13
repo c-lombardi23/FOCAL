@@ -1,5 +1,6 @@
 import traceback
 from typing import Callable, List
+from pathlib import Path
 
 import pandas as pd
 
@@ -77,11 +78,12 @@ def _run_search_helper(
             print("Best hyperparameters not saved")
 
         pathname = config.save_model_file
+        pathname = Path(pathname)
         if pathname is None:
             print("Model not saved - no path specified")
         else:
-            if not pathname.endswith(".keras"):
-                pathname = pathname + ".keras"
+            if not pathname.suffix != ".keras":
+                pathname = pathname.with_suffix(".keras")
             tuner.save_best_model(pathname)
             print(f"Model saved to: {pathname}")
 

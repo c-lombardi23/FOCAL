@@ -1,8 +1,9 @@
 {
-  "csv_path": "C:\\Thorlabs\\combined_data.csv",
-  "img_folder": "C:\\Thorlabs\\combined\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\cnn_feature_scaler1.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2_label_scaler.pkl",
+  "output_dir": "C:\\Users\\clombardi\\Focal_Test",
+  "csv_path": "combined_data.csv",
+  "img_folder": "combined_images\\",
+  "feature_scaler_path": "cnn_feature_scaler1.pkl",
+  "label_scaler_path": "cnn2_label_scaler.pkl",
   
 
   "image_shape": [224, 224, 3],
@@ -25,7 +26,7 @@
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 50,
+  "max_epochs": 2,
   "objective": "val_accuracy",
 
   "brightness": 0.0,
@@ -48,8 +49,8 @@
   "checkpoints": "n",
   "checkpoint_filepath": "C:\\Users\\clombardi\\test_files\\cnn_maksed_features.keras",
 
-  "save_model_file": "C:\\Users\\clombardi\\test_files\\cnn_masked_features.keras",
-  "save_history_file": "C:\\Users\\clombardi\\test_files\\cnn_maksed_features_history",
+  "save_model_file": "cnn_masked_features.keras",
+  "save_history_file": "cnn_maksed_features_history",
 
   "set_mask": "y"
 }
