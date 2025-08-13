@@ -15,16 +15,20 @@ First, clone the repository, create and activate a virtual environment, and then
 
 .. code-block:: bash
 
-   git clone http://github.com/c-lombardi23/FOCAL.git
-   cd FOCAL
-
    # Create and activate a virtual environment (recommended)
    python -m venv venv
    source venv/bin/activate  # On Linux/macOS
-   # venv\Scripts\activate    # On Windows
+   venv\Scripts\activate    # On Windows
 
-   # Install the package and its development dependencies
-   pip install -e ".[dev]"
+   # If using anaconda
+   conda create --name your_env_name
+   conda activate your_env_name
+
+   git clone http://github.com/c-lombardi23/FOCAL.git
+   cd FOCAL
+
+   # Install the package in editable mode
+   pip install -e .
 
 Verify the Installation
 -----------------------

@@ -115,6 +115,10 @@ myenv\Scripts\activate
 # On Linux:
 source myenv/bin/activate
 
+# If using anaconda
+conda create --name your_env_name
+conda activate your_env_name
+
 # Clone the repository
 git clone https://github.com/c-lombardi23/FOCAL.git
 cd FOCAL
