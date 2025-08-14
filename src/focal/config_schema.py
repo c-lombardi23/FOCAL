@@ -56,7 +56,13 @@ class BaseConfig(BaseModel):
     set_mask: Optional[str] = None
     # The shape of the numerical feature vector.
     feature_shape: Optional[List[int]] = None
+<<<<<<< HEAD
     
+=======
+
+
+
+>>>>>>> 3fc85a56becff5f96cbc9f526f4ba94097e4f5f9
     @field_validator("mode")
     @classmethod
     def valid_modes(cls, value):

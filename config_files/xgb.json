@@ -28,7 +28,11 @@
   "subsample": 0.8,
   "reg_lambda": 2.0,
 
+<<<<<<< HEAD
   "xgb_path": "Unified_regressor_new.pkl",
+=======
+  "xgb_path": "Unified_regressor.pkl",
+>>>>>>> 3fc85a56becff5f96cbc9f526f4ba94097e4f5f9
   "save_history_file": "xgb_history1",
 
   "set_mask": "y"

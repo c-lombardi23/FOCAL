@@ -272,6 +272,7 @@ class TestPredictions(DataCollector):
             pred_probabilites (np.ndarray): Array of predicted probabilities.
         """
         pred_probabilites = np.array(pred_probabilites).flatten()
+        print(pred_probabilites)
         fpr, tpr, thresholds = roc_curve(true_labels, pred_probabilites)
         auc = roc_auc_score(true_labels, pred_probabilites)
         plt.plot(fpr, tpr, label=f"ROC Curve (AUC={auc:.2f}%)")

@@ -11,7 +11,11 @@
   "mode": "test_cnn",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
+<<<<<<< HEAD
   "model_path": "cnn_masked_features.keras",
+=======
+  "model_path": "cnn1.keras",
+>>>>>>> 3fc85a56becff5f96cbc9f526f4ba94097e4f5f9
   "num_classes": 1,
   "classification_type": "binary",
 
