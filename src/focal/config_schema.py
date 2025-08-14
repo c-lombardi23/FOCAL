@@ -251,7 +251,9 @@ class TestCNNConfig(BaseConfig):
     backbone: Optional[str] = None
     # Path to save the output classification report.
     classification_path: Optional[str] = None
+    # Maximum angle threshold for good cleave
     angle_threshold: float
+    # Maximum diameter threshold for good cleave
     diameter_threshold: float
 
     # Define a post-validation check for this model.
@@ -268,7 +270,9 @@ class TestCNNConfig(BaseConfig):
 
 
 class TestMLPConfig(BaseConfig):
+    # Maximum angle threshold for good cleave
     angle_threshold: float
+    # Maximum diameter threshold for good cleave
     diameter_threshold: float
     # Path to a saved label scaler.
     label_scaler_path: Optional[str] = None
@@ -293,7 +297,9 @@ class TestMLPConfig(BaseConfig):
 
 
 class TestImageOnlyConfig(BaseConfig):
+    # Maximum angle threshold for good cleave
     angle_threshold: float
+    # Maximume diameter threshold for good cleave 
     diameter_threshold: float
     # Path to the trained image-only model file.
     model_path: Optional[str] = None
@@ -377,8 +383,9 @@ class GradCamConfig(BaseModel):
 
 class TrainImageOnlyConfig(ModelConfig):
     """Configuration for training an image-only classification model."""
-
+    # Name of pre-trained backbone to use
     backbone: str
+    # Layer to unfreeze backbone from 
     unfreeze_from: Optional[int] = 0
     # Max angle for good cleave
     angle_threshold: float
