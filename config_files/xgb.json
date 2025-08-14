@@ -1,26 +1,16 @@
 {
-<<<<<<< HEAD
-  "csv_path": "G:\\Intern_Project_2025\\Csv_files\\combined_data.csv",
-  "img_folder": "G:\\Intern_Project_2025\\combined_images\\",
-  "label_scaler_path": "G:\\Intern_Project_2025\\models\\Unified_regressor_scaler.pkl",
-=======
   "output_dir": "C:\\Users\\clombardi\\Focal_Test",
   "csv_path": "combined_data.csv",
   "img_folder": "combined_images\\",
   "label_scaler_path": "Unified_regressor_scaler.pkl",
->>>>>>> 3fc85a5 (updated filepath reading)
   
 
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
 
-  "mode": "train_xgboost",
+  "mode": "test_xgboost",
   "backbone": "efficientnet",
-<<<<<<< HEAD
-  "model_path": "G:\\Intern_Project_2025\\models\\Unified_classifier.keras",
-=======
   "model_path": "Unified_classifier.keras",
->>>>>>> 3fc85a5 (updated filepath reading)
  
   "angle_threshold": 0.49,
   "diameter_threshold": 0.34,
@@ -38,13 +28,8 @@
   "subsample": 0.8,
   "reg_lambda": 2.0,
 
-<<<<<<< HEAD
-  "xgb_path": "G:\\Intern_Project_2025\\models\\Unified_regressor_new.pkl",
-  "save_history_file": "G:\\Intern_Project_2025\\metrics\\Unified_regressor_new_history.csv",
-=======
-  "xgb_path": "Unified_regressor.pkl",
+  "xgb_path": "Unified_regressor_new.pkl",
   "save_history_file": "xgb_history1",
->>>>>>> 3fc85a5 (updated filepath reading)
 
   "set_mask": "y"
 }

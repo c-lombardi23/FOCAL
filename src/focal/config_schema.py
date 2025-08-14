@@ -45,9 +45,9 @@ class BaseConfig(BaseModel):
     """Basic config for all classes."""
     output_dir: str
     # Path to the CSV file containing metadata for the images.
-    csv_path: Path
+    csv_path: str
     # Path to the directory containing all the image files.
-    img_folder: Path
+    img_folder: str
     # The operational mode for the CLI (e.g., 'train_cnn', 'test_mlp').
     mode: str
     # The target shape for images after resizing (height, width, channels).
@@ -56,9 +56,7 @@ class BaseConfig(BaseModel):
     set_mask: Optional[str] = None
     # The shape of the numerical feature vector.
     feature_shape: Optional[List[int]] = None
-
-
-
+    
     @field_validator("mode")
     @classmethod
     def valid_modes(cls, value):

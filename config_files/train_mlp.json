@@ -1,16 +1,9 @@
 {
-<<<<<<< HEAD
-  "csv_path": "g:\\Intern_Project_2025\\Csv_files\\combined_data.csv",
-  "img_folder": "C:\\Thorlabs\\125PM\\",
-  "feature_scaler_path": "C:\\Users\\clombardi\\test_files\\mlpfeature_scaler1.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\test_files\\mlptension_scaler1.pkl",
-=======
   "output_dir": "C:\\Users\\clombardi\\Focal_Test",
   "csv_path": "combined_data.csv",
   "img_folder": "combined_images\\",
   "feature_scaler_path": "mlpfeature_scaler1.pkl",
   "label_scaler_path": "mlptension_scaler1.pkl",
->>>>>>> 3fc85a5 (updated filepath reading)
  
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
