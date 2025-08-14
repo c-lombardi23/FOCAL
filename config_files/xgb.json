@@ -1,15 +1,15 @@
 {
-  "csv_path": "C:\\Thorlabs\\combined_data.csv",
-  "img_folder": "C:\\Thorlabs\\combined_images\\",
+  "csv_path": "G:\\Intern_Project_2025\\Csv_files\\combined_data.csv",
+  "img_folder": "G:\\Intern_Project_2025\\combined_images\\",
   "label_scaler_path": "G:\\Intern_Project_2025\\models\\Unified_regressor_scaler.pkl",
   
 
   "image_shape": [224, 224, 3],
   "feature_shape": [4],
 
-  "mode": "test_xgboost",
+  "mode": "train_xgboost",
   "backbone": "efficientnet",
-  "model_path": "g:\\Intern_Project_2025\\models\\Unified_classifier.keras",
+  "model_path": "G:\\Intern_Project_2025\\models\\Unified_classifier.keras",
  
   "angle_threshold": 0.49,
   "diameter_threshold": 0.34,
@@ -27,8 +27,8 @@
   "subsample": 0.8,
   "reg_lambda": 2.0,
 
-  "xgb_path": "g:\\Intern_Project_2025\\models\\Unified_regressor.pkl",
-  "save_history_file": "C:\\Users\\clombardi\\FG250LA\\Individual_Trials\\xgb_history1",
+  "xgb_path": "G:\\Intern_Project_2025\\models\\Unified_regressor_new.pkl",
+  "save_history_file": "G:\\Intern_Project_2025\\metrics\\Unified_regressor_new_history.csv",
 
   "set_mask": "y"
 }

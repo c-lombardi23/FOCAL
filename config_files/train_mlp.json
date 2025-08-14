@@ -1,5 +1,5 @@
 {
-  "csv_path": "C:\\Thorlabs\\125PM_2_Categories.csv",
+  "csv_path": "g:\\Intern_Project_2025\\Csv_files\\combined_data.csv",
   "img_folder": "C:\\Thorlabs\\125PM\\",
   "feature_scaler_path": "C:\\Users\\clombardi\\test_files\\mlpfeature_scaler1.pkl",
   "label_scaler_path": "C:\\Users\\clombardi\\test_files\\mlptension_scaler1.pkl",

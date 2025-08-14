@@ -2,9 +2,7 @@
   "csv_path": "C:\\Thorlabs\\combined_data.csv",
   "img_folder": "C:\\Thorlabs\\combined\\",
   "feature_scaler_path": "C:\\Users\\clombardi\\cnn_feature_scaler1.pkl",
-  "label_scaler_path": "C:\\Users\\clombardi\\combined_data\\Individual_Trials2\\cnn2_label_scaler.pkl",
   
-
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
 
@@ -46,7 +44,7 @@
   "monitor": "val_accuracy",
   "method": "max",
   "checkpoints": "n",
-  "checkpoint_filepath": "C:\\Users\\clombardi\\test_files\\cnn_maksed_features.keras",
+  "checkpoint_filepath": "C:\\Users\\clombardi\\test_files\\Unified_classifier_checkpoint.keras",
 
   "save_model_file": "C:\\Users\\clombardi\\test_files\\cnn_masked_features.keras",
   "save_history_file": "C:\\Users\\clombardi\\test_files\\cnn_maksed_features_history",
