@@ -1,7 +1,8 @@
 {
-  "csv_path": "C:\\Thorlabs\\FG250LA_1.csv",
-  "img_folder": "C:\\Thorlabs\\FG250LA\\",
-  "label_scaler_path": "C:\\Users\\clombardi\\FG250LA_1\\HyperParameterTuning1\\FG250LA_tuning1\\label_scaler1.pkl",
+  "output_dir": "C:\\Users\\clombardi\\Focal_Test",
+  "csv_path": "combined_data.csv",
+  "img_folder": "combined_images\\",
+  "label_scaler_path": "label_scaler1.pkl",
   
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
@@ -9,7 +10,7 @@
   "mode": "cnn_hyperparameter",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
-  "model_path": "C:\\Users\\clombardi\\FG250LA_1\\Individual_Trials\\cnn_hyperparameter1.keras",
+  "model_path": "cnn_hyperparameter1.keras",
   "project_name": "FG250LA_tuning2",
   "num_classes": 1,
   "classification_type": "binary",
@@ -20,7 +21,7 @@
   "batch_size": 16,
   "buffer_size": 40,
   "test_size": 0.25,
-  "max_epochs": 3,
+  "max_epochs": 1,
   "objective": "val_accuracy",
   "tension_threshold": 190,
   "test_p": 0.9,
@@ -32,8 +33,8 @@
   "method": "min",
   "checkpoints": "y",
 
-  "tuner_directory": "C:\\Users\\clombardi\\FG250LA_1\\HyperParameterTuning1",
-  "save_model_file": "C:\\Users\\clombardi\\FG250LA_1\\HyperParameterTuning1\\FG250LA_tuning2\\model.keras",
+  "tuner_directory": "HyperParameterTuning1",
+  "save_model_file": "model.keras",
 
   "set_mask": "y"
 }

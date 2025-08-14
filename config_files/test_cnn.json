@@ -1,8 +1,16 @@
 {
+<<<<<<< HEAD
   "csv_path": "G:\\Intern_Project_2025\\Csv_files\\combined_data.csv",
   "img_folder": "G:\\Intern_Project_2025\\combined_images\\",
   "feature_scaler_path": "G:\\Intern_Project_2025\\models\\Unified_classifier_feature_scaler.pkl",
   "classification_path": "G\\Intern_Project_2025\\metrics\\Unified_regressor_new_classification.csv",
+=======
+  "output_dir": "C:\\Users\\clombardi\\Focal_Test",
+  "csv_path": "combined_data.csv",
+  "img_folder": "combined_images\\",
+  "feature_scaler_path": "cnn_feature_scaler1.pkl",
+  "classification_path": "classification.csv",
+>>>>>>> 3fc85a5 (updated filepath reading)
 
   "image_shape": [224, 224, 3],
   "feature_shape": [5],
@@ -10,7 +18,11 @@
   "mode": "test_cnn",
   "cnn_mode": "bad_good",
   "backbone": "efficientnet",
+<<<<<<< HEAD
   "model_path": "G:\\Intern_Project_2025\\models\\Unified_classifier.keras",
+=======
+  "model_path": "cnn1.keras",
+>>>>>>> 3fc85a5 (updated filepath reading)
   "num_classes": 1,
   "classification_type": "binary",
 

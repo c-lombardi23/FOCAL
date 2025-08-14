@@ -166,10 +166,10 @@ class XGBoostModel:
         plt.xlabel(x_label)
         plt.ylabel(y_label)
         plt.legend(loc="upper right")
-        model_dir = os.path.dirname(self.xgb_path)
-        basename = os.path.basename(self.xgb_path)
-        stem, _ = os.path.splitext(basename)
-        save_plot = os.path.join(model_dir, f"{stem}_{title}.png")
+        model_dir = self.xgb_path.parent.parent
+        basename = self.xgb_path.name
+        save_path = model_dir / "metrics" / basename
+        save_plot = f"{save_path}_{title}.png"
         plt.savefig(save_plot)
         plt.show()
 
@@ -341,9 +341,6 @@ class XGBoostPredictor:
                 "Predicted Delta": np.array(predicted_deltas).round(2),
             }
         )
-        basepath = self.xgb_path.strip(".pkl")
-        csv_path = f"{basepath}_performance.csv"
-        # df.to_csv(csv_path, index=False)
 
         return (
             tensions,

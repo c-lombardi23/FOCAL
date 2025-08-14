@@ -670,7 +670,6 @@ class CustomModel:
 
         # Save training history
         if history_file:
-            os.makedirs(os.path.dirname(history_file), exist_ok=True)
             df = pd.DataFrame(history.history)
             df.to_csv(history_file, index=False)
             print(f"Training history saved to: {history_file}")
@@ -679,7 +678,6 @@ class CustomModel:
 
         # Save trained model
         if save_model_file:
-            os.makedirs(os.path.dirname(save_model_file), exist_ok=True)
             model.save(save_model_file)
             print(f"Model saved to: {save_model_file}")
         else:
@@ -788,7 +786,6 @@ class CustomModel:
 
             # Save fold-specific history and model
             if history_file:
-                os.makedirs(os.path.dirname(history_file), exist_ok=True)
                 df = pd.DataFrame(history.history)
                 df.to_csv(f"{history_file}_fold{fold+1}.csv", index=False)
                 print(f"Fold {fold+1} history saved")
@@ -796,8 +793,6 @@ class CustomModel:
                 print("History not saved")
 
             if save_model_file:
-                os.makedirs(os.path.dirname(save_model_file), exist_ok=True)
-                save_model_file = save_model_file.strip(".keras")
                 model.save(f"{save_model_file}_fold{fold+1}.keras")
                 print(f"Fold {fold+1} model saved")
             else:
@@ -869,9 +864,9 @@ class CustomModel:
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
 
-        model_dir = os.path.dirname(model_path)
-        basename = os.path.basename(model_path)
-        stem, _ = os.path.splitext(basename)
-        save_plot = os.path.join(model_dir, f"{stem}_{title}.png")
+        model_dir = model_path.parent.parent
+        basename = model_path.name
+        save_path = model_dir / "metrics" / basename
+        save_plot = f"{save_path}_{title}.png"
         plt.savefig(save_plot)
         plt.show()

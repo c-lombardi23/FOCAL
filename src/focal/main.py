@@ -47,6 +47,7 @@ from .commands.train_commands import (
 
 # Import application modules
 from .config_schema import load_config
+from .main_utils import resolve_paths
 
 try:
     import tensorflow as tf
@@ -98,6 +99,7 @@ Examples:
 
     try:
         config = load_config(parsed_args.file_path)
+        config = resolve_paths(config)
 
         command_map = {
             "train_cnn": TrainCNN,
