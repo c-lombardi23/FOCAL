@@ -1,5 +1,5 @@
 """
-Fiber Cleave Processing Package
+Focal package
 
 A machine learning package for fiber cleave quality classification and tension prediction
 using CNN and MLP models.

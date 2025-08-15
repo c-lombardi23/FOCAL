@@ -130,6 +130,10 @@ class DataCollector:
     ) -> Optional[pd.DataFrame]:
         """Read CSV file and add cleave quality labels based on certain
         criteria.
+        
+        Args:
+            angle_threshold: Maximum angle threshold for good cleave.
+            diameter_threshold: Maximum diameter threshold for good cleave. 
 
         Returns:
             pd.DataFrame: DataFrame with added CleaveCategory column
@@ -555,6 +559,7 @@ class DataCollector:
             n_splits: Number of k-fold splits
             train_p: Masking probability for training
             test_p: Masking probabilty for testing
+            n_splits: Number of folds to use
 
         Returns:
             List of (train_ds, test_ds) tuples for each fold
@@ -632,6 +637,7 @@ class DataCollector:
             feature_scaler_path: Optional path to save feature scaler
             train_p: Masking probability for training.
             test_p: Masking probability for testing.
+            feature_scaler_path: Path to save feature scaler.
 
         Returns:
             Tuple of (train_ds, test_ds)
@@ -737,6 +743,9 @@ class MLPDataCollector(DataCollector):
         Args:
             csv_path: Path to CSV file containing cleave metadata
             img_folder: Path to folder containing cleave images
+            angle_threshold: Maximum angle threshold for good cleave
+            diameter_threshold: Maximum diameter threshold for good cleave 
+            backbone: Name of pretrained backbone
         """
         super().__init__(
             csv_path,
@@ -941,6 +950,7 @@ class MLPDataCollector(DataCollector):
         return datasets, label_scaler
 
 
+# This class was attempting something but I never ended up using it
 class BadCleaveTensionClassifier(DataCollector):
     def __init__(
         self,

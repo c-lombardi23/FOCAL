@@ -264,7 +264,6 @@ class XGBoostPredictor:
         )
 
         # Compute mean tension from good cleaves
-        # good_mean = df[df["CleaveCategory"] == 1]["CleaveTension"].mean()
         good_cleaves_df = df[df["CleaveCategory"] == 1]
         mean_tension_per_type = (
             good_cleaves_df.groupby("FiberType")["CleaveTension"]
@@ -343,7 +342,6 @@ class XGBoostPredictor:
         )
         basepath = self.xgb_path.strip(".pkl")
         csv_path = f"{basepath}_performance.csv"
-        # df.to_csv(csv_path, index=False)
 
         return (
             tensions,

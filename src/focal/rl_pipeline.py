@@ -55,6 +55,8 @@ class CleaveEnv(gym.Env):
             high_range (float): High percentage of maximum tension.
             max_delta (float): Maximum change in tension per action
             max_tension_change (float): Absolute maximum tension change.
+            quality_weight (float): Value for increasing reward for good cnn value.
+            proximity_weight (float): Value for scaling reward based on proximity to good tension.
         """
         # call gym init method
         super().__init__()
@@ -429,6 +431,7 @@ class TrainAgent:
             learning_rate (float): typical learning rate for ml
             batch_size (int): number of episodes to batch together
             tau (float): Soft update coefficient
+            timesteps (int): Total number of training steps
         """
 
         self.agent = SAC(

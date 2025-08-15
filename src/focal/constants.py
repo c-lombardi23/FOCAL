@@ -1,3 +1,5 @@
+# Required constants to use during training/testing. You can change these if you update logic.
+
 IMAGE_DIMS = [224, 224]  # default image size for transfer learning
 IMAGE_SIZE = [224, 224, 3]  # defuault image size with 3 channels
 

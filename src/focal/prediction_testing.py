@@ -53,6 +53,9 @@ class TestPredictions(DataCollector):
             csv_path (str): Path to CSV file with metadata.
             scalar_path (str): Path to feature scaler (ignored if image_only=True).
             img_folder (str): Path to image folder.
+            angle_threshold (float): Maximum angle threshold for good cleave.
+            diameter_threshold (float): Maximum diameter threshold for good cleave.
+            encoder_path (str): Path to one hot encoder if used. 
             image_only (bool): If True, test only with images (no features).
             backbone (str) : Name of backbone model used.
             classification_type (str): Multiclass or binary classification.
@@ -198,6 +201,7 @@ class TestPredictions(DataCollector):
         Args:
             true_labels (np.ndarray): Array of true labels.
             pred_labels (list[int]): List of predicted labels.
+            model_path (str): Path to trained model. 
         """
         if self.classification_type == "binary":
             labels = np.array([0, 1])
@@ -312,6 +316,11 @@ class TestTensionPredictions(BadCleaveTensionClassifier):
         Args:
             cnn_model_path: Trained CNN classifier to identify good/bad cleave
             tension_model_path: Trained model to predict tension direction (raise/lower)
+            csv_Path: Path to csv dataset.
+            scaler_path: Path to saved scaler.
+            img_folder: Folder containing images to test on.
+            tension_threshold: Maximum tension value for prediction.
+            image_only: Only predict with images, no numerical features. 
         """
 
         super().__init__(

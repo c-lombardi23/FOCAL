@@ -163,6 +163,7 @@ def log_image_training_run(
         config: Config object with hyperparameters.
         model: Trained TensorFlow model.
         history: Training history from model.fit().
+        dataset_path: Path to dataset used during training.
         artifacts (dict): Optional dict with keys like "model", "history".
     """
     mlflow.set_experiment("fiber_image_only_training")
@@ -237,6 +238,8 @@ def log_xgb_training_run(
     Args:
         config: Config object with hyperparameters.
         model: Trained TensorFlow model.
+        X_train: Train features of dataset.
+        y_train: Train labels of dataset.
         history: Training history from model.fit().
         artifacts (dict): Optional dict with keys like "model", "history".
     """

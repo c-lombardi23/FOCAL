@@ -196,6 +196,12 @@ class BuildMLPModel(CustomModel):
             cnn_model_path: Path to the pre-trained CNN model
             param_shape: Dimensions of numerical parameters
             learning_rate: Learning rate for optimization
+            num_classes: Number of categories to classify
+            dense1: Number of neurons in first FC layer.
+            dense2: Number of neurons in second FC layer.
+            dropout1: Amount of dropout for CNN output
+            dropout2: Amount of dropout for feature input.
+            dropout3: Amount of dropout for concatenated image+features
             checkpoints: Checkpoint callback
             epochs: Number of training epochs
             initial_epoch: Starting epoch number

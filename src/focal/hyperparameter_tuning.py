@@ -219,11 +219,7 @@ class HyperParameterTuning:
             directory=directory,
             project_name=project_name,
         )
-        """self.tuner = Hyperband( hypermodel, objective=objective,
-        max_epochs=max_epochs, directory=directory,
-
-        project_name=project_name )
-        """
+        
 
     def run_search(
         self,
@@ -289,6 +285,8 @@ class ImageOnlyHyperModel(HyperModel):
         Args:
             image_shape: Dimensions of input images
             num_classes: Number of output classes
+            backbone: Name of pretrained backbone
+            classification_type: Binary or multiclass
         """
         if tf is None:
             raise ImportError("TensorFlow is required for ImageOnlyHyperModel")
@@ -472,6 +470,9 @@ class ImageHyperparameterTuning(HyperParameterTuning):
             objective: Metric to optimize
             directory: Directory for tuner logs
             project_name: Name of the tuning project
+            backbone: Name of pretrained backbone
+            num_classes: Number of categories to classify
+            class_weights: Weights to prevent uneven dataset
         """
         self.class_weights = class_weights
         self.image_shape = image_shape
@@ -489,12 +490,7 @@ class ImageHyperparameterTuning(HyperParameterTuning):
             directory=directory,
             project_name=project_name,
         )
-        """self.tuner = Hyperband( hypermodel, objective=objective,
-        max_epochs=max_epochs, directory=directory,
-
-        project_name=project_name )
-        """
-
+   
 
 class MLPHyperparameterTuning(HyperParameterTuning):
     """Hyperparameter tuning specifically for MLP models."""
@@ -516,6 +512,7 @@ class MLPHyperparameterTuning(HyperParameterTuning):
             objective: Metric to optimize
             directory: Directory for tuner logs
             project_name: Name of the tuning project
+            class_weights: Weights to prevent uneven dataset
         """
         self.cnn_model = tf.keras.models.load_model(cnn_path)
         self.image_input = self.cnn_model.input[0]

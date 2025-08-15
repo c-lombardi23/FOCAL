@@ -637,18 +637,7 @@ class CustomModel:
         Returns:
             tf.keras.callbacks.History: Training history
         """
-        """Callbacks = []
-
-        if early_stopping:
-            callbacks.append(early_stopping)
-        if checkpoints:
-            callbacks.append(checkpoints)
-        if tensorboard:
-            callbacks.append(tensorboard)
-        if reduce_lr:
-            callbacks.append(reduce_lr)
-        """
-
+       
         if callbacks:
             history = model.fit(
                 self.train_ds,
@@ -717,12 +706,22 @@ class CustomModel:
             datasets: List of (train_ds, test_ds) tuples for each fold
             image_shape: Dimensions of input images
             param_shape: Dimensions of numerical parameters
-            learning_rate: Learning rate for optimization
-            metrics: List of metrics to monitor
-            epochs: Number of training epochs
-            initial_epoch: Starting epoch number
-            history_file: Base filename for saving training history
-            model_file: Base filename for saving models
+            dropout1: Amount of dropout for image layer.
+            dense1: Amount of neurons for first FC layer.
+            dropout2: Amount of dropout for feature input.
+            dense2: Amount of neruons for second FC layer.
+            dropout3: Amount of dropout for concatenated images+features.
+            brightness: Brightness amount for image.
+            height: Height of augmented image.
+            width: Width of augmented image.
+            contrast: Contrast amount of augmented image.
+            rotation: Rotation amount of augmented image.
+            learning_rate: Learning rate for optimization.
+            metrics: List of metrics to monitor.
+            epochs: Number of training epochs.
+            initial_epoch: Starting epoch number.
+            history_file: Base filename for saving training history.
+            model_file: Base filename for saving models.
 
         Returns:
             Tuple of (list of trained models, list of training histories)
